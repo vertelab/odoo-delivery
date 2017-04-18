@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        
+        <record id="unifaun_partner" model="res.partner">
+            <field name="name">Unifaun</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="customer" eval="False"/>
+            <field name="supplier" eval="True"/>
+            <field name="email">info@unifaun.com</field>
+            <field name="street">Tegnérgatan 34</field>
+            <field name="city">Stockholm</field>
+            <field name="zip">11359</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+
+        <record id="unifaun_product" model="product.product">
+            <field name="name">Delivery Product</field>
+<!--
+            <field name="categ_id" ref="product.product_category_2"/>
+-->
+            <field name="standard_price">0.0</field>
+            <field name="list_price">0.0</field>
+            <field name="type">service</field>
+        </record>
+
+
+
+
+        <record id="unifaun_p15" model="delivery.carrier">
+            <field name="name">Posten DPD Företagspaket 16.00</field>
+            <field name="partner_id" ref="unifaun_partner"/>
+            <field name="product_id" ref="unifaun_product"/>
+            <field name="unifaun_service_code">P15</field>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="unifaun_p31" model="delivery.carrier">
+            <field name="name">Posten DPD Företagspaket 09.00</field>
+            <field name="partner_id" ref="unifaun_partner"/>
+            <field name="product_id" ref="unifaun_product"/>
+            <field name="unifaun_service_code">P31</field>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="unifaun_p14" model="delivery.carrier">
+            <field name="name">Posten DPD Företagspaket 12.00</field>
+            <field name="partner_id" ref="unifaun_partner"/>
+            <field name="product_id" ref="unifaun_product"/>
+            <field name="unifaun_service_code">P14</field>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="unifaun_p52" model="delivery.carrier">
+            <field name="name">Posten PALL.ETT</field>
+            <field name="partner_id" ref="unifaun_partner"/>
+            <field name="product_id" ref="unifaun_product"/>
+            <field name="unifaun_service_code">P52</field>
+            <field name="active" eval="True"/>
+        </record>
+        <record id="unifaun_dpd" model="delivery.carrier">
+            <field name="name">Posten Utrikes DPD</field>
+            <field name="partner_id" ref="unifaun_partner"/>
+            <field name="product_id" ref="unifaun_product"/>
+            <field name="unifaun_service_code">DPD</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="unifaun_pnl330" model="delivery.carrier">
+            <field name="name">Bring CarryOn Business</field>
+            <field name="partner_id" ref="unifaun_partner"/>
+            <field name="product_id" ref="unifaun_product"/>
+            <field name="unifaun_service_code">PNL330</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        
+        <record id="unifaun_api_key" model="ir.config_parameter">
+            <field name="key">unifaun.api_key</field>
+            <field name="value">api key</field>
+        </record>             
+        <record id="unifaun_passwd" model="ir.config_parameter">
+            <field name="key">unifaun.passwd</field>
+            <field name="value">password</field>
+        </record>             
+        <record id="unifaun_url" model="ir.config_parameter">
+            <field name="key">unifaun.url</field>
+            <field name="value">https://api.unifaun.com/rs-extapi/v1</field>
+        </record>             
+        
+        
+        
+
+    </data>
+</openerp>
