@@ -30,6 +30,11 @@ class stock_picking(models.Model):
     
     is_unifaun = fields.Boolean(related='carrier_id.is_unifaun')
     
+    
+    # https://www.unifaunonline.se/rs-docs/
+    # Create shipment to be completed manually
+    # catch carrier_tracking_ref (to be mailed? add on waybill)
+    
     @api.one
     def order_transport(self):
         if self.carrier_tracking_ref:
