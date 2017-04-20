@@ -35,6 +35,14 @@ class delivery_carrier(models.Model):
 
     unifaun_service_code = fields.Char('Service Code')
     is_unifaun = fields.Boolean('Is Unifaun')
+    unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
+    
+    @api.multi
+    def test_environment(self):
+        self.ensure_one()
+        if 'test' in (self.env['ir.config_parameter'].get_param('unifaun.environment', 'prod'), self.unifaun_environment):
+            return True
+        return False
     
     def unifaun_send(self, method, params=None, payload=None):
         headers = {'content-type': 'application/json'}
@@ -44,7 +52,7 @@ class delivery_carrier(models.Model):
         url = self.env['ir.config_parameter'].get_param('unifaun.url')
     
         response = requests.post(
-            url + method,
+            url + '/' + method,
             params=params,
             data=payload and json.dumps(payload) or None,
             headers=headers,
@@ -66,7 +74,7 @@ class delivery_carrier(models.Model):
         url = self.env['ir.config_parameter'].get_param('unifaun.url')
         
         response = requests.get(
-            url + method, 
+            url + '/' + method, 
             params=params,
             headers=headers, 
             verify=False, 
@@ -77,9 +85,19 @@ class delivery_carrier(models.Model):
             return {'status_code': response.status_code,'text': response.text,'response': response}
 
         return response.json()
+    
+    def get_file(self, url):
+        username = self.env['ir.config_parameter'].get_param('unifaun.api_key')
+        password = self.env['ir.config_parameter'].get_param('unifaun.passwd')
+        response = requests.get(
+            url,
+            verify=False, 
+            auth=HTTPBasicAuth(username, password))
+        if response.status_code < 200 or response.status_code >= 300:
+            _logger.error("ERROR " + str(response.status_code) + ": " + response.text)
+            return {'status_code': response.status_code,'text': response.text,'response': response}
 
-
-
+        return response.content
         
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
