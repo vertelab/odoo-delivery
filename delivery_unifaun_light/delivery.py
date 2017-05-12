@@ -28,116 +28,95 @@ _logger = logging.getLogger(__name__)
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
     
-    unifaun_sender = fields.Char(string='SenderPartners id')
-    unifaun_customer_no = fields.Char(string='Customer Number')
+    unifaun_sender = fields.Char(string='SenderPartners id', help="Code describing the carrier. See Unifaun help pages.")
+    unifaun_customer_no = fields.Char(string='Customer Number', help="The paying party's customer number with the carrier.")
 
 class stock_picking(models.Model):
     _inherit="stock.picking"
     
     is_unifaun = fields.Boolean(related='carrier_id.is_unifaun')
-    unifaun_shipmentid = fields.Char(string='Unifaun ID')
+    unifaun_shipmentid = fields.Char(string='Unifaun Shipment ID', copy=False)
+    unifaun_stored_shipmentid = fields.Char(string='Unifaun Stored Shipment ID', copy=False)
+    unifaun_package_code = fields.Char(string='Package Code', copy=False)
+    unifaun_pdfs = fields.Char(string='Unifaun PDFs', copy=False)
     
     # https://www.unifaunonline.se/rs-docs/
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
     
     @api.one
-    def order_transport(self):
+    def order_stored_shipment(self):
+        """Create a stored shipment."""
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
+        if self.unifaun_stored_shipmentid:
+            raise Warning(_('A stored shipment already exists for this order.'))
         error = ''
         if not self.weight:
             error += '\n' if error else ''
             error += _('The delivery must have a weight.')
-        #TODO: Add more error handling
+        # TODO: Add more error handling
         if error:
             raise Warning(error)
-        sender = self.picking_type_id.warehouse_id.partner_id
+        # Choose sender and receiver based on picking type (in or out).
+        if self.picking_type_id.code == 'incoming':
+            receiver = self.picking_type_id.warehouse_id.partner_id
+            sender = self.partner_id
+        elif self.picking_type_id.code == 'outgoing':
+            sender = self.picking_type_id.warehouse_id.partner_id
+            receiver = self.partner_id
         rec = {
-            "pdfConfig": {
-                "target4XOffset": 0,
-                "target2YOffset": 0,
-                "target1Media": "laser-ste",
-                "target1YOffset": 0,
-                "target3YOffset": 0,
-                "target2Media": "laser-a4",
-                "target4YOffset": 0,
-                "target4Media": None,
-                "target3XOffset": 0,
-                "target3Media": None,
-                "target1XOffset": 0,
-                "target2XOffset": 0
+            'sender': {
+                #~ 'quickId': "1",
+                'name': sender.name,        
+                'address1': sender.street,        
+                'zipcode': sender.zip,        
+                'city': sender.city,        
+                'country': sender.country_id.code,        
+                'phone': sender.phone,        
+                'email': sender.email,        
             },
-            'shipment': {
-                'sender': {
-                    'quickId': "1",
-                    'name': sender.name,        
-                    'address1': sender.street,        
-                    'zipcode': sender.zip,        
-                    'city': sender.city,        
-                    'country': sender.country_id.code,        
-                    'phone': sender.phone,        
-                    'email': sender.email,        
-                },
-                "senderPartners": [{
-                    "id": self.carrier_id.unifaun_sender,
-                    "custNo": self.carrier_id.unifaun_customer_no,
-                }],
-                'receiver': {
-                    'name': self.partner_id.name,        
-                    'address1': self.partner_id.street,        
-                    'zipcode': self.partner_id.zip,        
-                    'city': self.partner_id.city,        
-                    'country': self.partner_id.country_id.code,        
-                    'phone': self.partner_id.phone,        
-                    'email': self.partner_id.email,        
-                },
-                'service': {
-                    'id': self.carrier_id.unifaun_service_code,
-                },
-                'parcels':  [{
-                    "copies": 1,
-                    "weight": self.weight,
-                    "packageCode": "PC",
-                    "contents": "Important stuff",
-                    "valuePerParcel": True,
-                }],
-                "orderNo": self.name,
-                "senderReference": self.origin,
-                },
+            'senderPartners': [{
+                'id': self.carrier_id.unifaun_sender,
+                'custNo': self.carrier_id.unifaun_customer_no,
+            }],
+            'receiver': {
+                'name': receiver.name,        
+                'address1': receiver.street,        
+                'zipcode': receiver.zip,        
+                'city': receiver.city,        
+                'country': receiver.country_id.code,        
+                'phone': receiver.phone,        
+                'email': receiver.email,        
+            },
+            'service': {
+                'id': self.carrier_id.unifaun_service_code,
+            },
+            'parcels':  [{
+                "copies": 1,
+                "weight": self.weight,
+                "contents": "Important stuff",
+                "valuePerParcel": True,
+            }],
+            "orderNo": self.name,
+            "senderReference": self.origin,
+            #~ "receiverReference": "receiver ref 345",
+            #~ "options": [{
+                #~ "message": "This is order number 123",
+                #~ "to": "sales@unifaun.com",
+                #~ "id": "ENOT",
+                #~ "languageCode": "SE",
+                #~ "from": "info@unifaun.com"
+            #~ }],
         }
         
-        #~ if self.carrier_id.test_environment():
-            #~ rec['shipment']['test'] = True
-        response = self.carrier_id.unifaun_send('shipments', None, rec)
-        if type(response) != type({}):
-            for r in response:
-                self.carrier_tracking_ref = r.get('shipmentNo', '')
-                self.unifaun_shipmentid = r.get('id', '')
-                for pdf in r.get('pdfs', []):
-                    name = pdf.get('description', 'Unknown') + pdf.get('id', '001')
-                    data = self.carrier_id.get_file(pdf.get('href', ''))
-                    if type(data) != type({}):
-                        self.env['ir.attachment'].create({
-                            'name': name,
-                            'datas_fname': name + '.pdf',
-                            'data': data,
-                            'res_model': self._name,
-                            'res_id': self.id,
-                            'description': 'Unifaun document.',
-                        })
-                    else:
-                        self.env['mail.message'].create({
-                            'body': _(u"Unifaun missing document\ndata %s" % data),
-                            'subject': "Order Transport",
-                            'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
-                            'res_id': self.id,
-                            'model': self._name,
-                            'type': 'notification',
-                        })
-        
+        response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
+        if type(response) == type({}):
+            _logger.warn('\n%s\n' % response)
+            self.unifaun_stored_shipmentid = response.get('id', '')
+            
             self.env['mail.message'].create({
-                'body': _(u"Unifaun\nrec %s\nresp %s\n" % (rec, response)),
+                'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
                 'subject': "Order Transport",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
@@ -146,8 +125,77 @@ class stock_picking(models.Model):
             })
         else:
             self.env['mail.message'].create({
-                'body': _("Unifaun error!\nrec %s\nresp %s\n" % (rec, response)),
+                'body': _("Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
                 'subject': "Order Transport",
+                'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
+                'res_id': self.id,
+                'model': self._name,
+                'type': 'notification',
+            })
+        _logger.warn('Unifaun Order Transport: rec %s response %s' % (rec,response))
+    
+    @api.one
+    def confirm_stored_shipment(self):
+        """Create shipment(s) from a stored shipment."""
+        if not self.unifaun_stored_shipmentid:
+            raise Warning(_('No stored shipment found for this order.'))
+        if self.unifaun_shipmentid:
+            raise Warning(_('The stored shipment has already been confirmed (there is a Shipment id).'))
+        if self.carrier_tracking_ref:
+            raise Warning(_('Transport already ordered (there is a Tracking ref)'))
+        
+        rec = {
+          "target1Media": "laser-ste",
+          "target1XOffset": 0.0,
+          "target1YOffset": 0.0,
+          "target2Media": "laser-a4",
+          "target2XOffset": 0.0,
+          "target2YOffset": 0.0,
+          "target3Media": None,
+          "target3XOffset": 0.0,
+          "target3YOffset": 0.0,
+          "target4Media": None,
+          "target4XOffset": 0.0,
+          "target4YOffset": 0.0
+        }
+        
+        response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.unifaun_stored_shipmentid, None, rec)
+        if type(response) == type([]):
+            _logger.warn('\n%s\n' % response)
+            unifaun_shipmentid = ''
+            carrier_tracking_ref = ''
+            unifaun_pdfs = ''
+            parcels = 0
+            for r in response:
+                # Could be more than one shipment.
+                if carrier_tracking_ref:
+                    carrier_tracking_ref += ', '
+                carrier_tracking_ref += r.get('shipmentNo') or ''
+                if unifaun_shipmentid:
+                    unifaun_shipmentid += ', '
+                unifaun_shipmentid += r.get('id') or ''
+                for pdf in r.get('pdfs') or []:
+                    if unifaun_pdfs:
+                        unifaun_pdfs += ', '
+                    unifaun_pdfs += pdf.get('href') or ''
+                for parcel in r.get('parcels') or []:
+                    parcels += 1
+            self.number_of_packages = parcels
+            self.carrier_tracking_ref = carrier_tracking_ref
+            self.unifaun_shipmentid = unifaun_shipmentid
+            self.unifaun_pdfs = unifaun_pdfs
+            self.env['mail.message'].create({
+                'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (rec, response)),
+                'subject': "Shipment(s) Created",
+                'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
+                'res_id': self.id,
+                'model': self._name,
+                'type': 'notification',
+            })
+        else:
+            self.env['mail.message'].create({
+                'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (rec, response)),
+                'subject': "Create Shipment",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
                 'model': self._name,

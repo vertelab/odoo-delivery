@@ -7,10 +7,14 @@
       <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
       <field name="type">form</field>
       <field name="arch" type="xml">
+        <separator string="Carrier Information" position="after">
+          <button name="order_stored_shipment" string="Order Transport" type='object' attrs="{'invisible': [('is_unifaun', '==', False)]}" />
+          <button name="confirm_stored_shipment" string="Confirm Transport" type='object' attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
+        </separator>
         <field name="carrier_tracking_ref" position="after">
-            <field name="is_unifaun" invisible="1"/>
-            <button name="order_transport" string="Order Transport" type='object' attrs="{'invisible': [('is_unifaun', '==', False)]}" />
-
+          <field name="unifaun_stored_shipmentid"/>
+          <field name="unifaun_shipmentid"/>
+          <field name="is_unifaun" invisible="1"/>
         </field>
       </field>
     </record>
@@ -23,6 +27,9 @@
         <field name="unifaun_environment" position="after">
           <field name="unifaun_sender" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
           <field name="unifaun_customer_no" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+<!--
+          <field name="unifaun_package_code" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+-->
         </field>
       </field>
     </record>
