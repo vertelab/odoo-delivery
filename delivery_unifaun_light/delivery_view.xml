@@ -24,7 +24,7 @@
       <field name="model">delivery.carrier</field>
       <field name="inherit_id" ref="delivery_unifaun_base.view_delivery_carrier_form" />
       <field name="arch" type="xml">
-        <field name="unifaun_environment" position="after">
+        <field name="unifaun_service_code" position="after">
           <field name="unifaun_sender" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
           <field name="unifaun_customer_no" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
 <!--
