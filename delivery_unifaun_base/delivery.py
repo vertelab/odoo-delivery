@@ -35,14 +35,14 @@ class delivery_carrier(models.Model):
 
     unifaun_service_code = fields.Char('Service Code')
     is_unifaun = fields.Boolean('Is Unifaun')
-    unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
+    #~ unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
     
-    @api.multi
-    def test_environment(self):
-        self.ensure_one()
-        if 'test' in (self.env['ir.config_parameter'].get_param('unifaun.environment', 'prod'), self.unifaun_environment):
-            return True
-        return False
+    #~ @api.multi
+    #~ def test_environment(self):
+        #~ self.ensure_one()
+        #~ if 'test' in (self.env['ir.config_parameter'].get_param('unifaun.environment', 'prod'), self.unifaun_environment):
+            #~ return True
+        #~ return False
     
     def unifaun_send(self, method, params=None, payload=None):
         headers = {'content-type': 'application/json'}
