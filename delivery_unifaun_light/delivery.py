@@ -51,13 +51,13 @@ class stock_picking(models.Model):
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
         if self.unifaun_stored_shipmentid:
             raise Warning(_('A stored shipment already exists for this order.'))
-        error = ''
-        if not self.weight:
-            error += '\n' if error else ''
-            error += _('The delivery must have a weight.')
-        # TODO: Add more error handling
-        if error:
-            raise Warning(error)
+        #~ error = ''
+        #~ #if not self.weight:
+        #~ #    error += '\n' if error else ''
+        #~ #    error += _('The delivery must have a weight.')
+        #~ # TODO: Add more error handling
+        #~ if error:
+            #~ raise Warning(error)
         # Choose sender and receiver based on picking type (in or out).
         if self.picking_type_id.code == 'incoming':
             receiver = self.picking_type_id.warehouse_id.partner_id
@@ -65,41 +65,48 @@ class stock_picking(models.Model):
         elif self.picking_type_id.code == 'outgoing':
             sender = self.picking_type_id.warehouse_id.partner_id
             receiver = self.partner_id
+        
         rec = {
             'sender': {
                 #~ 'quickId': "1",
-                'name': sender.name,        
-                'address1': sender.street,        
-                'zipcode': sender.zip,        
-                'city': sender.city,        
-                'country': sender.country_id.code,        
-                'phone': sender.phone,        
-                'email': sender.email,        
+                'name': sender.name,
+                'address1': sender.street or '',
+                'address2': sender.street2 or '',
+                'zipcode': sender.zip or '',
+                'city': sender.city or '',
+                'state': sender.state_id and sender.state_id.name or '',
+                'country': sender.country_id and sender.country_id.code or '',
+                'phone': sender.phone or sender.mobile or '',
+                'mobile': sender.mobile or '',
+                'email': sender.email or '',
             },
             'senderPartners': [{
                 'id': self.carrier_id.unifaun_sender,
                 'custNo': self.carrier_id.unifaun_customer_no,
             }],
             'receiver': {
-                'name': receiver.name,        
-                'address1': receiver.street,        
-                'zipcode': receiver.zip,        
-                'city': receiver.city,        
-                'country': receiver.country_id.code,        
-                'phone': receiver.phone,        
-                'email': receiver.email,        
+                'name': receiver.name,
+                'address1': receiver.street or '',
+                'address2': receiver.street2 or '',
+                'zipcode': receiver.zip or '',
+                'city': receiver.city or '',
+                'state': receiver.state_id and receiver.state_id.name or '',
+                'country': sender.country_id and sender.country_id.code or '',
+                'phone': receiver.phone or receiver.mobile or '',
+                'mobile': receiver.mobile or '',
+                'email': receiver.email or '',
             },
             'service': {
                 'id': self.carrier_id.unifaun_service_code,
             },
             'parcels':  [{
-                "copies": 1,
-                "weight": self.weight,
-                "contents": "Important stuff",
-                "valuePerParcel": True,
+                'copies': self.number_of_packages or 1,
+                'weight': self.weight or 0,
+                'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
+                'valuePerParcel': False,
             }],
-            "orderNo": self.name,
-            "senderReference": self.origin,
+            'orderNo': self.name,
+            'senderReference': self.origin,
             #~ "receiverReference": "receiver ref 345",
             #~ "options": [{
                 #~ "message": "This is order number 123",

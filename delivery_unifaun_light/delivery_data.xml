@@ -2,7 +2,10 @@
 <openerp>
     <data noupdate="1">
         
-        
+        <record id="unifaun_parcel_description" model="ir.config_parameter">
+            <field name="key">unifaun.parcel_description</field>
+            <field name="value">Goods</field>
+        </record>          
 
     </data>
 </openerp>
