@@ -4,7 +4,7 @@
         
         <record id="unifaun_parcel_description" model="ir.config_parameter">
             <field name="key">unifaun.parcel_description</field>
-            <field name="value">Goods</field>
+            <field name="value">G</field>
         </record>          
 
     </data>

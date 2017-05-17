@@ -65,7 +65,13 @@ class stock_picking(models.Model):
         elif self.picking_type_id.code == 'outgoing':
             sender = self.picking_type_id.warehouse_id.partner_id
             receiver = self.partner_id
-        
+        receiver_contact = sender_contact = None
+        if receiver.parent_id and receiver.type == 'contact':
+            receiver_contact = receiver
+            receiver = self.env['res.partner'].browse(receiver.parent_id.address_get(['delivery'])['delivery'])
+        if sender.parent_id and sender.type == 'contact':
+            sender_contact = sender
+            sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
         rec = {
             'sender': {
                 #~ 'quickId': "1",
@@ -116,6 +122,20 @@ class stock_picking(models.Model):
                 #~ "from": "info@unifaun.com"
             #~ }],
         }
+        if sender_contact:
+            rec['sender'].update({
+                'phone': sender_contact.phone or sender_contact.mobile or '',
+                'mobile': sender_contact.mobile or '',
+                'email': sender_contact.email or '',
+                'contact': sender_contact.name,
+            })
+        if receiver_contact:
+            rec['receiver'].update({
+                'phone': receiver_contact.phone or receiver_contact.mobile or '',
+                'mobile': receiver_contact.mobile or '',
+                'email': receiver_contact.email or '',
+                'contact': receiver_contact.name,
+            })
         
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         if type(response) == type({}):
