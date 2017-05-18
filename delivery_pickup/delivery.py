@@ -1,0 +1,70 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+# OpenERP, Open Source Management Solution, third party addon
+# Copyright (C) 2017- Vertel AB (<http://vertel.se>).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+import openerp.exceptions
+from openerp import models, fields, api, _
+from openerp import http
+from openerp.http import request
+import openerp.addons.website_sale.controllers.main
+
+import logging
+_logger = logging.getLogger(__name__)
+
+class delivery_carrier(models.Model):
+    _inherit = "delivery.carrier"
+
+    pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the Carrier Type is a pickup location for deliveries.")
+    @api.one
+    def _data_input(self):
+        if self.pickup_location:
+            self.data_input = '<select id="carrier_data" class="selectpicker" data-style="btn-primary"><option value="1">Choose location</option>%s</select>' % \
+                              '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in self.env['res.partner'].search([('pickup_location','=',True)])]) 
+    data_input = fields.Text(compute="_data_input",)
+    
+    @api.model
+    def lookup_carrier(self, carrier_id,carrier_data,order):
+        carrier = self.env['delivery.carrier'].browse(int(carrier_id))
+        if carrier and carrier.pickup_location:
+            if not carrier_data == '1': 
+                location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
+                assert location.pickup_location == True
+                order.partner_shipping_id = location.id
+
+class ResPartner(models.Model):
+    """Add some fields related to pickup locations"""
+    _inherit = "res.partner"
+
+    pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the partner is a pickup location for deliveries.")
+
+    @api.onchange('pickup_location')
+    def onchange_pickup_location(self):
+        if self.pickup_location:
+            self.supplier = True
+
+class website_sale(openerp.addons.website_sale.controllers.main.website_sale):
+                
+    @http.route(['/shop/delivery/data'], type='json', auth="user", website=True)
+    def lookup_carrier(self, carrier_id,carrier_data,**post):
+        order = request.website.sale_get_order()
+        _logger.debug('delivery-data %s %s %s' % (carrier_id,carrier_data,order))
+        return request.env['delivery.carrier'].lookup_carrier(carrier_id,carrier_data,order)
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
