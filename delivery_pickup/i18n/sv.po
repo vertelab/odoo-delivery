@@ -1,13 +1,13 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* picking_comment
+# 	* delivery_pickup
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 8.0-20170102\n"
+"Project-Id-Version: Odoo Server 8.0-20170508\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-25 08:30+0000\n"
-"PO-Revision-Date: 2017-01-25 09:32+0100\n"
+"POT-Creation-Date: 2017-05-18 15:09+0000\n"
+"PO-Revision-Date: 2017-05-18 17:15+0200\n"
 "Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -15,29 +15,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: \n"
 "Language: sv\n"
-"X-Generator: Poedit 1.8.9\n"
+"X-Generator: Poedit 2.0.1\n"
 
-#. module: picking_comment
-#: help:product.product,picking_comment:0
-msgid "Add instructions for picking"
-msgstr "Lägg till plockinstruktioner"
+#. module: delivery_pickup
+#: model:ir.model,name:delivery_pickup.model_delivery_carrier
+msgid "Carrier and delivery grids"
+msgstr "Transportör och leveranstabell"
 
-#. module: picking_comment
-#: view:website:stock.report_picking
-msgid "Comment"
-msgstr "Kommentar"
+#. module: delivery_pickup
+#: help:delivery.carrier,pickup_location:0
+msgid "Check this field if the Carrier Type is a pickup location for deliveries."
+msgstr "Kryssa detta fält om transportörstypen är utleveransställe."
 
-#. module: picking_comment
-#: view:product.product:picking_comment.product_normal_form_view
-msgid "Picking"
-msgstr "Plockning"
+#. module: delivery_pickup
+#: help:res.partner,pickup_location:0
+msgid "Check this field if the partner is a pickup location for deliveries."
+msgstr "Kryssa detta fält om kontakten är ett utleveransställe."
 
-#. module: picking_comment
-#: field:product.product,picking_comment:0
-msgid "Picking comment"
-msgstr "Plockommentar"
+#. module: delivery_pickup
+#: field:delivery.carrier,data_input:0
+msgid "Data input"
+msgstr "Datainmatning"
 
-#. module: picking_comment
-#: model:ir.model,name:picking_comment.model_product_product
-msgid "Product"
-msgstr "Produkt"
+#. module: delivery_pickup
+#: model:ir.model,name:delivery_pickup.model_res_partner
+msgid "Partner"
+msgstr "Kontakt"
+
+#. module: delivery_pickup
+#: field:delivery.carrier,pickup_location:0
+#: view:res.partner:delivery_pickup.view_res_partner_filter
+#: field:res.partner,pickup_location:0
+msgid "Pickup Location"
+msgstr "Utleveransställe"
+
+#. module: delivery_pickup
+#: view:res.partner:delivery_pickup.view_res_partner_filter
+msgid "Pickup Location for delivery"
+msgstr "Utleveransställe"
+
+#. module: delivery_pickup
+#: model:ir.actions.act_window,name:delivery_pickup.action_pickup_location_form
+#: model:ir.ui.menu,name:delivery_pickup.menu_pickup_location_form
+msgid "Pickup Locations"
+msgstr "Utleveransställen"
