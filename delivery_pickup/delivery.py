@@ -33,20 +33,23 @@ class delivery_carrier(models.Model):
 
     pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the Carrier Type is a pickup location for deliveries.")
     @api.one
-    def _data_input(self):
+    def _carrier_data(self):
         if self.pickup_location:
-            self.data_input = '<select id="carrier_data" class="selectpicker" data-style="btn-primary"><option value="1">Choose location</option>%s</select>' % \
-                              '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in self.env['res.partner'].search([('pickup_location','=',True)])]) 
-    data_input = fields.Text(compute="_data_input",)
-    
+            self.carrier_data = '<select name="carrier_data" class="selectpicker" data-style="btn-primary"><option value="1">Choose location</option>%s</select>' % \
+                              '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in self.env['res.partner'].search([('pickup_location','=',True)])])
+        else:
+            super(delivery_carrier, self)._carrier_data()
+
     @api.model
-    def lookup_carrier(self, carrier_id,carrier_data,order):
+    def lookup_carrier(self, carrier_id, carrier_data, order):
         carrier = self.env['delivery.carrier'].browse(int(carrier_id))
         if carrier and carrier.pickup_location:
-            if not carrier_data == '1': 
+            if not carrier_data == '1':
                 location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
                 assert location.pickup_location == True
                 order.partner_shipping_id = location.id
+        else:
+            super(delivery_carrier, self).lookup_carrier(carrier_id, carrier_data, order)
 
 class ResPartner(models.Model):
     """Add some fields related to pickup locations"""
@@ -58,13 +61,5 @@ class ResPartner(models.Model):
     def onchange_pickup_location(self):
         if self.pickup_location:
             self.supplier = True
-
-class website_sale(openerp.addons.website_sale.controllers.main.website_sale):
-                
-    @http.route(['/shop/delivery/data'], type='json', auth="user", website=True)
-    def lookup_carrier(self, carrier_id,carrier_data,**post):
-        order = request.website.sale_get_order()
-        _logger.debug('delivery-data %s %s %s' % (carrier_id,carrier_data,order))
-        return request.env['delivery.carrier'].lookup_carrier(carrier_id,carrier_data,order)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -10,19 +10,6 @@
         </field>
       </field>
     </record>
-    
-    
-    <template id="payment_delivery" name="Delivery Costs Pickup Location" inherit_id="website_sale_delivery.payment_delivery">
-        <xpath expr="//div[@t-field='delivery.website_description']" position="before">
-                <span><t t-raw="delivery.data_input"/></span>
-        </xpath>
-    </template>
 
-    <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Pickup Location">
-      <xpath expr="." position="inside">
-        <script type="text/javascript" src="/delivery_pickup/static/src/js/delivery_pickup.js"></script>
-      </xpath>
-    </template>
-    
   </data>
 </openerp>
