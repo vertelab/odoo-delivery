@@ -36,7 +36,7 @@ class delivery_carrier(models.Model):
         #else:
             #super(delivery_carrier, self)._carrier_data()
         pass
-    carrier_data = fields.Text(compute="_carrier_data",)
+    carrier_data = fields.Text(compute="_carrier_data")
 
     @api.model
     def lookup_carrier(self, carrier_id, carrier_data, order):
