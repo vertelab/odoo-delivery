@@ -19,19 +19,17 @@
 #
 ##############################################################################
 {
-'name': 'Delivery Pickup',
+'name': 'Delivery Carrier Data',
 'version': '0.1',
-'summary': 'Delivery to a pickup location',
+'summary': 'Add extra input field to delivery method',
 'category': 'stock',
 'description': """
-    Delivery is made to a special pickup location. This pickup location is written to sale order delivery adress.
-
-    Pickup location is a res partner marked as this.
-
+Show input field in check out form in website_sale
+==================================================
 Financed by Cavarosa LTD""",
 'author': 'Vertel AB',
 'website': 'http://www.vertel.se',
-'depends': ['delivery_carrier_data'],
-'data': ['res_partner_view.xml', 'delivery_view.xml'],
+'depends': ['website_sale_delivery',],
+'data': ['delivery_view.xml'],
 'installable': True,
 }
