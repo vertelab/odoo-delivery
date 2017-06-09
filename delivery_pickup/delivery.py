@@ -47,6 +47,8 @@ class delivery_carrier(models.Model):
                 location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
                 assert location.pickup_location == True
                 order.partner_shipping_id = location.id
+        elif carrier and carrier.cavarosa_box:
+            pass
 
 class ResPartner(models.Model):
     """Add some fields related to pickup locations"""
