@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-# OpenERP, Open Source Management Solution, third party addon
+# Odoo, Open Source Management Solution, third party addon
 # Copyright (C) 2004-2017 Vertel AB (<http://vertel.se>).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 #
 ##############################################################################
 {
-'name': 'Delivery Unifaun Base',
-'version': '0.2',
-'summary': 'Integrate Delivery with Unifaun Base-module',
+'name': 'Delivery Fraktjakt',
+'version': '0.1',
+'summary': 'Integrate Delivery with Fraktjakt',
 'category': '',
 'description': """
     """,
