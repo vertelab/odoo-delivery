@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Odoo, Open Source Management Solution
+#    Copyright (C) 2004-2017 Tiny SPRL (<http://tiny.be>).
+#       
+#    Third party addon by Vertel AB
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -33,13 +35,10 @@ _logger = logging.getLogger(__name__)
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
     
-    
-    #~ unifaun_service_code = fields.Char('Service Code')
     is_fraktjakt = fields.Boolean('Is Fraktjakt')
     fraktjakt_id = fields.Char(string='Fraktjakt ID')
     fraktjakt_desc = fields.Char(string='Fraktjakt Description')
-    
-    
+        
     def fraktjakt_send(self, method, payload=None):
         
         url = self.env['ir.config_parameter'].get_param('fraktjakt.turl' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.purl')
@@ -64,8 +63,6 @@ class delivery_carrier(models.Model):
                 return {'status_code': response.status_code,'text': error,'response': response}
 
         return response
-        #~ return {'status_code': response.status_code,'text': response.text,'response': response}
-        
 
     def init_element(self,tag):
         return etree.Element(tag)
@@ -76,16 +73,7 @@ class delivery_carrier(models.Model):
     def add_subelement(self,element,tag,value):
         sub = etree.SubElement(element,tag)
         sub.text = value
-
-
     
-    def init_shipment(self,value='0.0', shipper_info='1'):
-        shipment = etree.Element('shipment')
-        shipment_value = etree.SubElement(shipment,'value')
-        shipment_value.text = value
-        shipment_shipper_info = etree.SubElement(shipment,'shipper_info')
-        shipment_shipper_info.text = shipper_info
-        return shipment
         
     def add_consignor(self,shipment):
         consignor = etree.SubElement(shipment,'consignor')
@@ -98,55 +86,17 @@ class delivery_carrier(models.Model):
         encoding = etree.SubElement(consignor,'encoding')
         encoding.text = 'UTF-8'
 
-    def add_subelement(self,shipment,tag,value):
-        sub = etree.SubElement(shipment,tag)
-        sub.text = value
-
-
-    def init_parsels(self,shipment):
-        return etree.SubElement(shipment,'parcels')
-
-    def add_parcel(self,parcels):
-        parcel = etree.SubElement(parcels,'parcel')
-        weight = etree.SubElement(parcel,'weight')
-        weight.text = '2.8'
-        length = etree.SubElement(parcel,'length')
-        length.text = '30'
-        width = etree.SubElement(parcel,'width')
-        width.text = '20'
-        height = etree.SubElement(parcel,'height')
-        height.text = '10'
         
-    def add_address_to(self,shipment,partner):
-        address_to = etree.SubElement(shipment,'address_to')
-        street_address_1 = etree.SubElement(address_to,'street_address_1')
-        street_address_1.text = partner.street
-        street_address_2 = etree.SubElement(address_to,'street_address_2')
-        street_address_2.text = partner.street2 if partner.street2 else '' 
-        postal_code = etree.SubElement(address_to,'postal_code')
-        postal_code.text = partner.zip
-        city_name = etree.SubElement(address_to,'city_name')
-        city_name.text = partner.city
-        recidential = etree.SubElement(address_to,'recidential')
-        recidential.text = '1'
-        country_code = etree.SubElement(address_to,'country_code')
-        country_code.text = partner.country_id.code or 'SE'
+    def add_address(self,element,tag,partner):
+        adress = self.init_subelement(element,tag)
+        self.add_subelement(adress,'street_address_1',partner.street or '')
+        self.add_subelement(adress,'street_address_2',partner.street2 or '')
+        self.add_subelement(adress,'postal_code',partner.zip or '') 
+        self.add_subelement(adress,'city_name',partner.city or '')
+        self.add_subelement(adress,'recidential','0')
+        self.add_subelement(adress,'country_code',partner.country_id.code or 'SE')
 
-    def add_address_from(self,shipment,partner):
-        address_from = etree.SubElement(shipment,'address_from')
-        street_address_1 = etree.SubElement(address_from,'street_address_1')
-        street_address_1.text = partner.street
-        street_address_2 = etree.SubElement(address_from,'street_address_2')
-        street_address_2.text = partner.street2 if partner.street2 else ''
-        postal_code = etree.SubElement(address_from,'postal_code')
-        postal_code.text = partner.zip
-        city_name = etree.SubElement(address_from,'city_name')
-        city_name.text = partner.city
-        recidential = etree.SubElement(address_from,'recidential')
-        recidential.text = '1'
-        country_code = etree.SubElement(address_from,'country_code')
-        country_code.text = partner.country_id.code or 'SE'
-    
+
 
 
 class res_partner(models.Model):
@@ -173,16 +123,35 @@ class stock_picking(models.Model):
     @api.multi
     def fraktjakt_query(self):
         """Create a stored shipment."""
+       
+        if not self.env['ir.config_parameter'].get_param('fraktjakt.environment',None):
+            raise Warning(_('Fraktjakt are not configureds'))        
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
         if self.fraktjakt_shipmentid:
             raise Warning(_('A stored shipment already exists for this order.'))
+
+
+
+
         query = self.env['fj_query'].create({
             'picking_id': self.id,
             'sender_id': self.picking_type_id.warehouse_id.partner_id.id,
             'reciever_id': self.partner_id.id,
-            'pickup_date': self.min_date
+            'pickup_date': self.min_date,
+            'pack_ids':    self.pack_operation_ids.mapped('result_package_id'),
+
+            #~ 'move_line': None,
         })
+        for package in set(self.pack_operation_ids.mapped('result_package_id')):
+            self.env['fj_query.package'].create({
+                'wizard_id': query.id,
+                'package_id': package.id,
+                'weight': package.ul_id.weight,
+                'height': package.ul_id.height,
+                'width': package.ul_id.width,
+                'length': package.ul_id.length,
+            })
 
 
         form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
@@ -204,8 +173,8 @@ class fj_query(models.TransientModel):
 
     picking_id = fields.Many2one(comodel_name='stock.picking',string='Picking',)
     line_ids = fields.One2many(string='Shipping products', comodel_name='fj_query.line', inverse_name='wizard_id')
-    pack_ids = fields.One2many(string='Packages', comodel_name='stock.quant.package')
-    move_lines = fields.One2many(string='Products',comodel_name='stock.move')
+    pack_ids = fields.One2many(string='Packages', comodel_name='fj_query.package', inverse_name='wizard_id')
+    move_lines = fields.One2many(string='Products',comodel_name='stock.move',inverse_name='picking_id')
     sender_id = fields.Many2one(comodel_name='res.partner',string='Sender',)
     reciever_id = fields.Many2one(comodel_name='res.partner',string='Reciever',)
     cold = fields.Boolean(string='Cold',help="Cargo contains packeges that should be cold")
@@ -229,11 +198,21 @@ class fj_query(models.TransientModel):
         self.message = ''
         
         carrier = self.picking_id.carrier_id
-        shipment = carrier.init_shipment()
+        shipment = carrier.init_element('shipment')
+        carrier.add_subelement(shipment,'value','199.0')
+        carrier.add_subelement(shipment,'shipper_info','1')
+
         carrier.add_consignor(shipment)
-        parcels = carrier.init_parsels(shipment)
-        carrier.add_parcel(parcels)
-        carrier.add_address_to(shipment,self.reciever_id)
+        parcels = carrier.init_subelement(shipment,'parcels')
+        parcel = carrier.init_subelement(parcels,'parcel')
+        carrier.add_subelement(parcel,'weight','2.8')
+        carrier.add_subelement(parcel,'height','15')
+        carrier.add_subelement(parcel,'width','20')
+        carrier.add_subelement(parcel,'length','25')
+        
+        
+
+        carrier.add_address(shipment,'address_to',self.reciever_id)
         #~ carrier.add_address_from(shipment,self.sender_id)
         if self.cold:
             carrier.add_subelement(shipment,'cold','1')
@@ -253,7 +232,6 @@ class fj_query(models.TransientModel):
             carrier.add_subelement(shipment,'time_guarantee','1')
         
         response = carrier.fraktjakt_send('fraktjakt/query_xml',urllib.quote_plus(etree.tostring(shipment)))
-        
         
         if response.ok:
             fj = etree.XML(response.content)
@@ -339,13 +317,11 @@ class fj_query_line(models.TransientModel):
     
     @api.multi
     def choose_product(self):
-
         
         self.wizard_id.fraktjakt_arrival_time = self.arrival_time
         self.wizard_id.fraktjakt_price = self.price
         self.wizard_id.fraktjakt_agent_info = self.agent_info
         self.wizard_id.fraktjakt_agent_link = self.agent_link
-
 
         carrier = self.wizard_id.picking_id.carrier_id
         order = carrier.init_element('OrderSpecification')
@@ -358,9 +334,9 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(comodity,'name',self.wizard_id.picking_id.name)
         carrier.add_subelement(comodity,'quantity',self.wizard_id.picking_id.name)
         carrier.add_subelement(comodity,'description',self.wizard_id.picking_id.name)
-        
+ 
         # Parcels
-        parcels = carrier.init_parsels(order)
+        parcels = carrier.init_subelement(order,'parsels')
         parcel = carrier.init_subelement(parcels,'parcel')
         carrier.add_subelement(parcel,'weight','2.8')
         carrier.add_subelement(parcel,'height','15')
@@ -378,7 +354,7 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(booking,'pickup_date',self.wizard_id.pickup_date or '')
         carrier.add_subelement(booking,'driving_instructions',self.wizard_id.driving_instructions or '')
         carrier.add_subelement(booking,'user_notes',self.wizard_id.user_notes or '')
-        carrier.add_address_to(order,self.wizard_id.reciever_id)
+        carrier.add_address(order,'address_to',self.wizard_id.reciever_id)
         #~ carrier.add_address_from(order,self.wizard_id.sender_id)
         
         
@@ -417,6 +393,15 @@ class fj_query_line(models.TransientModel):
             'target': 'new',
         }
         
+class fj_query_package(models.TransientModel):
+    _name = 'fj_query.package'
+
+    wizard_id = fields.Many2one(comodel_name='fj_query')
+    pack_id = fields.Many2one(string='Package', comodel_name='stock.quant.package')
+    weight = fields.Float()
+    height = fields.Float()
+    width = fields.Float()
+    lenght = fields.Float()
                 
                 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

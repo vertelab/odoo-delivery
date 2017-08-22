@@ -71,7 +71,7 @@
             </page>
             
             <page string="Packages">
-              <field name="pack_ids" readonly="1">
+              <field name="pack_ids" readonly="1"/>
 <!--
                 carrier.add_subelement(parcel,'weight','2.8')
         carrier.add_subelement(parcel,'height','15')
@@ -86,15 +86,15 @@
                   <field name="price" />
                   <button name="choose_product" string="Choose" type="object" icon="terp-product" />
                 </tree>
--->
               </field>
+-->
             </page>
             
             
             <page string="products">
-              <field name="move_lines" readonly="1">
-                <tree string="Shipment products">
+              <field name="move_lines" readonly="1"/>
 <!--
+                <tree string="Shipment products" /> 
                             carrier.add_subelement(comodity,'name',self.wizard_id.picking_id.name)
         carrier.add_subelement(comodity,'quantity',self.wizard_id.picking_id.name)
         carrier.add_subelement(comodity,'description',self.wizard_id.picking_id.name)
@@ -105,8 +105,8 @@
                   <field name="price" />
                   <button name="choose_product" string="Choose" type="object" icon="terp-product" />
                 </tree>
--->
               </field>
+-->
             </page>
             <page string="Driving instructions">
               <field name="driving_instructions" nolabel="1" />
