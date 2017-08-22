@@ -197,39 +197,15 @@ class stock_picking(models.Model):
             'target': 'new',
         }
         
-        form = self.env[form_tuple[0]].browse(form_tuple[1])
-        raise Warning(self,query,form.read())
-        #~ id = result and result[1] or False
-        #~ result = act_obj.read(cr, uid, [id], context=context)[0]
-
-        #~ #compute the number of purchase orders to display
-        #~ purchase_ids = []
-        #~ pos = self.browse(cr, uid, ids, context=context)
-        #~ for po in pos:
-            #~ purchase_ids += [p.id for p in po.purchase_ids]
-
-        #~ #choose the view_mode accordingly
-        #~ if len(pos) > 0 and len(purchase_ids) != 1:
-            #~ result['domain'] = "[('id','in',[" + ','.join(map(str, purchase_ids)) + "])]"
-        #~ elif len(pos) > 0:
-            #~ res = mod_obj.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')
-            #~ result['views'] = [(res and res[1] or False, 'form')]
-            #~ result['res_id'] = purchase_ids and purchase_ids[0] or False
-        #~ return result
-
-        
-        #~ if self.carrier_tracking_ref:
-            #~ raise Warning(_('Transport already ordered (there is a Tracking ref)'))
-        #~ if self.fraktjakt_stored_shipmentid:
-            #~ raise Warning(_('A stored shipment already exists for this order.'))
-    
-        #~ return {}
+       
     
 class fj_query(models.TransientModel):
     _name = 'fj_query'
 
     picking_id = fields.Many2one(comodel_name='stock.picking',string='Picking',)
     line_ids = fields.One2many(string='Shipping products', comodel_name='fj_query.line', inverse_name='wizard_id')
+    pack_ids = fields.One2many(string='Packages', comodel_name='stock.quant.package')
+    move_lines = fields.One2many(string='Products',comodel_name='stock.move')
     sender_id = fields.Many2one(comodel_name='res.partner',string='Sender',)
     reciever_id = fields.Many2one(comodel_name='res.partner',string='Reciever',)
     cold = fields.Boolean(string='Cold',help="Cargo contains packeges that should be cold")
@@ -243,11 +219,15 @@ class fj_query(models.TransientModel):
     pickup_date = fields.Date(string='Pickup Date',)
     driving_instructions = fields.Text(string='Driving Instructions',)
     user_notes = fields.Text(string='Notes',)
+    message = fields.Text()
     
     @api.multi
     def fraktjakt_query(self):
         """Create a stored shipment."""
-       
+        
+        self.line_ids = None
+        self.message = ''
+        
         carrier = self.picking_id.carrier_id
         shipment = carrier.init_shipment()
         carrier.add_consignor(shipment)
@@ -324,6 +304,8 @@ class fj_query(models.TransientModel):
                     'agent_link': shipping_product.find('agent_link').text,
                     'shipper': carrier.partner_id.id, 
                 })
+            else:
+                self.message = response.content
                 
             form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
@@ -404,6 +386,7 @@ class fj_query_line(models.TransientModel):
         
         record = etree.XML(response.content)
         result = record.find('result')
+        self.wizard_id.message = response.content
         if result:
             code = result.find('code').text
             warning = result.find('warning_message').text
@@ -411,4 +394,29 @@ class fj_query_line(models.TransientModel):
             self.wizard_id.picking_id.fraktjakt_shipmentid = result.find('shipment_id').text
             self.wizard_id.picking_id.fraktjakt_orderid = result.find('order_id').text            
             _logger.warn('Order response %s %s %s' % (code,warning,error))
+            if code in ['1','2']:
+                form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
+                return {
+                'name': 'Shipment Query',
+                'type': 'ir.actions.act_window',
+                'res_model': 'fj_query',
+                'res_id': self.wizard_id.id,
+                'view_id': form_tuple[1],
+                'view_mode': 'form',
+                'target': 'new',
+            }
+        else:        
+            form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
+            return {
+            'name': 'Shipment Query',
+            'type': 'ir.actions.act_window',
+            'res_model': 'fj_query',
+            'res_id': self.wizard_id.id,
+            'view_id': form_tuple[1],
+            'view_mode': 'form',
+            'target': 'new',
+        }
+        
+                
+                
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
