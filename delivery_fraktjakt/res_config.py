@@ -43,18 +43,22 @@ class stock_config_settings(models.TransientModel):
     def set_fraktjakt(self):
         self.env['ir.config_parameter'].set_param('fraktjakt.tid', (self.fraktjakt_tid or '').strip(), groups=['base.group_system'])
         self.env['ir.config_parameter'].set_param('fraktjakt.tkey', (self.fraktjakt_tkey or '').strip(), groups=['base.group_system'])
-        self.env['ir.config_parameter'].set_param('fraktjakt.turl', (self.fraktjakt_turl or 'http://api2.fraktjakt.se/%s').strip(), groups=['base.group_system'])
+        self.env['ir.config_parameter'].set_param('fraktjakt.turl', (self.fraktjakt_turl or 'https://api2.fraktjakt.se/%s').strip(), groups=['base.group_system'])
         self.env['ir.config_parameter'].set_param('fraktjakt.pid', (self.fraktjakt_tid or '').strip(), groups=['base.group_system'])
         self.env['ir.config_parameter'].set_param('fraktjakt.pkey', (self.fraktjakt_tkey or '').strip(), groups=['base.group_system'])
-        self.env['ir.config_parameter'].set_param('fraktjakt.purl', (self.fraktjakt_turl or 'http://api1.fraktjakt.se/%s').strip(), groups=['base.group_system'])
+        self.env['ir.config_parameter'].set_param('fraktjakt.purl', (self.fraktjakt_turl or 'https://api1.fraktjakt.se/%s').strip(), groups=['base.group_system'])
         self.env['ir.config_parameter'].set_param('fraktjakt.environment', (self.fraktjakt_environment or '').strip(), groups=['base.group_system'])
         
 
     @api.multi
     def get_default_all(self):
         return {
-            'fraktjakt_id': self.env['ir.config_parameter'].get_param('fraktjakt.id',default=''),
-            'fraktjakt_key': self.env['ir.config_parameter'].get_param('fraktjakt.key',default=''),
+            'fraktjakt_tid': self.env['ir.config_parameter'].get_param('fraktjakt.tid',default=''),
+            'fraktjakt_pid': self.env['ir.config_parameter'].get_param('fraktjakt.pid',default=''),
+            'fraktjakt_tkey': self.env['ir.config_parameter'].get_param('fraktjakt.tkey',default=''),
+            'fraktjakt_pkey': self.env['ir.config_parameter'].get_param('fraktjakt.pkey',default=''),
+            'fraktjakt_turl': self.env['ir.config_parameter'].get_param('fraktjakt.turl',default=''),
+            'fraktjakt_purl': self.env['ir.config_parameter'].get_param('fraktjakt.purl',default=''),
             'fraktjakt_environment': self.env['ir.config_parameter'].get_param('fraktjakt.environment',default='test'),
         }
         
