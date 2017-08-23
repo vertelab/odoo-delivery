@@ -54,7 +54,6 @@
               <field name="express" />
               <field name="green" />
             </group>
-            <field name="pickup_date" />
           </group>
           <notebook>
             <page string="Shipment products">
@@ -69,49 +68,40 @@
                 </tree>
               </field>
             </page>
-            
             <page string="Packages">
-              <field name="pack_ids" readonly="1"/>
+              <field name="pack_ids" readonly="0">
+                <tree string="Packages" editable="bottom">
+                  <field name="pack_id" count="Number of packages" />
+                  <field name="weight" sum="Total Weight" avg="Average Weight" />
+                  <field name="height" readonly="1"/>
+                  <field name="width" readonly="1"/>
+                  <field name="length" readonly="1"/>
 <!--
-                carrier.add_subelement(parcel,'weight','2.8')
-        carrier.add_subelement(parcel,'height','15')
-        carrier.add_subelement(parcel,'width','20')
-        carrier.add_subelement(parcel,'length','25')
-                  
-                <tree string="Shipment products">
-                  <field name="carrier_id" />
-                  <field name="name" />
-                  <field name="desc" />
-                  <field name="arrival_time" />
-                  <field name="price" />
-                  <button name="choose_product" string="Choose" type="object" icon="terp-product" />
+                  <field name="volume" sum="Total Volume" />
+-->
                 </tree>
               </field>
--->
             </page>
-            
-            
-            <page string="products">
-              <field name="move_lines" readonly="1"/>
+            <page string="Products">
+              <field name="move_lines" readonly="1" >
+                   <tree string="Comodities" > 
+                   <field name="move_id" />
+                   <field name="name" />
+                   <field name="description" />
 <!--
-                <tree string="Shipment products" /> 
-                            carrier.add_subelement(comodity,'name',self.wizard_id.picking_id.name)
-        carrier.add_subelement(comodity,'quantity',self.wizard_id.picking_id.name)
-        carrier.add_subelement(comodity,'description',self.wizard_id.picking_id.name)
-                  <field name="carrier_id" />
-                  <field name="name" />
-                  <field name="desc" />
-                  <field name="arrival_time" />
-                  <field name="price" />
-                  <button name="choose_product" string="Choose" type="object" icon="terp-product" />
-                </tree>
-              </field>
+                   <field name="price" />
 -->
+                   </tree>
+                   </field>
             </page>
-            <page string="Driving instructions">
+            <page string="Booking">
+                <group>
+              <field name="pickup_date" />
+
+                </group>
+              <separator string="Driving instructions"/>
               <field name="driving_instructions" nolabel="1" />
-            </page>
-            <page string="Notes">
+              <separator string="Notes"/>
               <field name="user_notes" nolabel="1" />
             </page>
           </notebook>

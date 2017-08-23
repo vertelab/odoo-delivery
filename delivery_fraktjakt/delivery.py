@@ -48,21 +48,19 @@ class delivery_carrier(models.Model):
 
         if response.status_code < 200 or response.status_code >= 300:
             _logger.error("ERROR " + str(response.status_code) + ": " + response.text)
-            return {'status_code': response.status_code,'text': response.text,'response': response}
+            return (response,response.status_code,response.text)
            
         record = etree.XML(response.content)
-        shipment = record.find('shipment')
-        if shipment:
-            code = shipment.find('code').text
-            warning = shipment.find('warning_message').text
-            error = shipment.find('error_message').text
-            if code == '1':
-                _logger.warning("Fraktjakt Warning %s" % warning)
-            elif code == '2':
-                _logger.error("Fraktjakt Error %s" % error)
-                return {'status_code': response.status_code,'text': error,'response': response}
+        code = record.find('code').text
+        warning = record.find('warning_message').text
+        error = record.find('warning_message').text
+        if code == '1':
+            _logger.warning("Fraktjakt Warning %s" % warning)
+        elif code == '2':
+            _logger.error("Fraktjakt Error %s" % error)
+            return (response,2,error)
 
-        return response
+        return (response,0,warning or 'OK')
 
     def init_element(self,tag):
         return etree.Element(tag)
@@ -113,7 +111,6 @@ class stock_picking(models.Model):
     fraktjakt_shipmentid = fields.Char(string='Fraktjakt Shipment ID', copy=False)
     fraktjakt_orderid = fields.Char(string='Fraktjakt Order ID', copy=False)
     
-    
     fraktjakt_arrival_time = fields.Char(string='Arrival Time')
     fraktjakt_price = fields.Float(string='Price')
     #~ fraktjakt_tax = fields.Many2one(comodel_name='account.tax')
@@ -139,19 +136,27 @@ class stock_picking(models.Model):
             'sender_id': self.picking_type_id.warehouse_id.partner_id.id,
             'reciever_id': self.partner_id.id,
             'pickup_date': self.min_date,
-            'pack_ids':    self.pack_operation_ids.mapped('result_package_id'),
 
             #~ 'move_line': None,
         })
-        for package in set(self.pack_operation_ids.mapped('result_package_id')):
+        
+        for pack in set(self.pack_operation_ids.mapped('result_package_id')):
             self.env['fj_query.package'].create({
+                'pack_id': pack.id,
+                'weight': pack.weight,
                 'wizard_id': query.id,
-                'package_id': package.id,
-                'weight': package.ul_id.weight,
-                'height': package.ul_id.height,
-                'width': package.ul_id.width,
-                'length': package.ul_id.length,
             })
+        self.weight = sum(self.pack_operation_ids.mapped('result_package_id').mapped('weight'))
+            
+        for move in self.move_lines:
+            self.env['fj_query.commodity'].create({
+                'move_id': move.id,
+                'wizard_id': query.id,
+                'name': move.product_id.display_name,
+                'quantity': move.product_uos_qty,
+                'description': move.product_id.description_sale,
+                'price': move.price_unit * move.product_uos_qty,
+                })
 
 
         form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
@@ -166,7 +171,13 @@ class stock_picking(models.Model):
             'target': 'new',
         }
         
-       
+class stock_quant_package(models.Model):
+    _inherit = 'stock.quant.package'
+    
+    @api.one
+    def _weight(self):
+        self.weight = self.ul_id.weight + sum([l.qty * l.product_id.weight for l in self.quant_ids])
+    weight = fields.Float(compute='_weight')
     
 class fj_query(models.TransientModel):
     _name = 'fj_query'
@@ -174,7 +185,7 @@ class fj_query(models.TransientModel):
     picking_id = fields.Many2one(comodel_name='stock.picking',string='Picking',)
     line_ids = fields.One2many(string='Shipping products', comodel_name='fj_query.line', inverse_name='wizard_id')
     pack_ids = fields.One2many(string='Packages', comodel_name='fj_query.package', inverse_name='wizard_id')
-    move_lines = fields.One2many(string='Products',comodel_name='stock.move',inverse_name='picking_id')
+    move_lines = fields.One2many(string='Products',comodel_name='fj_query.commodity',inverse_name='wizard_id')
     sender_id = fields.Many2one(comodel_name='res.partner',string='Sender',)
     reciever_id = fields.Many2one(comodel_name='res.partner',string='Reciever',)
     cold = fields.Boolean(string='Cold',help="Cargo contains packeges that should be cold")
@@ -199,19 +210,19 @@ class fj_query(models.TransientModel):
         
         carrier = self.picking_id.carrier_id
         shipment = carrier.init_element('shipment')
-        carrier.add_subelement(shipment,'value','199.0')
+        carrier.add_subelement(shipment,'value',str(sum(self.move_lines.mapped('price'))))
         carrier.add_subelement(shipment,'shipper_info','1')
 
         carrier.add_consignor(shipment)
-        parcels = carrier.init_subelement(shipment,'parcels')
-        parcel = carrier.init_subelement(parcels,'parcel')
-        carrier.add_subelement(parcel,'weight','2.8')
-        carrier.add_subelement(parcel,'height','15')
-        carrier.add_subelement(parcel,'width','20')
-        carrier.add_subelement(parcel,'length','25')
         
+        parcels = carrier.init_subelement(shipment,'parsels')
+        for package in self.pack_ids:
+            parcel = carrier.init_subelement(parcels,'parcel')
+            carrier.add_subelement(parcel,'weight',str(package.weight))
+            carrier.add_subelement(parcel,'height',str(package.height))
+            carrier.add_subelement(parcel,'width',str(package.width))
+            carrier.add_subelement(parcel,'length',str(package.length))
         
-
         carrier.add_address(shipment,'address_to',self.reciever_id)
         #~ carrier.add_address_from(shipment,self.sender_id)
         if self.cold:
@@ -231,9 +242,8 @@ class fj_query(models.TransientModel):
         if self.time_guarantee:
             carrier.add_subelement(shipment,'time_guarantee','1')
         
-        response = carrier.fraktjakt_send('fraktjakt/query_xml',urllib.quote_plus(etree.tostring(shipment)))
-        
-        if response.ok:
+        response,code,self.message = carrier.fraktjakt_send('fraktjakt/query_xml',urllib.quote_plus(etree.tostring(shipment)))
+        if code in ['0','1']:
             fj = etree.XML(response.content)
             shipping_products = fj.find('shipping_products')
             for shipping_product in fj.find('shipping_products').findall('shipping_product'):
@@ -282,8 +292,6 @@ class fj_query(models.TransientModel):
                     'agent_link': shipping_product.find('agent_link').text,
                     'shipper': carrier.partner_id.id, 
                 })
-            else:
-                self.message = response.content
                 
             form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
@@ -330,18 +338,20 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(order,'reference',self.wizard_id.picking_id.name)
         # Comodoties
         comodities = carrier.init_subelement(order,'comodities')
-        comodity = carrier.init_subelement(comodities,'comodity')
-        carrier.add_subelement(comodity,'name',self.wizard_id.picking_id.name)
-        carrier.add_subelement(comodity,'quantity',self.wizard_id.picking_id.name)
-        carrier.add_subelement(comodity,'description',self.wizard_id.picking_id.name)
+        for move in self.wizard_id.move_lines:
+            comodity = carrier.init_subelement(comodities,'comodity')
+            carrier.add_subelement(comodity,'name',move.name)
+            carrier.add_subelement(comodity,'quantity',move.quantity)
+            carrier.add_subelement(comodity,'description',move.description)
  
         # Parcels
         parcels = carrier.init_subelement(order,'parsels')
-        parcel = carrier.init_subelement(parcels,'parcel')
-        carrier.add_subelement(parcel,'weight','2.8')
-        carrier.add_subelement(parcel,'height','15')
-        carrier.add_subelement(parcel,'width','20')
-        carrier.add_subelement(parcel,'length','25')
+        for package in self.wizard_id.pack_ids:
+            parcel = carrier.init_subelement(parcels,'parcel')
+            carrier.add_subelement(parcel,'weight',package.weight)
+            carrier.add_subelement(parcel,'height',package.height)
+            carrier.add_subelement(parcel,'width',package.width)
+            carrier.add_subelement(parcel,'length',package.length)
         # Recipient
         recipient = carrier.init_subelement(order,'recipient')
         #~ carrier.add_subelement(recipient,'company_to',self.wizard_id.picking_id.partner_id.)
@@ -354,13 +364,15 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(booking,'pickup_date',self.wizard_id.pickup_date or '')
         carrier.add_subelement(booking,'driving_instructions',self.wizard_id.driving_instructions or '')
         carrier.add_subelement(booking,'user_notes',self.wizard_id.user_notes or '')
+        # Address 
         carrier.add_address(order,'address_to',self.wizard_id.reciever_id)
         #~ carrier.add_address_from(order,self.wizard_id.sender_id)
         
         
-        response = carrier.fraktjakt_send('orders/order_xml',urllib.quote_plus(etree.tostring(order)))
+        response,code,self.message = carrier.fraktjakt_send('orders/order_xml',urllib.quote_plus(etree.tostring(order)))
         
         record = etree.XML(response.content)
+        
         result = record.find('result')
         self.wizard_id.message = response.content
         if result:
@@ -368,7 +380,8 @@ class fj_query_line(models.TransientModel):
             warning = result.find('warning_message').text
             error = result.find('error_message').text
             self.wizard_id.picking_id.fraktjakt_shipmentid = result.find('shipment_id').text
-            self.wizard_id.picking_id.fraktjakt_orderid = result.find('order_id').text            
+            self.wizard_id.picking_id.fraktjakt_orderid = result.find('order_id').text
+                        
             _logger.warn('Order response %s %s %s' % (code,warning,error))
             if code in ['1','2']:
                 form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
@@ -399,9 +412,22 @@ class fj_query_package(models.TransientModel):
     wizard_id = fields.Many2one(comodel_name='fj_query')
     pack_id = fields.Many2one(string='Package', comodel_name='stock.quant.package')
     weight = fields.Float()
-    height = fields.Float()
-    width = fields.Float()
-    lenght = fields.Float()
-                
+    height = fields.Float(related='pack_id.ul_id.height')
+    width = fields.Float(related='pack_id.ul_id.width')
+    length = fields.Float(related='pack_id.ul_id.length')
+    @api.one
+    def _volume(self):
+        self.volume = self.height * self.width * self.length / 1000.0
+    volume = fields.Float(compute='_volume')
+
+class fj_query_commodity(models.TransientModel):
+    _name = 'fj_query.commodity'
+
+    wizard_id = fields.Many2one(comodel_name='fj_query')
+    move_id = fields.Many2one(string='Product', comodel_name='stock.move')
+    name = fields.Char()
+    quantity = fields.Float()
+    description = fields.Char()
+    price = fields.Float()
                 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
