@@ -20,7 +20,7 @@
 ##############################################################################
 {
 'name': 'Delivery Fraktjakt',
-'version': '0.1',
+'version': '0.2',
 'summary': 'Integrate Delivery with Fraktjakt',
 'category': '',
 'description': """
