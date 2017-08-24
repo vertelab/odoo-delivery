@@ -19,7 +19,9 @@
       <field name="arch" type="xml">
         <separator string="Carrier Information" position="after">
           <button name="fraktjakt_query" string="Fraktjakt Shipment Query" type='object' attrs="{'invisible': [('is_fraktjakt', '==', False)]}" />
+<!--
           <button name="confirm_stored_shipment" string="Confirm Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
+-->
         </separator>
         <field name="carrier_tracking_ref" position="after">
           <field name="fraktjakt_shipmentid" />

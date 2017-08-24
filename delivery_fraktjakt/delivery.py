@@ -93,6 +93,13 @@ class delivery_carrier(models.Model):
         self.add_subelement(adress,'city_name',partner.city or '')
         self.add_subelement(adress,'residential','0')
         self.add_subelement(adress,'country_code',partner.country_id.code or 'SE')
+        
+    def get_url(self,method):
+        id = self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pid')
+        key = self.env['ir.config_parameter'].get_param('fraktjakt.tkey' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pkey')
+        url = self.env['ir.config_parameter'].get_param('fraktjakt.turl' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.purl')
+        return '%s/%s?consigner_id=%s&consigner_key=%s' % (url,method,id,key)
+
 
 
 
@@ -390,19 +397,32 @@ class fj_query_line(models.TransientModel):
             picking.fraktjakt_price = self.price
             picking.fraktjakt_agent_info = self.agent_info
             picking.fraktjakt_agent_link = self.agent_link
+            picking.carrier_id = self.carrier_id
                         
             _logger.warn('Order response %s %s %s' % (code,warning,error))
-            if code in ['1','2']:
-                form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
+            if code in ['2']:
                 return {
                 'name': 'Fraktjakt Shipment Query',
                 'type': 'ir.actions.act_window',
                 'res_model': 'fj_query',
                 'res_id': self.wizard_id.id,
-                'view_id': form_tuple[1],
+                'view_id': self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')[1],
                 'view_mode': 'form',
                 'target': 'new',
             }
+            else:
+               shipping_id = "Shipping ID <a href='%s'>%s</a>" % (carrier.get_url('shipments/show/%s' % picking.fraktjakt_shipmentid),picking.fraktjakt_shipmentid)
+               order_id = "Order <a href='%s'>%s</a>" % (carrier.get_url('orders/show/%s' % picking.fraktjakt_orderid),picking.fraktjakt_orderid)
+               payment_link = "<href='%s'>Payment</a>" % (record.find('payment_link').text) if record.find('payment_link') else '' 
+               order_confirmation_link = "<href='%s'>Order confirmation</a>" % (record.find('sender_email_link').text) if record.find('sender_email_link') else ''
+               
+               self.env['mail.message'].create({
+                    'body': _("Fraktjakt %s %s %s %s\nCode %s\n%s\n" % (shipping_id,order_id,payment_link,order_confirmation_link,code,warning or error or '')),
+                    'subject': "Fraktjakt",
+                    'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
+                    'res_id': picking.id,
+                    'model': picking._name,
+                    'type': 'notification',})
         else:        
             form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
