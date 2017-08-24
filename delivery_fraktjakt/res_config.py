@@ -30,14 +30,14 @@ _logger = logging.getLogger(__name__)
 class stock_config_settings(models.TransientModel):
     _name = 'stock.config.settings'
     _inherit = 'stock.config.settings'
-    fraktjakt_tid = fields.Char(string="Consignor id (test)")
-    fraktjakt_tkey = fields.Char(string='Consignor key (test)')
-    fraktjakt_turl = fields.Char(string='Url (test)')
-    fraktjakt_pid = fields.Char(string="Consignor id")
-    fraktjakt_pkey = fields.Char(string='Consignor key')
-    fraktjakt_purl = fields.Char(string='Url')
+    fraktjakt_tid = fields.Char(string="Consignor id (test)",help="This is your id you got from the Fraktjakt test system, id/key and address are differenet from the production system.")
+    fraktjakt_tkey = fields.Char(string='Consignor key (test)',help="This is your key you got from the Fraktjakt test system, id/key and address are differenet from the production system.")
+    fraktjakt_turl = fields.Char(string='Url (test)',help="The test server usually https://api2.fraktjakt.se, id/key and address are different from the production system.")
+    fraktjakt_pid = fields.Char(string="Consignor id", help="This is your id you got from the Fraktjakt production system, id/key and address are different from the test system.")
+    fraktjakt_pkey = fields.Char(string='Consignor key',help="This is your key you got from the Fraktjakt production system, id/key and address are different from the test system.")
+    fraktjakt_purl = fields.Char(string='Url',help="The production server usually https://api1.fraktjakt.se, id/key and address are different from the test system.")
 
-    fraktjakt_environment = fields.Selection([('production','Production'),('test','Test')],string='Environment',help='Test or Production')
+    fraktjakt_environment = fields.Selection([('production','Production'),('test','Test')],string='Environment',help='Test or Production, these are different system with uniqe id/key and address')
 
     @api.one
     def set_fraktjakt(self):

@@ -18,7 +18,7 @@
       <field name="type">form</field>
       <field name="arch" type="xml">
         <separator string="Carrier Information" position="after">
-          <button name="fraktjakt_query" string="Shipment Query" type='object' attrs="{'invisible': [('is_fraktjakt', '==', False)]}" />
+          <button name="fraktjakt_query" string="Fraktjakt Shipment Query" type='object' attrs="{'invisible': [('is_fraktjakt', '==', False)]}" />
           <button name="confirm_stored_shipment" string="Confirm Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
         </separator>
         <field name="carrier_tracking_ref" position="after">
@@ -59,9 +59,18 @@
             <page string="Shipment products">
               <field name="line_ids" readonly="1">
                 <tree string="Shipment products">
-                  <field name="carrier_id" />
+<!--
+                     <field name="image" widget="image" class="oe_left oe_avatar" options="{&quot;preview_image&quot;: &quot;image_medium&quot;, &quot;size&quot;: [40, 40]}"/>
+-->
+                  <field name="image" widget="image" class="oe_left oe_avatar" string='' nolabel="1" />
+                  <field name="partner_id" />
+                  <field name="carrier_id" string="Transport product"/>
+<!--
                   <field name="name" />
+-->
+<!--
                   <field name="desc" />
+-->
                   <field name="arrival_time" />
                   <field name="price" />
                   <button name="choose_product" string="Choose" type="object" icon="terp-product" />
@@ -115,7 +124,7 @@
       </field>
     </record>
     <record id="action_fj_query" model="ir.actions.act_window">
-      <field name="name">Shipment Query</field>
+      <field name="name">Fraktjakt Shipment Query</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">fj_query</field>
       <field name="view_type">form</field>

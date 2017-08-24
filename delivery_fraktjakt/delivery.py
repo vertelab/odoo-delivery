@@ -23,6 +23,7 @@
 
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
+import openerp
 
 import requests
 from lxml import etree
@@ -31,6 +32,7 @@ import urllib
 import logging
 _logger = logging.getLogger(__name__)
 
+FRAKTJAKT_API_VERSION = '2.91'
 
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
@@ -53,7 +55,7 @@ class delivery_carrier(models.Model):
         record = etree.XML(response.content)
         code = record.find('code').text
         warning = record.find('warning_message').text
-        error = record.find('warning_message').text
+        error = record.find('error_message').text
         if code == '1':
             _logger.warning("Fraktjakt Warning %s" % warning)
         elif code == '2':
@@ -72,18 +74,16 @@ class delivery_carrier(models.Model):
         sub = etree.SubElement(element,tag)
         sub.text = value
     
-        
     def add_consignor(self,shipment):
         consignor = etree.SubElement(shipment,'consignor')
-        id = etree.SubElement(consignor,'id')
-        id.text = self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pid')
-        key = etree.SubElement(consignor,'key')
-        key.text = self.env['ir.config_parameter'].get_param('fraktjakt.tkey' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pkey')
-        language = etree.SubElement(consignor,'language')
-        language.text = 'sv'
-        encoding = etree.SubElement(consignor,'encoding')
-        encoding.text = 'UTF-8'
-
+        self.add_subelement(consignor,'id',self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pid'))
+        self.add_subelement(consignor,'key',self.env['ir.config_parameter'].get_param('fraktjakt.tkey' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pkey'))
+        self.add_subelement(consignor,'language','sv')
+        self.add_subelement(consignor,'encoding','UTF-8')
+        self.add_subelement(consignor,'system_name','Odoo')
+        self.add_subelement(consignor,'system_version',openerp.service.common.exp_version()['server_serie'])
+        self.add_subelement(consignor,'module_version',self.env['ir.model.data'].xmlid_to_object('base.module_delivery_fraktjakt').installed_version)
+        self.add_subelement(consignor,'api_version',FRAKTJAKT_API_VERSION)
         
     def add_address(self,element,tag,partner):
         adress = self.init_subelement(element,tag)
@@ -127,6 +127,7 @@ class stock_picking(models.Model):
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
         if self.fraktjakt_shipmentid:
             raise Warning(_('A stored shipment already exists for this order.'))
+        
 
 
 
@@ -147,6 +148,13 @@ class stock_picking(models.Model):
                 'wizard_id': query.id,
             })
         self.weight = sum(self.pack_operation_ids.mapped('result_package_id').mapped('weight'))
+        if len(query.pack_ids) == 0:
+            raise Warning(_('There is no packages to ship.'))
+        if self.weight == 0:
+            raise Warning(_('There is no weight to ship.'))
+        if sum(query.pack_ids.mapped('volume')) == 0:
+            raise Warning(_('There is no dimensions on packages.'))
+        
             
         for move in self.move_lines:
             self.env['fj_query.commodity'].create({
@@ -162,7 +170,7 @@ class stock_picking(models.Model):
         form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
         
         return {
-            'name': 'Shipment Query',
+            'name': 'Fraktjakt Shipment Query',
             'type': 'ir.actions.act_window',
             'res_model': 'fj_query',
             'res_id': query.id,
@@ -212,9 +220,7 @@ class fj_query(models.TransientModel):
         shipment = carrier.init_element('shipment')
         carrier.add_subelement(shipment,'value',str(sum(self.move_lines.mapped('price'))))
         carrier.add_subelement(shipment,'shipper_info','1')
-
         carrier.add_consignor(shipment)
-        
         parcels = carrier.init_subelement(shipment,'parcels')
         for package in self.pack_ids:
             parcel = carrier.init_subelement(parcels,'parcel')
@@ -292,24 +298,24 @@ class fj_query(models.TransientModel):
                     'agent_link': shipping_product.find('agent_link').text,
                     'shipper': carrier.partner_id.id, 
                 })
-                
-            form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
-            return {
-            'name': 'Shipment Query',
+        return {
+            'name': 'Fraktjakt Shipment Query',
             'type': 'ir.actions.act_window',
             'res_model': 'fj_query',
             'res_id': self.id,
-            'view_id': form_tuple[1],
+            'view_id': self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')[1],
             'view_mode': 'form',
             'target': 'new',
-        }
+            }
 
 
 class fj_query_line(models.TransientModel):
     _name = 'fj_query.line'
 
-    carrier_id = fields.Many2one(comodel_name='delivery.carrier')
     wizard_id = fields.Many2one(comodel_name='fj_query')
+    carrier_id = fields.Many2one(comodel_name='delivery.carrier')
+    partner_id = fields.Many2one(related='carrier_id.partner_id')
+    image = fields.Binary(related='carrier_id.partner_id.image')
     name = fields.Char(string="name")
     desc = fields.Char(string="Description")
     
@@ -389,7 +395,7 @@ class fj_query_line(models.TransientModel):
             if code in ['1','2']:
                 form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
                 return {
-                'name': 'Shipment Query',
+                'name': 'Fraktjakt Shipment Query',
                 'type': 'ir.actions.act_window',
                 'res_model': 'fj_query',
                 'res_id': self.wizard_id.id,
@@ -400,7 +406,7 @@ class fj_query_line(models.TransientModel):
         else:        
             form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
-            'name': 'Shipment Query',
+            'name': 'Fraktjakt Shipment Query',
             'type': 'ir.actions.act_window',
             'res_model': 'fj_query',
             'res_id': self.wizard_id.id,
