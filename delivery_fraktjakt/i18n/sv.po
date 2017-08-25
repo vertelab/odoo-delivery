@@ -165,7 +165,7 @@ msgstr "Förarinstruktion"
 #. module: delivery_fraktjakt
 #: field:fj_query,dropoff:0
 msgid "Drop off"
-msgstr "Avlämning"
+msgstr "Utkörning"
 
 #. module: delivery_fraktjakt
 #: field:stock.config.settings,fraktjakt_environment:0
