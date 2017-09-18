@@ -1,22 +1,37 @@
 <openerp>
-  <data>
-    <template id="payment_delivery_icon" name="Delivery Icon" inherit_id="website_sale_delivery.payment_delivery">
-      <xpath expr="//span[@t-field='delivery.name']" position="replace">
-        <span t-field="delivery.website_image" t-field-options="{&quot;widget&quot;: &quot;image&quot;, &quot;class&quot;: &quot;img-rounded&quot;}" />
-        <span t-field="delivery.name" />
-        <a t-att-href="delivery.website_description_link" target="_blank">read more</a>
-      </xpath>
-    </template>
-    <record model="ir.ui.view" id="view_delivery_carrier_form">
-      <field name="name">delivery.carrier.website.form</field>
-      <field name="model">delivery.carrier</field>
-      <field name="inherit_id" ref="website_sale_delivery.view_delivery_carrier_form" />
-      <field name="arch" type="xml">
-        <xpath expr="//group[@name='website']" position="inside">
-            <field name="website_description_link" attrs="{'invisible':[('website_published', '=', False)]}" />
-            <field name="website_image" attrs="{'invisible':[('website_published', '=', False)]}" />
-        </xpath>
-      </field>
-    </record>
-  </data>
+    <data>
+        <template id="payment_delivery_icon" name="Delivery Icon" inherit_id="website_sale_delivery.payment_delivery">
+            <xpath expr="//span[@class='badge']" position="replace"/>
+            <xpath expr="//div[@t-field='delivery.website_description']" position="replace"/>
+            <xpath expr="//span[@t-field='delivery.name']" position="replace">
+                <div class="container">
+                    <div class="col-md-3 col-sm-3 col-xs-3">
+                        <span t-field="delivery.website_image" t-field-options="{&quot;widget&quot;: &quot;image&quot;, &quot;class&quot;: &quot;img-rounded&quot;}" />
+                    </div>
+                    <div class="col-md-9 col-sm-9 col-xs-9">
+                        <span t-field="delivery.name" />
+                        <span class="badge" t-field="delivery.price"
+                            t-field-options='{
+                                "widget": "monetary",
+                                "from_currency": "delivery.product_id.company_id.currency_id",
+                                "display_currency": "website_sale_order.currency_id"
+                            }'/>
+                        <div t-field="delivery.website_description" class="text-muted"/>
+                        <a t-att-href="delivery.website_description_link" target="_blank">read more</a>
+                    </div>
+                </div>
+            </xpath>
+        </template>
+        <record model="ir.ui.view" id="view_delivery_carrier_form">
+            <field name="name">delivery.carrier.website.form</field>
+            <field name="model">delivery.carrier</field>
+            <field name="inherit_id" ref="website_sale_delivery.view_delivery_carrier_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='website']" position="inside">
+                    <field name="website_description_link" attrs="{'invisible':[('website_published', '=', False)]}" />
+                    <field name="website_image" attrs="{'invisible':[('website_published', '=', False)]}" />
+                </xpath>
+            </field>
+        </record>
+    </data>
 </openerp>
