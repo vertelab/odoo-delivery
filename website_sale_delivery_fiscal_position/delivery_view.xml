@@ -1,0 +1,19 @@
+<openerp>
+  <data>
+    <template id="payment_delivery_fiscal_position" name="Delivery Fiscal Position" inherit_id="website_sale_delivery.payment_delivery">
+      <xpath expr="//t[@t-if='delivery.available']" position="attributes">
+        <attribute name="t-if">delivery.available and delivery.check_fiscal_position(order)</attribute>
+      </xpath>
+    </template>
+    <record model="ir.ui.view" id="view_delivery_carrier_form">
+      <field name="name">delivery.carrier.website.form</field>
+      <field name="model">delivery.carrier</field>
+      <field name="inherit_id" ref="website_sale_delivery.view_delivery_carrier_form" />
+      <field name="arch" type="xml">
+        <xpath expr="//group[@name='website']" position="inside">
+          <field name="website_fiscal_position" attrs="{'invisible':[('website_published', '=', False)]}" />
+        </xpath>
+      </field>
+    </record>
+  </data>
+</openerp>
