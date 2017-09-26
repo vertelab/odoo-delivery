@@ -31,7 +31,9 @@ class delivery_carrier(models.Model):
 
     website_image = fields.Binary(string="Image")
     website_description_link = fields.Char(string="Description Link")
-
+    
+    website_description = fields.Text(string='Description for the website', translate=True) # adds translation
+    name = fields.Char(string='Delivery Method', required=True, translate=True) 
 
 
 

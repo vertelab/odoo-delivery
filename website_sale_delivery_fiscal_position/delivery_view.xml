@@ -11,7 +11,7 @@
       <field name="inherit_id" ref="website_sale_delivery.view_delivery_carrier_form" />
       <field name="arch" type="xml">
         <xpath expr="//group[@name='website']" position="inside">
-          <field name="website_fiscal_position" attrs="{'invisible':[('website_published', '=', False)]}" />
+          <field name="website_fiscal_position" widget="many2many_tags" attrs="{'invisible':[('website_published', '=', False)]}" />
         </xpath>
       </field>
     </record>

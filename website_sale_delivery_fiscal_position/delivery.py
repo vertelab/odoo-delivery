@@ -29,7 +29,7 @@ _logger = logging.getLogger(__name__)
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
 
-    website_fiscal_position = fields.Many2one(comodel_name='account.fiscal.position')
+    website_fiscal_position = fields.Many2many(comodel_name='account.fiscal.position')
 
     def check_fiscal_position(self,order):
         fp = order.partner_id.property_account_position if order.partner_id.is_company else order.partner_id.parent_id.property_account_position
