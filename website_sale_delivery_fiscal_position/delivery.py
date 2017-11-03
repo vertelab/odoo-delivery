@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-# OpenERP, Open Source Management Solution, third party addon
+# Odoo, Open Source Enterprise Management Solution, third party addon
 # Copyright (C) 2017- Vertel AB (<http://vertel.se>).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,12 +29,16 @@ _logger = logging.getLogger(__name__)
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
 
-    website_image = fields.Binary(string="Image")
-    website_description_link = fields.Char(string="Description Link")
-    
-    website_description = fields.Text(string='Description for the website', translate=True) # adds translation
-    name = fields.Char(string='Delivery Method', required=True, translate=True) 
+    website_fiscal_position = fields.Many2many(comodel_name='account.fiscal.position')
 
-
+    def check_fiscal_position(self,order):
+        fp = order.partner_id.property_account_position if order.partner_id.is_company else order.partner_id.parent_id.property_account_position
+        _logger.warn('%s Fiscal Position Partner %s carrier %s' % (self.name,fp and fp.name,self.website_fiscal_position and self.website_fiscal_position.name))
+        if fp and self.website_fiscal_position:
+            return self.website_fiscal_position.id == fp.id
+        elif fp:
+            return False # Partner has fp hide delivery
+        else:
+            return True # Partner does not have fp show all 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -18,23 +18,19 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from openerp import models, fields, api, _
-from openerp import http
-from openerp.http import request
-
-import logging
-_logger = logging.getLogger(__name__)
-
-class delivery_carrier(models.Model):
-    _inherit = "delivery.carrier"
-
-    website_image = fields.Binary(string="Image")
-    website_description_link = fields.Char(string="Description Link")
-    
-    website_description = fields.Text(string='Description for the website', translate=True) # adds translation
-    name = fields.Char(string='Delivery Method', required=True, translate=True) 
+{
+'name': 'Delivery Pricelist',
+'version': '0.1',
+'summary': 'Delivery choosen by customers pricelist',
+'category': 'stock',
+'description': """
+    Delivery is choosen by customers prislis.
 
 
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+Financed by Maria Åkerberg""",
+'author': 'Vertel AB',
+'website': 'http://www.vertel.se',
+'depends': ['delivery_carrier_data'],
+'data': ['delivery_view.xml'],
+'installable': True,
+}
