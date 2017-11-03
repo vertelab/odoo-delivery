@@ -11,4 +11,21 @@ $(document).ready(function () {
         })
     });
 
+    $("#delivery_carrier").find("ul").find("input[name=delivery_type]").each(function() {
+        if (!$(this).is(':checked')) {
+            $(this).parent().find("input[name=carrier_data]").attr('disabled', 'disabled');
+        }
+    });
+
+    $("input[name=delivery_type]").on("change", function() {
+        $("#delivery_carrier").find("ul").find("input[name=delivery_type]").each(function() {
+            if ($(this).is(':checked')) {
+                $(this).parent().find("input[name=carrier_data]").removeAttr('disabled');
+            }
+            else {
+                $(this).parent().find("input[name=carrier_data]").attr('disabled', 'disabled');
+            }
+        });
+    });
+
 });

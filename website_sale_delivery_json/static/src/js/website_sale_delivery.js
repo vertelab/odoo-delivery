@@ -1,5 +1,4 @@
 $(document).ready(function () {
-
     // When choosing an delivery carrier, update the quotation and the acquirers
     var $carrier = $("#delivery_carrier");
     $carrier.find("input[name='delivery_type']").click(function (ev) {
@@ -12,5 +11,4 @@ $(document).ready(function () {
             $("#order_delivery").find("span.oe_currency_value").replaceWith('<span class="oe_currency_value">' + data['amount_delivery'] + '</span>');
         });
     });
-
 });
