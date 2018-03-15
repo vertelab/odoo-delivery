@@ -28,6 +28,7 @@ Show input field in check out form in website_sale
 ==================================================
 Financed by Cavarosa LTD""",
 'author': 'Vertel AB',
+    'license': 'AGPL-3',
 'website': 'http://www.vertel.se',
 'depends': ['website_sale_delivery',],
 'data': ['delivery_view.xml'],

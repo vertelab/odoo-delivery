@@ -30,6 +30,7 @@
 
 Financed by Cavarosa LTD""",
 'author': 'Vertel AB',
+    'license': 'AGPL-3',
 'website': 'http://www.vertel.se',
 'depends': ['delivery_carrier_data'],
 'data': ['res_partner_view.xml', 'delivery_view.xml'],
