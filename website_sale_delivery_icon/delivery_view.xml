@@ -21,6 +21,9 @@
                     </div>
                 </div>
             </xpath>
+            <xpath expr="//div[@id='delivery_carrier']/div[@class='col-lg-5 col-sm-6']" position="attributes">
+                <attribute name="class">col-lg-8 col-sm-9</attribute>
+            </xpath>
         </template>
         <record model="ir.ui.view" id="view_delivery_carrier_form">
             <field name="name">delivery.carrier.website.form</field>
