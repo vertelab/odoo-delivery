@@ -29,6 +29,7 @@ Add extra check for fiscal position.
 
 Financed by Dermanord AB""",
 'author': 'Vertel AB',
+    'license': 'AGPL-3',
 'website': 'http://www.vertel.se',
 'depends': ['website_sale_delivery'],
 'data': ['delivery_view.xml'],
