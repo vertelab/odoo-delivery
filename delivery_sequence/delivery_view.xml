@@ -1,17 +1,14 @@
 <openerp>
     <data>
-                
         <record id="view_delivery_carrier_tree" model="ir.ui.view">
             <field name="name">delivery.carrier.tree</field>
             <field name="model">delivery.carrier</field>
             <field name="inherit_id" ref="delivery.view_delivery_carrier_tree" />
             <field name="arch" type="xml">
                 <field name="name" position="before">
-                    <field name="sequence" widget="handle"/>
-                    </field>
-                </tree>
+                    <field name="sequence" widget="handle" />
+                </field>
             </field>
         </record>
-        
     </data>
 </openerp>
