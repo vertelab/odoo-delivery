@@ -12,7 +12,6 @@ $(document).ready(function() {
         determine_sel();
     });
     function determine_sel() {
-        console.log("run");
         if($pickup_input.is(':checked')) {
             if($pickup_sel.val() != 1) {
                 $submit_btn.attr("disabled", false);
