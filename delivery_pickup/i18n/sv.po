@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* delivery_pickup
+#   * delivery_pickup
 #
 msgid ""
 msgstr ""
@@ -59,3 +59,9 @@ msgstr "Utleveransställe"
 #: model:ir.ui.menu,name:delivery_pickup.menu_pickup_location_form
 msgid "Pickup Locations"
 msgstr "Utleveransställen"
+
+#. module: delivery_pickup
+#: code:addons/delivery_pickup/delivery.py:38
+#, python-format
+msgid "<select name=\"carrier_data\" class=\"selectpicker\" data-style=\"btn-primary\"><option value=\"1\">Choose location</option>%s</select>"
+msgstr "<select name=\"carrier_data\" class=\"selectpicker\" data-style=\"btn-primary\"><option value=\"1\">Välj ställe</option>%s</select>"

@@ -35,7 +35,7 @@ class delivery_carrier(models.Model):
     @api.one
     def _carrier_data(self):
         if self.pickup_location:
-            self.carrier_data = '<select name="carrier_data" class="selectpicker" data-style="btn-primary"><option value="1">Choose location</option>%s</select>' % \
+            self.carrier_data = _('<select name="carrier_data" class="selectpicker" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \
                               '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in self.env['res.partner'].search([('pickup_location','=',True)])])
         else:
             super(delivery_carrier, self)._carrier_data()
