@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2004-2018 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,16 +19,18 @@
 #
 ##############################################################################
 
+from odoo import models, fields, api, _
+from odoo.exceptions import except_orm, Warning, RedirectWarning
+import base64
+import odoo.addons.decimal_precision as dp
+
 import logging
 import time
-from openerp.osv import fields,osv
-from openerp.tools.translate import _
-import openerp.addons.decimal_precision as dp
-from openerp.tools.safe_eval import safe_eval as eval
+from odoo.tools.safe_eval import safe_eval as eval
 
 _logger = logging.getLogger(__name__)
 
-class delivery_carrier(osv.osv):
+class delivery_carrier(models.Model):
     _name = "delivery.carrier"
     _description = "Carrier"
 
@@ -63,7 +65,7 @@ class delivery_carrier(osv.osv):
                   try:
                     price=grid_obj.get_price(cr, uid, carrier_grid, order, time.strftime('%Y-%m-%d'), context)
                     available = True
-                  except osv.except_osv, e:
+                  except models.except_osv, e:
                     # no suitable delivery method found, probably configuration error
                     _logger.error("Carrier %s: %s\n%s" % (carrier.name, e.name, e.value))
                     price = 0.0
@@ -183,7 +185,7 @@ class delivery_carrier(osv.osv):
         return res_id
 
 
-class delivery_grid(osv.osv):
+class delivery_grid(models.Model):
     _name = "delivery.grid"
     _description = "Delivery Grid"
     _columns = {
@@ -243,13 +245,13 @@ class delivery_grid(osv.osv):
                 ok = True
                 break
         if not ok:
-            raise osv.except_osv(_("Unable to fetch delivery method!"), _("Selected product in the delivery method doesn't fulfill any of the delivery grid(s) criteria."))
+            raise models.except_osv(_("Unable to fetch delivery method!"), _("Selected product in the delivery method doesn't fulfill any of the delivery grid(s) criteria."))
 
         return price
 
 
 
-class delivery_grid_line(osv.osv):
+class delivery_grid_line(models.Model):
     _name = "delivery.grid.line"
     _description = "Delivery Grid Line"
     _columns = {

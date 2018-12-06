@@ -18,10 +18,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import openerp
-from openerp import http
-from openerp.http import request
-from openerp.addons.website_sale_delivery.controllers.main import website_sale
+import odoo
+from odoo import http
+from odoo.http import request
+from odoo.addons.website_sale_delivery.controllers.main import website_sale
 import logging
 _logger = logging.getLogger(__name__)
 

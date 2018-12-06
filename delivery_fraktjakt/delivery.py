@@ -21,9 +21,10 @@
 #
 ##############################################################################
 
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
-import openerp
+from odoo import models, fields, api, _
+from odoo.exceptions import except_orm, Warning, RedirectWarning
+import base64
+import odoo.addons.decimal_precision as dp
 
 import requests
 from lxml import etree

@@ -19,11 +19,12 @@
 #
 ##############################################################################
 
-import openerp.exceptions
-from openerp import models, fields, api, _
-from openerp import http
-from openerp.http import request
-import openerp.addons.website_sale.controllers.main
+import odoo.exceptions
+from odoo import models, fields, api, _
+from odoo import http
+from odoo.http import request
+import odoo.addons.website_sale.controllers.main
+
 
 import logging
 _logger = logging.getLogger(__name__)

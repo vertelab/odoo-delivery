@@ -19,9 +19,13 @@
 #
 ##############################################################################
 
-from openerp import models, fields, api, _
-from openerp import http
-from openerp.http import request
+
+from odoo import models, fields, api, _
+from odoo.exceptions import except_orm, Warning, RedirectWarning
+import odoo.addons.decimal_precision as dp
+from odoo import http
+from odoo.http import request
+
 
 import logging
 _logger = logging.getLogger(__name__)
