@@ -1,4 +1,5 @@
-<openerp>
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
     <data>
         <template id="assets_frontend" inherit_id="website_sale_delivery.assets_frontend" name="Shop Replace">
             <xpath expr="//script[@src='/website_sale_delivery/static/src/js/website_sale_delivery.js']" position="replace">
@@ -6,4 +7,4 @@
             </xpath>
         </template>
     </data>
-</openerp>
+</odoo>

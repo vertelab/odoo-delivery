@@ -21,11 +21,11 @@
 import odoo
 from odoo import http
 from odoo.http import request
-from odoo.addons.website_sale_delivery.controllers.main import website_sale
+from odoo.addons.website_sale_delivery.controllers.main import WebsiteSaleDelivery
 import logging
 _logger = logging.getLogger(__name__)
 
-class website_sale(website_sale):
+class WebsiteSaleDelivery(WebsiteSaleDelivery):
 
     @http.route(['/shop/payment/delivery_update'], type='json', auth='public', website=True)
     def delivery_update(self, carrier_id, **kw):

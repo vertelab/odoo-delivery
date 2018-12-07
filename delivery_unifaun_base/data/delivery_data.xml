@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
     <data noupdate="1">
-        
+
         <record id="unifaun_partner" model="res.partner">
             <field name="name">Unifaun</field>
             <field name="company_id" ref="base.main_company"/>
@@ -23,9 +23,6 @@
             <field name="list_price">0.0</field>
             <field name="type">service</field>
         </record>
-
-
-
 
         <record id="unifaun_p15" model="delivery.carrier">
             <field name="name">Posten DPD Företagspaket 16.00</field>
@@ -71,26 +68,23 @@
             <field name="active" eval="True"/>
         </record>
 
-        
+
         <record id="unifaun_api_key" model="ir.config_parameter">
             <field name="key">unifaun.api_key</field>
             <field name="value">api key</field>
-        </record>             
+        </record>
         <record id="unifaun_passwd" model="ir.config_parameter">
             <field name="key">unifaun.passwd</field>
             <field name="value">password</field>
-        </record>             
+        </record>
         <record id="unifaun_url" model="ir.config_parameter">
             <field name="key">unifaun.url</field>
             <field name="value">https://api.unifaun.com/rs-extapi/v1</field>
-        </record>             
+        </record>
         <record id="unifaun_environment" model="ir.config_parameter">
             <field name="key">unifaun.environment</field>
             <field name="value">test</field>
-        </record>             
-        
-        
-        
+        </record>
 
     </data>
-</openerp>
+</odoo>
