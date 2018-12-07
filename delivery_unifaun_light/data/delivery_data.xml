@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="unifaun_parcel_description" model="ir.config_parameter">
+            <field name="key">unifaun.parcel_description</field>
+            <field name="value">G</field>
+        </record>
+    </data>
+</odoo>
