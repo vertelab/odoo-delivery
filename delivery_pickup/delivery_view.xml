@@ -13,6 +13,7 @@
         <template id="assets_frontend" inherit_id="website.assets_frontend">
             <xpath expr="." position="inside">
                 <script type="text/javascript" src="/delivery_pickup/static/src/js/main.js"></script>
+                <link href="/delivery_pickup/static/src/css/main.css" rel="stylesheet" />
             </xpath>
         </template>
     </data>
