@@ -9,11 +9,45 @@
             <field name="arch" type="xml">
                 <field name="integration_level" position="after">
                     <field name="unifaun_service_code" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                    <field name="unifaun_sender" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                    <field name="unifaun_customer_no" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
                     <!--
                          <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
                     -->
                     <field name="is_unifaun" />
                 </field>
+            </field>
+        </record>
+        <record id="view_stock_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking.form.unifaun</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <separator position="after">
+                    <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': [('is_unifaun', '==', False)]}" />
+                    <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
+                </separator>
+                <field name="carrier_tracking_ref" position="after">
+                    <field name="unifaun_stored_shipmentid" />
+                    <field name="unifaun_shipmentid" />
+                    <field name="is_unifaun" invisible="1" />
+                </field>
+                <notebook position="inside">
+                    <page string="Unifaun">
+                        <group>
+                            <field name="unifaun_status_ids">
+                                <tree>
+                                    <field name="type"/>
+                                    <field name="field"/>
+                                    <field name="name"/>
+                                    <field name="location"/>
+                                    <field name="message_code"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                </notebook>
             </field>
         </record>
     </data>
