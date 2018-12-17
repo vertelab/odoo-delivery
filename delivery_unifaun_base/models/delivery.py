@@ -208,7 +208,6 @@ class stock_picking(models.Model):
                 'weight': self.weight or 0,
                 'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
                 'valuePerParcel': True,
-                'code': '9876543210',
             }],
             'orderNo': self.name,
             'senderReference': self.origin,
