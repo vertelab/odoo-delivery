@@ -23,6 +23,7 @@ from odoo.exceptions import Warning
 import requests
 from requests.auth import HTTPBasicAuth
 import json
+import base64
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -43,6 +44,16 @@ class delivery_carrier(models.Model):
         #~ if 'test' in (self.env['ir.config_parameter'].get_param('unifaun.environment', 'prod'), self.unifaun_environment):
             #~ return True
         #~ return False
+
+    def unifaun_download(self, url):
+        username = self.env['ir.config_parameter'].get_param('unifaun.api_key')
+        password = self.env['ir.config_parameter'].get_param('unifaun.passwd')
+        response = requests.get(url, auth=HTTPBasicAuth(username, password))
+        return self.env['ir.attachment'].create({
+            'type': 'binary',
+            'name': 'Unifaun pdf %s' %url.split("/")[-1],
+            'datas': base64.b64encode(response.content),
+        })
 
     def unifaun_send(self, method, params=None, payload=None):
         headers = {'content-type': 'application/json'}
@@ -310,6 +321,13 @@ class stock_picking(models.Model):
             self.carrier_tracking_ref = carrier_tracking_ref
             self.unifaun_shipmentid = unifaun_shipmentid
             self.unifaun_pdfs = unifaun_pdfs
+            # create an attachment
+            # TODO: several pdfs?
+            attachment = self.carrier_id.unifaun_download(unifaun_pdfs)
+            attachment.write({
+                'res_model': self._name,
+                'res_id': self.id
+            })
             self.env['mail.message'].create({
                 'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (rec, response)),
                 'subject': "Shipment(s) Created",
