@@ -181,6 +181,13 @@ class stock_picking(models.Model):
         if sender.parent_id and sender.type == 'contact':
             sender_contact = sender
             sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
+        if receiver.parent_id:
+            if receiver.name:
+                receiver_name = '%s, %s' % receiver.parent_id.name, receiver.name
+            else:
+                receiver_name = receiver.parent_id.name
+        else:
+            receiver_name = receiver.name
         rec = {
             'sender': {
                 # ~ 'quickId': '1',
@@ -200,7 +207,7 @@ class stock_picking(models.Model):
                 'custNo': self.carrier_id.unifaun_customer_no or '',
             }],
             'receiver': {
-                'name': receiver.name,
+                'name': receiver_name,
                 'address1': receiver.street or '',
                 'address2': receiver.street2 or '',
                 'zipcode': receiver.zip or '',
