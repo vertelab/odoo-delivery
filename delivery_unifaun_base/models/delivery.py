@@ -183,7 +183,7 @@ class stock_picking(models.Model):
             sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
         if receiver.parent_id:
             if receiver.name:
-                receiver_name = '%s, %s' % receiver.parent_id.name, receiver.name
+                receiver_name = '%s, %s' % (receiver.parent_id.name, receiver.name)
             else:
                 receiver_name = receiver.parent_id.name
         else:
