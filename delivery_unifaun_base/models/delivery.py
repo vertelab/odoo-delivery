@@ -36,6 +36,7 @@ class delivery_carrier(models.Model):
     is_unifaun = fields.Boolean('Is Unifaun')
     unifaun_sender = fields.Char(string='SenderPartners id', help="Code describing the carrier. See Unifaun help pages.")
     unifaun_customer_no = fields.Char(string='Customer Number', help="The paying party's customer number with the carrier.")
+    unifaun_param_ids = fields.One2many(comodel_name='delivery.carrier.unifaun.param', inverse_name='carrier_id', string='Parameters')
     #~ unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
 
     #~ @api.multi
@@ -121,6 +122,103 @@ class stock_picking_unifaun_status(models.Model):
     raw_data = fields.Char(string='Raw Data')
     picking_id = fields.Many2one(comodel_name='stock.picking')
 
+class DeliveryCarrierUnifaunParam(models.Model):
+    _name = 'delivery.carrier.unifaun.param'
+    _description = 'Unifaun Carrier Parameter'
+
+    name = fields.Char(string='Name', required=True)
+    carrier_id = fields.Many2one(comodel_name='delivery.carrier', string='Carrier', ondelete='cascade', required=True)
+    parameter = fields.Char(string='Parameter', required=True)
+    type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
+    default_value = fields.Char(string='Default Value')
+    
+    @api.multi
+    def get_default_value(self):
+        try:
+            if self.type == 'string':
+                return {'value_char': self.default_value}
+            elif not self.default_value:
+                return False
+            elif self.type == 'integer':
+                return {'value_int': int(self.default_value)}
+            elif self.type == 'float':
+                return {'value_float': float(self.default_value)}
+        except:
+            raise Warning(_("Could not convert the default value (%s) to type %s") % (self.default_value, self.type))
+
+    @api.multi
+    def get_picking_param_values(self):
+        values = []
+        for param in self:
+            vals = {
+                'name': param.name,
+                'parameter': param.parameter,
+                'type': param.type,
+            }
+            vals.update(param.get_default_value())
+            values.append(vals)
+        return values
+
+class StockPickingUnifaunParam(models.Model):
+    _name = 'stock.picking.unifaun.param'
+    _description = 'Unifaun Picking Parameter'
+
+    name = fields.Char(string='Name', required=True)
+    picking_id = fields.Many2one(comodel_name='stock.picking', string='Picking', rquired=True, ondelete='cascade')
+    parameter = fields.Char(string='Parameter', required=True)
+    type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
+    value_char = fields.Char(string='Value')
+    value_int = fields.Integer(string='Value')
+    value_float = fields.Float(string='Value')
+    
+    @api.multi
+    def get_value(self):
+        if self.type == 'string':
+            return self.value_char
+        elif self.type == 'integer':
+            return self.value_int
+        elif self.type == 'float':
+            return self.value_float
+        raise Warning(_("Unknown type %s for parameter %s (%s)") % (self.type, self.name, self.parameter))
+    
+    @api.multi
+    def add_to_record(self, rec):
+        """Add this parameter to the given dict"""
+        def split_parameter(parameter):
+            if '.' in parameter:
+                return parameter.split('.', 1)
+            else:
+                return parameter, None
+        
+        def write_param(node, value, parameter):
+            if type(node) == list:
+                if not node:
+                    # Create an object for the next level. Maybe not the desired result?
+                    node.append({})
+                for e in node:
+                    write_param(e, value, parameter)
+                return
+            name, parameter = split_parameter(parameter)
+            is_list = False
+            if name[-2:] == '[]':
+                is_list = True
+                name = name[:-2]
+            if name not in node:
+                if is_list:
+                    node[name] = []
+                elif parameter:
+                    node[name] = {}
+                else:
+                    node[name] = value
+                    return
+            elif not parameter:
+                node[name] = value
+                return
+            write_param(node[name], value, parameter)
+        
+        for param in self:
+            value = param.get_value()
+            write_param(rec, param.get_value(), param.parameter)
 
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
@@ -128,14 +226,20 @@ class stock_picking(models.Model):
     is_unifaun = fields.Boolean(related='carrier_id.is_unifaun')
     unifaun_shipmentid = fields.Char(string='Unifaun Shipment ID', copy=False)
     unifaun_stored_shipmentid = fields.Char(string='Unifaun Stored Shipment ID', copy=False)
-    unifaun_package_code = fields.Char(string='Package Code', copy=False)
     unifaun_pdfs = fields.Char(string='Unifaun PDFs', copy=False)
     unifaun_status_ids = fields.One2many(comodel_name='stock.picking.unifaun.status', inverse_name='picking_id', string='Unifaun Status')
+    unifaun_param_ids = fields.One2many(comodel_name='stock.picking.unifaun.param', inverse_name='picking_id', string='Parameters')
 
     # https://www.unifaunonline.se/rs-docs/
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
 
+    @api.onchange('carrier_id')
+    def onchange_carrier_id_unifaun_param_ids(self):
+        self.unifaun_param_ids = None
+        if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
+            self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
+        
     @api.one
     def set_unifaun_status(self, statuses):
         if len(self.unifaun_status_ids) > 0:
@@ -252,7 +356,9 @@ class stock_picking(models.Model):
                 'email': receiver_contact.email or '',
                 'contact': receiver_contact.name,
             })
-
+        if self.unifaun_param_ids:
+            self.unifaun_param_ids.add_to_record(rec)
+        
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         if type(response) == type({}):
             _logger.warn('\n%s\n' % response)
@@ -277,7 +383,7 @@ class stock_picking(models.Model):
                 'type': 'notification',
             })
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
-
+        
     @api.one
     def confirm_stored_shipment(self):
         """Create shipment(s) from a stored shipment."""

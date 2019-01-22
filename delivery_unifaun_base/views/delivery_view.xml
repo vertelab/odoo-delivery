@@ -8,16 +8,25 @@
             <field name="inherit_id" ref="delivery.view_delivery_carrier_form" />
             <field name="arch" type="xml">
                 <field name="integration_level" position="after">
-                    <field name="unifaun_service_code" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                    <field name="unifaun_sender" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                    <field name="unifaun_customer_no" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                    <!--
-                         <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                    -->
                     <field name="is_unifaun" />
                 </field>
+                <notebook position="inside">
+                    <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
+                        <group>
+                            <field name="unifaun_service_code" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                            <field name="unifaun_sender" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                            <field name="unifaun_customer_no" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                            <!--
+                                 <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                            -->
+                        </group>
+                        <label for="unifaun_param_ids"/>
+                        <field name="unifaun_param_ids"/>
+                    </page>
+                </notebook>
             </field>
         </record>
+        
         <record id="view_stock_picking_form" model="ir.ui.view">
             <field name="name">stock.picking.form.unifaun</field>
             <field name="model">stock.picking</field>
@@ -34,21 +43,91 @@
                     <field name="is_unifaun" invisible="1" />
                 </field>
                 <notebook position="inside">
-                    <page string="Unifaun">
-                        <group>
-                            <field name="unifaun_status_ids">
-                                <tree>
-                                    <field name="type"/>
-                                    <field name="field"/>
-                                    <field name="name"/>
-                                    <field name="location"/>
-                                    <field name="message_code"/>
-                                </tree>
-                            </field>
-                        </group>
+                    <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
+                        <label for="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}" />
+                        <field name="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}">
+                            <tree>
+                                <field name="type" />
+                                <field name="field" />
+                                <field name="name" />
+                                <field name="location" />
+                                <field name="message_code" />
+                            </tree>
+                        </field>
+                        <label for="unifaun_param_ids" />
+                        <field name="unifaun_param_ids" />
                     </page>
                 </notebook>
             </field>
         </record>
+        
+        <record id="view_delivery_carrier_unifaun_param_form" model="ir.ui.view">
+            <field name="name">delivery.carrier.unifaun.param.form</field>
+            <field name="model">delivery.carrier.unifaun.param</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="parameter"/>
+                            <field name="type"/>
+                            <field name="default_value"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <record id="view_delivery_carrier_unifaun_param_tree" model="ir.ui.view">
+            <field name="name">delivery.carrier.unifaun.param.tree</field>
+            <field name="model">delivery.carrier.unifaun.param</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="parameter"/>
+                    <field name="type"/>
+                    <field name="default_value"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_stock_picking_unifaun_param_form" model="ir.ui.view">
+            <field name="name">stock.picking.unifaun.param.form</field>
+            <field name="model">stock.picking.unifaun.param</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="parameter"/>
+                            <field name="type"/>
+                            <field name="value_char" attrs="{'invisible': [('type', '!=', 'string')]}" />
+                            <field name="value_int" attrs="{'invisible': [('type', '!=', 'int')]}" />
+                            <field name="value_float" attrs="{'invisible': [('type', '!=', 'float')]}" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <record id="view_stock_picking_unifaun_param_tree" model="ir.ui.view">
+            <field name="name">stock.picking.unifaun.param.tree</field>
+            <field name="model">stock.picking.unifaun.param</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="type"/>
+                    <field name="value_char" attrs="{'invisible': [('type', '!=', 'string')]}" />
+                    <field name="value_int" attrs="{'invisible': [('type', '!=', 'int')]}" />
+                    <field name="value_float" attrs="{'invisible': [('type', '!=', 'float')]}" />
+                    <field name="parameter"/>
+                </tree>
+            </field>
+        </record>
+        
     </data>
 </odoo>
