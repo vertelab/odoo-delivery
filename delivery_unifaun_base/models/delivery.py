@@ -131,7 +131,7 @@ class DeliveryCarrierUnifaunParam(models.Model):
     parameter = fields.Char(string='Parameter', required=True)
     type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
     default_value = fields.Char(string='Default Value')
-    
+
     @api.multi
     def get_default_value(self):
         try:
@@ -170,7 +170,7 @@ class StockPickingUnifaunParam(models.Model):
     value_char = fields.Char(string='Value')
     value_int = fields.Integer(string='Value')
     value_float = fields.Float(string='Value')
-    
+
     @api.multi
     def get_value(self):
         if self.type == 'string':
@@ -180,7 +180,7 @@ class StockPickingUnifaunParam(models.Model):
         elif self.type == 'float':
             return self.value_float
         raise Warning(_("Unknown type %s for parameter %s (%s)") % (self.type, self.name, self.parameter))
-    
+
     @api.multi
     def add_to_record(self, rec):
         """Add this parameter to the given dict"""
@@ -189,7 +189,7 @@ class StockPickingUnifaunParam(models.Model):
                 return parameter.split('.', 1)
             else:
                 return parameter, None
-        
+
         def write_param(node, value, parameter):
             if type(node) == list:
                 if not node:
@@ -215,7 +215,7 @@ class StockPickingUnifaunParam(models.Model):
                 node[name] = value
                 return
             write_param(node[name], value, parameter)
-        
+
         for param in self:
             value = param.get_value()
             write_param(rec, param.get_value(), param.parameter)
@@ -239,7 +239,7 @@ class stock_picking(models.Model):
         self.unifaun_param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
-        
+
     @api.one
     def set_unifaun_status(self, statuses):
         if len(self.unifaun_status_ids) > 0:
@@ -358,7 +358,7 @@ class stock_picking(models.Model):
             })
         if self.unifaun_param_ids:
             self.unifaun_param_ids.add_to_record(rec)
-        
+
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         if type(response) == type({}):
             _logger.warn('\n%s\n' % response)
@@ -383,7 +383,7 @@ class stock_picking(models.Model):
                 'type': 'notification',
             })
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
-        
+
     @api.one
     def confirm_stored_shipment(self):
         """Create shipment(s) from a stored shipment."""
@@ -459,5 +459,33 @@ class stock_picking(models.Model):
                 'type': 'notification',
             })
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
+
+    @api.multi
+    def send_mail(self):
+        self.ensure_one()
+        template_id = self.env.ref('delivery_unifaun_base.unifaun_email_template').id
+        try:
+            compose_form_id = self.env['ir.model.data'].get_object_reference('mail', 'email_compose_message_wizard_form')[1]
+        except ValueError:
+            compose_form_id = False
+        ctx = dict()
+        ctx.update({
+            'default_model': 'stock.picking',
+            'default_res_id': self.ids[0],
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode': 'comment',
+            'default_partner_ids': [(6, 0, [self.partner_id.id])],
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(compose_form_id, 'form')],
+            'view_id': compose_form_id,
+            'target': 'new',
+            'context': ctx,
+        }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -26,7 +26,7 @@
                 </notebook>
             </field>
         </record>
-        
+
         <record id="view_stock_picking_form" model="ir.ui.view">
             <field name="name">stock.picking.form.unifaun</field>
             <field name="model">stock.picking</field>
@@ -60,7 +60,7 @@
                 </notebook>
             </field>
         </record>
-        
+
         <record id="view_delivery_carrier_unifaun_param_form" model="ir.ui.view">
             <field name="name">delivery.carrier.unifaun.param.form</field>
             <field name="model">delivery.carrier.unifaun.param</field>
@@ -78,7 +78,7 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="view_delivery_carrier_unifaun_param_tree" model="ir.ui.view">
             <field name="name">delivery.carrier.unifaun.param.tree</field>
             <field name="model">delivery.carrier.unifaun.param</field>
@@ -92,7 +92,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="view_stock_picking_unifaun_param_form" model="ir.ui.view">
             <field name="name">stock.picking.unifaun.param.form</field>
             <field name="model">stock.picking.unifaun.param</field>
@@ -112,7 +112,7 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="view_stock_picking_unifaun_param_tree" model="ir.ui.view">
             <field name="name">stock.picking.unifaun.param.tree</field>
             <field name="model">stock.picking.unifaun.param</field>
@@ -128,6 +128,36 @@
                 </tree>
             </field>
         </record>
-        
+
+        <record id="view_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherited.delivery_unifaun_base</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <button name="do_print_picking" position="before">
+                    <button name="send_mail" string="Send Mail" groups="stock.group_stock_user" type="object" attrs="{'invisible': [('state', 'not in', ('assigned', 'partially_available')), ('is_unifaun', '=', False)]}"/>
+                </button>
+            </field>
+        </record>
+
+        <record id="unifaun_email_template" model="mail.template">
+            <field name="name">Unifaun Email Template</field>
+            <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
+            <field name="subject">Unifaun ${object.name} tracking link</field>
+            <field name="email_to">${object.partner_id.email|safe}</field>
+            <field name="lang">${object.lang}</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html">
+<![CDATA[
+  <p>Dear ${(object.partner_id.name)},<br/><br/>
+Click the link below:<br/>
+<a href="${(object.unifaun_trace_and_track_url())}">${(object.unifaun_trace_and_track_url())}</a><br/></p>
+    Regards,<br/>
+    ${(object.company_id.name)}
+]]>
+            </field>
+        </record>
+
     </data>
 </odoo>
