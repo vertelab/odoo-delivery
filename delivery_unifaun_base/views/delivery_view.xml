@@ -60,7 +60,19 @@
                 </notebook>
             </field>
         </record>
-
+        
+        <record id="view_picking_internal_search" model="ir.ui.view">
+            <field name="name">stock.picking.internal.search.unifaun</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_internal_search" />
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <field name="name" position="attributes">
+                    <attribute name="filter_domain">['|', ('pack_operation_ids.result_package_id.unifaun_parcelno', 'ilike', self), ('name', 'ilike', self)]</attribute>
+                </field>
+            </field>
+        </record>
+        
         <record id="view_delivery_carrier_unifaun_param_form" model="ir.ui.view">
             <field name="name">delivery.carrier.unifaun.param.form</field>
             <field name="model">delivery.carrier.unifaun.param</field>
@@ -152,7 +164,7 @@
 <![CDATA[
   <p>Dear ${(object.partner_id.name)},<br/><br/>
 Click the link below:<br/>
-<a href="${(object.unifaun_trace_and_track_url())}">${(object.unifaun_trace_and_track_url())}</a><br/></p>
+<a href="${(object.unifaun_track_and_trace_url())}">${(object.unifaun_track_and_trace_url())}</a><br/></p>
     Regards,<br/>
     ${(object.company_id.name)}
 ]]>

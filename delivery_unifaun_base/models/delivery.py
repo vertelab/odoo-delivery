@@ -24,6 +24,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 import base64
+from urllib import urlencode
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -220,6 +221,27 @@ class StockPickingUnifaunParam(models.Model):
             value = param.get_value()
             write_param(rec, param.get_value(), param.parameter)
 
+class StockQuantPackage(models.Model):
+    _inherit = "stock.quant.package"
+    
+    unifaun_parcelno = fields.Char(string='Unifaun Reference')
+    
+    @api.multi
+    def unifaun_get_parcel_values(self):
+        """Return a dict of parcel data to be used in a Unifaun shipment record."""
+        vals = {
+            'reference': self.name, # ??? Not saved in shipment
+            'copies': 1,
+            'weight': self.shipping_weight or self.weight or 0,
+            'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
+            'valuePerParcel': True,
+        }
+        if self.packaging_id:
+            if self.packaging_id.shipper_package_code:
+                vals['packageCode'] = self.packaging_id.shipper_package_code
+            # TODO: Add volume, length, width, height
+        return vals
+
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
 
@@ -233,13 +255,19 @@ class stock_picking(models.Model):
     # https://www.unifaunonline.se/rs-docs/
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
-
+    
     @api.onchange('carrier_id')
     def onchange_carrier_id_unifaun_param_ids(self):
         self.unifaun_param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
 
+    @api.model
+    def create(self, vals):
+        res = super(stock_picking, self).create(vals)
+        res.onchange_carrier_id_unifaun_param_ids()
+        return res
+    
     @api.one
     def set_unifaun_status(self, statuses):
         if len(self.unifaun_status_ids) > 0:
@@ -257,6 +285,67 @@ class stock_picking(models.Model):
             })
         # ~ {u'field': u'Party_CustNo', u'message': u'invalid check digit', u'type': u'error', u'location': u'', u'messageCode': u'Checkdigit'}
 
+    @api.multi
+    def unifaun_track_and_trace_url(self):
+        """Return an URL for Unifaun Track & Trace."""
+        # https://www.unifaunonline.se/ufoweb-prod-201812111106/public/SUP/UO/UO-101-TrackandTrace-en.pdf
+        # TODO: Add support for regions and languages
+        parameters = {
+            'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
+            'reference': self.name}
+        region = 'se'
+        lang = 'se'
+        return 'https://www.unifaunonline.com/ext.uo.%s.%s.track?%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
+
+    @api.multi
+    def unifaun_get_parcel_data(self):
+        """Return a list of parcel dicts to send in unifaun shipment records."""
+        # valuePerParcel (boolean)
+        #     true defines information for each parcel individually.
+        #     false defines information for an entire row of parcels.
+        # copies (integer, minimum 1)
+        #     Number of parcels.
+        # marking (string)
+        #     Goods marking.
+        # packageCode (string)
+        #     Package code. Refer to Help -> Code lists in your account for available package types.
+        # packageText (string)
+        #     Package text. Used for certain services.
+        # weight (number, minimum 0)
+        #     Weight.
+        # volume (number, minimum 0)
+        #     Volume.
+        # length (number, minimum 0)
+        #     Length.
+        # width (number, minimum 0)
+        #     Width.
+        # height (number, minimum 0)
+        #     Height.
+        # loadingMeters (number, minimum 0)
+        #     Load meters.
+        # itemNo (string)
+        #     Item number. Used for certain services.
+        # contents (string)
+        #     Contents.
+        # reference (string)
+        #     Parcel reference. Used for certain services.
+        # parcelNos (array of string)
+        #     Parcel numbers. The array should have copies number of parcel numbers. Note: A special license key is required to use this value.
+        # stackable (boolean)
+        #     Parcel can be stacked. Used for certain services.
+
+        if self.package_ids:
+            packages = []
+            for package in self.package_ids:
+                packages.append(package.unifaun_get_parcel_values())
+            return packages
+        return [{
+            'copies': self.number_of_packages or 1,
+            'weight': self.weight,
+            'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
+            'valuePerParcel': self.number_of_packages < 2,
+        }]
+    
     @api.one
     def order_stored_shipment(self):
         """Create a stored shipment."""
@@ -325,12 +414,7 @@ class stock_picking(models.Model):
             'service': {
                 'id': self.carrier_id.unifaun_service_code or '',
             },
-            'parcels':  [{
-                'copies': self.number_of_packages or 1,
-                'weight': self.weight or 0,
-                'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
-                'valuePerParcel': True,
-            }],
+            'parcels': self.unifaun_get_parcel_data(),
             'orderNo': self.name,
             'senderReference': self.origin,
             #~ "receiverReference": "receiver ref 345",
@@ -410,7 +494,7 @@ class stock_picking(models.Model):
         }
 
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.unifaun_stored_shipmentid, None, rec)
-        if type(response) == type([]):
+        if type(response) == list:
             _logger.warn('\n%s\n' % response)
             unifaun_shipmentid = ''
             carrier_tracking_ref = ''
@@ -430,6 +514,12 @@ class stock_picking(models.Model):
                     unifaun_pdfs += pdf.get('href') or ''
                 for parcel in r.get('parcels') or []:
                     parcels += 1
+                if self.package_ids and r.get('parcels'):
+                    i = 0
+                    for package in self.package_ids:
+                        if i < len(r['parcels']):
+                            package.unifaun_parcelno = r['parcels'][i].get(u'parcelNo')
+                        i += 1
             self.number_of_packages = parcels
             self.carrier_tracking_ref = carrier_tracking_ref
             self.unifaun_shipmentid = unifaun_shipmentid
@@ -441,6 +531,7 @@ class stock_picking(models.Model):
                 'res_model': self._name,
                 'res_id': self.id
             })
+            
             self.env['mail.message'].create({
                 'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (rec, response)),
                 'subject': "Shipment(s) Created",
