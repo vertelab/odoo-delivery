@@ -475,7 +475,7 @@ class stock_picking(models.Model):
             'default_use_template': bool(template_id),
             'default_template_id': template_id,
             'default_composition_mode': 'comment',
-            'default_partner_ids': [(6, 0, [self.partner_id.id])],
+            'default_partner_ids': [(6, 0, [self[0].partner_id.id])],
         })
         return {
             'type': 'ir.actions.act_window',
