@@ -85,6 +85,7 @@
                             <field name="parameter"/>
                             <field name="type"/>
                             <field name="default_value"/>
+                            <field name="default_compute"/>
                         </group>
                     </sheet>
                 </form>
@@ -116,9 +117,12 @@
                             <field name="name"/>
                             <field name="parameter"/>
                             <field name="type"/>
+                            <field name="value_shown"/>
+<!--
                             <field name="value_char" attrs="{'invisible': [('type', '!=', 'string')]}" />
                             <field name="value_int" attrs="{'invisible': [('type', '!=', 'int')]}" />
                             <field name="value_float" attrs="{'invisible': [('type', '!=', 'float')]}" />
+-->
                         </group>
                     </sheet>
                 </form>
@@ -133,9 +137,12 @@
                 <tree>
                     <field name="name"/>
                     <field name="type"/>
+                    <field name="value_shown" />
+<!--
                     <field name="value_char" attrs="{'invisible': [('type', '!=', 'string')]}" />
                     <field name="value_int" attrs="{'invisible': [('type', '!=', 'int')]}" />
                     <field name="value_float" attrs="{'invisible': [('type', '!=', 'float')]}" />
+-->
                     <field name="parameter"/>
                 </tree>
             </field>

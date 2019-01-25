@@ -20,6 +20,7 @@
 ##############################################################################
 from odoo import models, fields, api, _
 from odoo.exceptions import Warning
+from odoo.tools import safe_eval
 import requests
 from requests.auth import HTTPBasicAuth
 import json
@@ -132,6 +133,7 @@ class DeliveryCarrierUnifaunParam(models.Model):
     parameter = fields.Char(string='Parameter', required=True)
     type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
     default_value = fields.Char(string='Default Value')
+    default_compute = fields.Char(string='Default Compute', help="Expression to compute default value for this parameter. variable param = the parameter object. Example: 'param.picking_id.sale_id.name'")
 
     @api.multi
     def get_default_value(self):
@@ -155,6 +157,7 @@ class DeliveryCarrierUnifaunParam(models.Model):
                 'name': param.name,
                 'parameter': param.parameter,
                 'type': param.type,
+                'param_id': param.id,
             }
             vals.update(param.get_default_value())
             values.append(vals)
@@ -165,23 +168,61 @@ class StockPickingUnifaunParam(models.Model):
     _description = 'Unifaun Picking Parameter'
 
     name = fields.Char(string='Name', required=True)
-    picking_id = fields.Many2one(comodel_name='stock.picking', string='Picking', rquired=True, ondelete='cascade')
+    picking_id = fields.Many2one(comodel_name='stock.picking', string='Picking', required=True, ondelete='cascade')
     parameter = fields.Char(string='Parameter', required=True)
     type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
-    value_char = fields.Char(string='Value')
-    value_int = fields.Integer(string='Value')
-    value_float = fields.Float(string='Value')
+    value = fields.Char(string='Value')
+    value_shown = fields.Char(string='Value', compute='_get_value_shown', inverse='_set_value_shown')
+    # ~ value_char = fields.Char(string='Value')
+    # ~ value_int = fields.Integer(string='Value')
+    # ~ value_float = fields.Float(string='Value')
+    param_id =  fields.Many2one(comodel_name='delivery.carrier.unifaun.param', string='Carrier Parameter', ondelete='set null')
 
+    @api.one
+    def _get_value_shown(self):
+        self.value_shown = self.value
+
+    @api.one
+    def _set_value_shown(self):
+        self.set_value(self.value_shown or None)
+    
     @api.multi
     def get_value(self):
-        if self.type == 'string':
-            return self.value_char
-        elif self.type == 'integer':
-            return self.value_int
-        elif self.type == 'float':
-            return self.value_float
+        try:
+            if self.type == 'string':
+                return self.value
+            elif self.type == 'int':
+                return self.value and int(self.value) or None
+            elif self.type == 'float':
+                return self.value and float(self.value) or None
+        except:
+            raise Warning(_("Could not convert the value (%s) of parameter %s to type %s") % (self.value, self.name, self.type))
         raise Warning(_("Unknown type %s for parameter %s (%s)") % (self.type, self.name, self.parameter))
 
+    @api.one
+    def set_value(self, value):
+        if value in (None, False):
+            self.value = value
+            return
+        try:
+            if self.type == 'string':
+                self.value = value
+                return
+            elif self.type == 'int':
+                self.value = str(int(value))
+                return
+            elif self.type == 'float':
+                self.value = str(float(value))
+                return
+        except:
+            raise Warning(_("Could not convert the value (%s, type %s) of parameter %s to type %s") % (value, type(value), self.name, self.type))
+        raise Warning(_("Unknown type %s for parameter %s (%s)") % (self.type, self.name, self.parameter))
+
+    @api.one
+    def compute_default_value(self):
+        if self.param_id and self.param_id.default_compute:
+            self.set_value(safe_eval(self.param_id.default_compute, {'param': self}, locals_builtins=True))
+    
     @api.multi
     def add_to_record(self, rec):
         """Add this parameter to the given dict"""
@@ -257,16 +298,18 @@ class stock_picking(models.Model):
     # catch carrier_tracking_ref (to be mailed? add on waybill)
     
     @api.onchange('carrier_id')
-    def onchange_carrier_id_unifaun_param_ids(self):
+    def onchange_carrier(self):
+        super(stock_picking, self).onchange_carrier()
         self.unifaun_param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
+            self.unifaun_param_ids.compute_default_value()
 
-    @api.model
-    def create(self, vals):
-        res = super(stock_picking, self).create(vals)
-        res.onchange_carrier_id_unifaun_param_ids()
-        return res
+    # ~ @api.model
+    # ~ def create(self, vals):
+        # ~ res = super(stock_picking, self).create(vals)
+        # ~ res.onchange_carrier_id_unifaun_param_ids()
+        # ~ return res
     
     @api.one
     def set_unifaun_status(self, statuses):
