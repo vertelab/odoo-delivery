@@ -37,11 +37,11 @@
                     <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': [('is_unifaun', '==', False)]}" />
                     <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
                 </separator>
-                <field name="carrier_tracking_ref" position="after">
+                <div name="tracking" position="after">
                     <field name="unifaun_stored_shipmentid" />
                     <field name="unifaun_shipmentid" />
                     <field name="is_unifaun" invisible="1" />
-                </field>
+                </div>
                 <notebook position="inside">
                     <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
                         <label for="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}" />
