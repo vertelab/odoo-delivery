@@ -297,19 +297,12 @@ class stock_picking(models.Model):
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
     
-    @api.onchange('carrier_id')
     def onchange_carrier(self):
         super(stock_picking, self).onchange_carrier()
         self.unifaun_param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
             self.unifaun_param_ids.compute_default_value()
-
-    # ~ @api.model
-    # ~ def create(self, vals):
-        # ~ res = super(stock_picking, self).create(vals)
-        # ~ res.onchange_carrier_id_unifaun_param_ids()
-        # ~ return res
     
     @api.one
     def set_unifaun_status(self, statuses):
