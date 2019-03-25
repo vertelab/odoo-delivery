@@ -13,9 +13,10 @@
                 <notebook position="inside">
                     <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
                         <group>
-                            <field name="unifaun_service_code" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                            <field name="unifaun_sender" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                            <field name="unifaun_customer_no" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
+                            <field name="unifaun_service_code" />
+                            <field name="unifaun_sender" />
+                            <field name="unifaun_customer_no" />
+                            <field name="unifaun_print_settings_id" />
                             <!--
                                  <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
                             -->
@@ -38,7 +39,11 @@
                     <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
                 </separator>
                 <div name="tracking" position="after">
-                    <field name="unifaun_stored_shipmentid" />
+                    <label for="unifaun_stored_shipmentid" />
+                    <div>
+                        <field name="unifaun_stored_shipmentid" />
+                        <button name="delete_stored_shipment" class="oe_right" string="Delete" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
+                    </div>
                     <field name="unifaun_shipmentid" />
                     <field name="is_unifaun" invisible="1" />
                 </div>
@@ -58,6 +63,9 @@
                         <field name="unifaun_param_ids" />
                     </page>
                 </notebook>
+                <notebook position="before">
+                    <h3 attrs="{'invisible': ['|', ('is_unifaun', '=', False), ('unifaun_status_ids', '=', False)]}" style="color: red;">Errors in the Unifaun message!</h3>
+                </notebook>
             </field>
         </record>
         
@@ -70,6 +78,44 @@
                 <field name="name" position="attributes">
                     <attribute name="filter_domain">['|', ('pack_operation_ids.result_package_id.unifaun_parcelno', 'ilike', self), ('name', 'ilike', self)]</attribute>
                 </field>
+            </field>
+        </record>
+        
+        <record id="view_unifaun_print_settings_form" model="ir.ui.view">
+            <field name="name">delivery.carrier.unifaun.print_settings.form</field>
+            <field name="model">delivery.carrier.unifaun.print_settings</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <label for="name" />
+                        <h1><field name="name"/></h1>
+                        <separator string="1st Label" />
+                        <group>
+                            <field name="format_1" />
+                            <field name="x_offset_1" />
+                            <field name="y_offset_1" />
+                        </group>
+                        <separator string="2nd Label" />
+                        <group>
+                            <field name="format_2" />
+                            <field name="x_offset_2" />
+                            <field name="y_offset_2" />
+                        </group>
+                        <separator string="3rd Label" />
+                        <group>
+                            <field name="format_3" />
+                            <field name="x_offset_3" />
+                            <field name="y_offset_3" />
+                        </group>
+                        <separator string="4th Label" />
+                        <group>
+                            <field name="format_4" />
+                            <field name="x_offset_4" />
+                            <field name="y_offset_4" />
+                        </group>
+                    </sheet>
+                </form>
             </field>
         </record>
         

@@ -39,6 +39,7 @@ class delivery_carrier(models.Model):
     unifaun_sender = fields.Char(string='SenderPartners id', help="Code describing the carrier. See Unifaun help pages.")
     unifaun_customer_no = fields.Char(string='Customer Number', help="The paying party's customer number with the carrier.")
     unifaun_param_ids = fields.One2many(comodel_name='delivery.carrier.unifaun.param', inverse_name='carrier_id', string='Parameters')
+    unifaun_print_settings_id = fields.Many2one(comodel_name='delivery.carrier.unifaun.print_settings', name=' Unifaun Print Settings')
     #~ unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
 
     #~ @api.multi
@@ -58,20 +59,34 @@ class delivery_carrier(models.Model):
             'datas': base64.b64encode(response.content),
         })
 
+    def _unifaun_get_params(self):
+        """ Return unifaun url, headers and auth parameters."""
+        return self.env['ir.config_parameter'].get_param('unifaun.url'), {
+                'headers': {'content-type': 'application/json'},
+                'auth': HTTPBasicAuth(
+                    self.env['ir.config_parameter'].get_param('unifaun.api_key'),
+                    self.env['ir.config_parameter'].get_param('unifaun.passwd'))
+            }
+
+    def unifaun_delete(self, url_delete):
+        url, req_params = self._unifaun_get_params()
+        response = requests.delete(url + url_delete,
+            verify=False,
+            **req_params)
+        _logger.warn(response)
+        if response.status_code < 200 or response.status_code >= 300:
+            _logger.error("unifaun_delete (%s) ERROR %s: %s" % (url_delete, response.status_code, response.text))
+            return False, response
+        return True, response
+
     def unifaun_send(self, method, params=None, payload=None):
-        headers = {'content-type': 'application/json'}
-
-        username = self.env['ir.config_parameter'].get_param('unifaun.api_key')
-        password = self.env['ir.config_parameter'].get_param('unifaun.passwd')
-        url = self.env['ir.config_parameter'].get_param('unifaun.url')
-
+        url, req_params = self._unifaun_get_params()
         response = requests.post(
             url + '/' + method,
             params=params,
             data=payload and json.dumps(payload) or None,
-            headers=headers,
             verify=False,
-            auth=HTTPBasicAuth(username, password))
+            **req_params)
 
         if response.status_code < 200 or response.status_code >= 300:
             _logger.error("ERROR " + str(response.status_code) + ": " + response.text)
@@ -123,6 +138,40 @@ class stock_picking_unifaun_status(models.Model):
     message_code = fields.Char(string='messageCode')
     raw_data = fields.Char(string='Raw Data')
     picking_id = fields.Many2one(comodel_name='stock.picking')
+
+print_format_selection = [
+        ('null', 'None'),
+        ('laser-a5', 'Single A5 label'),
+        ('laser-2a5', 'Two A5 labels on A4 paper'),
+        ('laser-ste', 'Two STE labels (107x251 mm) on A4 paper'),
+        ('laser-a4', 'Normal A4 used for waybills, customs declaration documents etc.'),
+        ('thermo-se', '107 x 251 mm thermo STE label'),
+        ('thermo-190', '107 x 190 mm thermo label'),
+        ('thermo-brev3', '107 x 72 mm thermo label'),
+        ('thermo-165', '107 x 165 mm thermo label')
+    ]
+
+class DeliveryCarrierUnifaunPrintSettings(models.Model):
+    _name = 'delivery.carrier.unifaun.print_settings'
+    _description = 'Unifaun Print Settings'
+    
+    name = fields.Char(string='Name', required=True)
+    
+    format_1 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='laser-a4')
+    x_offset_1 = fields.Float(string='X Offset')
+    y_offset_1 = fields.Float(string='Y Offset')
+    
+    format_2 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
+    x_offset_2 = fields.Float(string='X Offset')
+    y_offset_2 = fields.Float(string='Y Offset')
+    
+    format_3 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
+    x_offset_3 = fields.Float(string='X Offset')
+    y_offset_3 = fields.Float(string='Y Offset')
+    
+    format_4 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
+    x_offset_4 = fields.Float(string='X Offset')
+    y_offset_4 = fields.Float(string='Y Offset')
 
 class DeliveryCarrierUnifaunParam(models.Model):
     _name = 'delivery.carrier.unifaun.param'
@@ -297,12 +346,14 @@ class stock_picking(models.Model):
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
     
+    @api.onchange('carrier_id')
     def onchange_carrier(self):
         super(stock_picking, self).onchange_carrier()
         self.unifaun_param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
             self.unifaun_param_ids.compute_default_value()
+            
     
     @api.one
     def set_unifaun_status(self, statuses):
@@ -387,8 +438,11 @@ class stock_picking(models.Model):
         """Create a stored shipment."""
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
+        if self.unifaun_shipmentid:
+            raise Warning(_('The stored shipment has already been confirmed (there is a Shipment id).'))
         if self.unifaun_stored_shipmentid:
-            raise Warning(_('A stored shipment already exists for this order.'))
+            self.delete_stored_shipment()
+            # ~ raise Warning(_('A stored shipment already exists for this order.'))
         #~ error = ''
         #~ #if not self.weight:
         #~ #    error += '\n' if error else ''
@@ -505,6 +559,25 @@ class stock_picking(models.Model):
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
 
     @api.one
+    def delete_stored_shipment(self):
+        if not self.unifaun_stored_shipmentid:
+            raise Warning(_('No stored shipment found for this order.'))
+        if self.unifaun_shipmentid:
+            raise Warning(_('The stored shipment has already been confirmed (there is a Shipment id).'))
+        if self.carrier_tracking_ref:
+            raise Warning(_('Transport already ordered (there is a Tracking ref)'))
+        res, response = self.carrier_id.unifaun_delete('/stored-shipments/%s' % self.unifaun_stored_shipmentid)
+        if res:
+            self.unifaun_stored_shipmentid = None
+        else:
+            message = _('Failed to delete stored shipment %s!' % self.unifaun_stored_shipmentid)
+            if response.status_code == 404:
+                message += _('\n\n404: Stored shipment not found')
+            else:
+                message += _('\n\n%s: %s') % (response.status_code, response.text)
+            raise Warning(message)
+
+    @api.one
     def confirm_stored_shipment(self):
         """Create shipment(s) from a stored shipment."""
         if not self.unifaun_stored_shipmentid:
@@ -513,22 +586,26 @@ class stock_picking(models.Model):
             raise Warning(_('The stored shipment has already been confirmed (there is a Shipment id).'))
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
-
-        rec = {
-          "target1Media": "laser-ste",
-          "target1XOffset": 0.0,
-          "target1YOffset": 0.0,
-          "target2Media": "laser-a4",
-          "target2XOffset": 0.0,
-          "target2YOffset": 0.0,
-          "target3Media": None,
-          "target3XOffset": 0.0,
-          "target3YOffset": 0.0,
-          "target4Media": None,
-          "target4XOffset": 0.0,
-          "target4YOffset": 0.0
-        }
-
+        if not self.carrier_id.unifaun_print_settings_id:
+            raise Warning(_("No print settings found for carrier %s") % self.carrier_id.name)
+        rec = {}
+        # Send label printing instructions
+        for i in range(1, 5):
+            format = getattr(self.carrier_id.unifaun_print_settings_id, 'format_%s' % i)
+            if format == 'null':
+                rec.update({
+                    'target%sMedia' % i: None,
+                    'target%sXOffset' % i: 0.0,
+                    'target%sYOffset' % i: 0.0,
+                })
+            else:
+                x_offset = getattr(self.carrier_id.unifaun_print_settings_id, 'x_offset_%s' % i)
+                y_offset = getattr(self.carrier_id.unifaun_print_settings_id, 'y_offset_%s' % i)
+                rec.update({
+                    'target%sMedia' % i: format,
+                    'target%sXOffset' % i: x_offset,
+                    'target%sYOffset' % i: y_offset,
+                })
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.unifaun_stored_shipmentid, None, rec)
         if type(response) == list:
             _logger.warn('\n%s\n' % response)
