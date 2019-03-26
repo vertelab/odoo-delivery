@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Business Applications
-#    Copyright (C) 2004-2012 OpenERP S.A. (<http://openerp.com>).
+#    Odoo, Open Source Enterprise Management Solution, third party addon
+#    Copyright (C) 2018 Vertel AB (<http://vertel.se>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,7 +18,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
 
@@ -26,38 +25,31 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-
 class stock_config_settings(models.TransientModel):
-    _name = 'stock.config.settings'
     _inherit = 'stock.config.settings'
-
-    #~ username = self.env['ir.config_parameter'].get_param('unifaun.api_key')
-    #~ password = self.env['ir.config_parameter'].get_param('unifaun.passwd')
-    #~ url = self.env['ir.config_parameter'].get_param('unifaun.url')
 
     unifaun_apikey = fields.Char(string="API-key")
     unifaun_password = fields.Char(string='Password')
     unifaun_url = fields.Char(string='URL')
     unifaun_environment = fields.Selection([('production','Production'),('test','Test')],string='Environment',help='Test or Production')
 
-    @api.one
-    def set_unifaun(self):
-        self.env['ir.config_parameter'].set_param('unifaun.api_key', (self.unifaun_apikey or '').strip(), groups=['base.group_system'])
-        self.env['ir.config_parameter'].set_param('unifaun.passwd', (self.unifaun_password or '').strip(), groups=['base.group_system'])
-        self.env['ir.config_parameter'].set_param('unifaun.url', (self.unifaun_url or '').strip(), groups=['base.group_system'])
-        self.env['ir.config_parameter'].set_param('unifaun.environment', (self.unifaun_environment or '').strip(), groups=['base.group_system'])
-        
-
     @api.multi
-    def get_default_all(self):
+    def set_unifaun(self):
+        icp = self.env['ir.config_parameter']
+        icp.set_param('unifaun.api_key', (self.unifaun_apikey or '').strip(), groups=['base.group_system'])
+        icp.set_param('unifaun.passwd', (self.unifaun_password or '').strip(), groups=['base.group_system'])
+        icp.set_param('unifaun.url', (self.unifaun_url or '').strip(), groups=['base.group_system'])
+        icp.set_param('unifaun.environment', (self.unifaun_environment or '').strip(), groups=['base.group_system'])
+
+    @api.model
+    def get_default_all(self, fields=None):
+        icp = self.env['ir.config_parameter']
         return {
-            'unifaun_apikey': self.env['ir.config_parameter'].get_param('unifaun.api_key',default=''),
-            'unifaun_password': self.env['ir.config_parameter'].get_param('unifaun.passwd',default=''),
-            'unifaun_url': self.env['ir.config_parameter'].get_param('unifaun.url',default='https://api.unifaun.com/rs-extapi/v1'),
-            'unifaun_environment': self.env['ir.config_parameter'].get_param('unifaun.environment',default='test'),
+            'unifaun_apikey': icp.get_param('unifaun.api_key', default=''),
+            'unifaun_password': icp.get_param('unifaun.passwd', default=''),
+            'unifaun_url': icp.get_param('unifaun.url', default='https://api.unifaun.com/rs-extapi/v1'),
+            'unifaun_environment': icp.get_param('unifaun.environment', default='test'),
         }
-        
-        
-        
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
