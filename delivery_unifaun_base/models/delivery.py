@@ -666,13 +666,15 @@ class stock_picking(models.Model):
             self.carrier_tracking_ref = carrier_tracking_ref
             self.unifaun_shipmentid = unifaun_shipmentid
             self.unifaun_pdfs = unifaun_pdfs
+            _logger.warn('\n\nunifaun_pdfs: %s\n' % unifaun_pdfs)
             # create an attachment
             # TODO: several pdfs?
-            attachment = self.carrier_id.unifaun_download(unifaun_pdfs)
-            attachment.write({
-                'res_model': self._name,
-                'res_id': self.id
-            })
+            if unifaun_pdfs:
+                attachment = self.carrier_id.unifaun_download(unifaun_pdfs)
+                attachment.write({
+                    'res_model': self._name,
+                    'res_id': self.id
+                })
             
             self.env['mail.message'].create({
                 'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (rec, response)),
