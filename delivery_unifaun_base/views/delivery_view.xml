@@ -60,7 +60,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <separator position="after">
-                    <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': [('is_unifaun', '==', False)]}" />
+                    <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': ['|',('is_unifaun', '==', False),('state','!=','done')]}"/>
                     <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
                 </separator>
                 <field name="carrier_tracking_ref" position="after">
@@ -73,10 +73,9 @@
                     <field name="is_unifaun" invisible="1" />
                 </field>
                 <notebook position="inside">
-                    <page string="Packages">
-                        <field name="package_ids" />
-                    </page>
                     <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
+                        <label for="unifaun_pdf_ids"/>
+                        <field name="unifaun_pdf_ids"/>
                         <label for="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}" />
                         <field name="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}">
                             <tree>

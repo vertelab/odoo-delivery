@@ -52,13 +52,13 @@ class delivery_carrier(models.Model):
             #~ return True
         #~ return False
 
-    def unifaun_download(self, url):
+    def unifaun_download(self, pdf):
         username = self.env['ir.config_parameter'].get_param('unifaun.api_key')
         password = self.env['ir.config_parameter'].get_param('unifaun.passwd')
-        response = requests.get(url, auth=HTTPBasicAuth(username, password))
+        response = requests.get(pdf['href'], auth=HTTPBasicAuth(username, password))
         return self.env['ir.attachment'].create({
             'type': 'binary',
-            'name': 'Unifaun pdf %s' %url.split("/")[-1],
+            'name': 'Unifaun %s %s' % (pdf['description'], pdf['href'].split("/")[-1]),
             'datas': base64.b64encode(response.content),
         })
 
@@ -130,7 +130,6 @@ class delivery_carrier(models.Model):
 
         return response.content
 
-
 class stock_picking_unifaun_status(models.Model):
     _name = 'stock.picking.unifaun.status'
 
@@ -141,7 +140,50 @@ class stock_picking_unifaun_status(models.Model):
     message_code = fields.Char(string='messageCode')
     raw_data = fields.Char(string='Raw Data')
     picking_id = fields.Many2one(comodel_name='stock.picking')
+    # ~ trans_id = fields.Many2one(comodel_name='stock.picking.unifaun.status_trans', string='Human Readable Message')
+    # ~ trans_message = fields.Char(string='Message', related='trans_id.name')
+    
+    # ~ @api.one
+    # ~ def translate_message(self):
+        # ~ self.trans_id = self.env['stock.picking.unifaun.status_trans'].search([
+            # ~ '|',
+                # ~ ('field', '=', self.field),
+                # ~ ('field', '=', '*'),
+            # ~ '|',
+                # ~ ('message', '=', self.name),
+                # ~ ('message', '=', '*'),
+            # ~ '|',
+                # ~ ('type', '=', self.type),
+                # ~ ('type', '=', '*'),
+            # ~ '|',
+                # ~ ('location', '=', self.location),
+                # ~ ('location', '=', '*'),
+            # ~ '|',
+                # ~ ('message_code', '=', self.message_code),
+                # ~ ('message_code', '=', '*'),
+        # ~ ], limit=1)
+    
+    # ~ @api.model
+    # ~ @api.returns('self', lambda value: value.id)
+    # ~ def create(self, vals):
+        # ~ res = super(stock_picking_unifaun_status, self).create(vals)
+        # ~ res.translate_message()
+        # ~ return res
 
+# ~ #access_stock_stock_picking_unifaun_status_trans_user,access_stock_stock_picking_unifaun_status_trans_user,model_stock_picking_unifaun_status_trans,stock.group_stock_user,1,1,1,1
+# ~ class stock_picking_unifaun_status_trans(models.Model):
+    # ~ _name = 'stock.picking.unifaun.status_trans'
+    # ~ _order = 'sequence'
+
+    # ~ name = fields.Char(string='Message', required=True, translate=True)
+    # ~ sequence = fields.Integer(string='Sequence', default=100)
+    # ~ field = fields.Char(string='field')
+    # ~ message = fields.Char(string='message')
+    # ~ type = fields.Char(string='type')
+    # ~ location = fields.Char(string='location')
+    # ~ message_code = fields.Char(string='messageCode')
+
+# Definition of format selection fields for DeliveryCarrierUnifaunPrintSettings
 print_format_selection = [
         ('null', 'None'),
         ('laser-a5', 'Single A5 label'),
@@ -314,6 +356,15 @@ class StockPickingUnifaunParam(models.Model):
             value = param.get_value()
             write_param(rec, param.get_value(), param.parameter)
 
+class StockPickingUnifuanPdf(models.Model):
+    _name = 'stock.picking.unifaun.pdf'
+    
+    name = fields.Char(string='Description', required=True)
+    href = fields.Char(string='Href')
+    unifaunid = fields.Char(string='Unifaun ID')
+    attachment_id = fields.Many2one(string='PDF', comodel_name='ir.attachment', required=True)
+    picking_id = fields.Many2one(string='Picking', comodel_name='stock.picking', required=True, ondelete='cascade')
+    
 class StockQuantPackage(models.Model):
     _inherit = "stock.quant.package"
     
@@ -363,7 +414,7 @@ class stock_picking(models.Model):
     is_unifaun = fields.Boolean(related='carrier_id.is_unifaun')
     unifaun_shipmentid = fields.Char(string='Unifaun Shipment ID', copy=False)
     unifaun_stored_shipmentid = fields.Char(string='Unifaun Stored Shipment ID', copy=False)
-    unifaun_pdfs = fields.Char(string='Unifaun PDFs', copy=False)
+    unifaun_pdf_ids = fields.One2many(string='Unifaun PDFs', comodel_name='stock.picking.unifaun.pdf', inverse_name='picking_id', copy=False)
     unifaun_status_ids = fields.One2many(comodel_name='stock.picking.unifaun.status', inverse_name='picking_id', string='Unifaun Status')
     unifaun_param_ids = fields.One2many(comodel_name='stock.picking.unifaun.param', inverse_name='picking_id', string='Parameters')
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
@@ -640,7 +691,7 @@ class stock_picking(models.Model):
             _logger.warn('\n%s\n' % response)
             unifaun_shipmentid = ''
             carrier_tracking_ref = ''
-            unifaun_pdfs = ''
+            unifaun_pdfs = []
             parcels = 0
             for r in response:
                 # Could be more than one shipment.
@@ -650,10 +701,8 @@ class stock_picking(models.Model):
                 if unifaun_shipmentid:
                     unifaun_shipmentid += ', '
                 unifaun_shipmentid += r.get('id') or ''
-                for pdf in r.get('pdfs') or []:
-                    if unifaun_pdfs:
-                        unifaun_pdfs += ', '
-                    unifaun_pdfs += pdf.get('href') or ''
+                if r.get('pdfs'):
+                    unifaun_pdfs += r['pdfs']
                 for parcel in r.get('parcels') or []:
                     parcels += 1
                 if self.package_ids and r.get('parcels'):
@@ -665,15 +714,20 @@ class stock_picking(models.Model):
             self.number_of_packages = parcels
             self.carrier_tracking_ref = carrier_tracking_ref
             self.unifaun_shipmentid = unifaun_shipmentid
-            self.unifaun_pdfs = unifaun_pdfs
-            _logger.warn('\n\nunifaun_pdfs: %s\n' % unifaun_pdfs)
             # create an attachment
             # TODO: several pdfs?
-            if unifaun_pdfs:
-                attachment = self.carrier_id.unifaun_download(unifaun_pdfs)
+            for pdf in unifaun_pdfs:
+                attachment = self.carrier_id.unifaun_download(pdf)
                 attachment.write({
                     'res_model': self._name,
                     'res_id': self.id
+                })
+                self.env['stock.picking.unifaun.pdf'].create({
+                    'name': pdf.get('description'),
+                    'href': pdf.get('href'),
+                    'unifaunid': pdf.get('id'),
+                    'attachment_id': attachment.id,
+                    'picking_id': self.id,
                 })
             
             self.env['mail.message'].create({
