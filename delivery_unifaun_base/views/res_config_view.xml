@@ -12,7 +12,8 @@
                         <field name="unifaun_apikey" />
                         <field name="unifaun_password" />
                         <field name="unifaun_url" />
-                        <field name="unifaun_environment" />
+                        <field name="unifaun_receiver_name_method" />
+                        <field name="unifaun_package_contents" />
                     </group>
                 </form>
             </field>

@@ -59,9 +59,15 @@
             <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
             <field name="type">form</field>
             <field name="arch" type="xml">
+                <field name="number_of_packages" position="replace" />
                 <separator position="after">
-                    <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': ['|',('is_unifaun', '==', False),('state','!=','done')]}"/>
-                    <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
+                    <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '==', False), ('state', '!=', 'done'), ('unifaun_shipmentid', '!=', False)]}" />
+                    <button name="delete_stored_shipment" string="Delete" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
+                    <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': ['|', ('unifaun_stored_shipmentid', '==', False), ('unifaun_shipmentid', '!=', False)]}" />
+                    <span>
+                        <label for="number_of_packages" class="oe_inline" />
+                        <field name="number_of_packages" class="oe_inline" />
+                    </span>
                 </separator>
                 <field name="carrier_tracking_ref" position="after">
                     <label for="unifaun_stored_shipmentid" />

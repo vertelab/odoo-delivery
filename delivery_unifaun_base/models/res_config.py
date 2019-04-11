@@ -31,7 +31,8 @@ class stock_config_settings(models.TransientModel):
     unifaun_apikey = fields.Char(string="API-key")
     unifaun_password = fields.Char(string='Password')
     unifaun_url = fields.Char(string='URL')
-    unifaun_environment = fields.Selection([('production','Production'),('test','Test')],string='Environment',help='Test or Production')
+    unifaun_package_contents = fields.Char(string='Package Contents', help="Default package content description.")
+    unifaun_receiver_name_method = fields.Selection(string='Receiver Name', selection=[('default', 'Own Name'), ('parent', 'Parent'), ('commercial', 'Commercial Partner')], help="Method for choosing receivers name on shipping labels.")
 
     @api.multi
     def set_unifaun(self):
@@ -39,16 +40,18 @@ class stock_config_settings(models.TransientModel):
         icp.set_param('unifaun.api_key', (self.unifaun_apikey or '').strip(), groups=['base.group_system'])
         icp.set_param('unifaun.passwd', (self.unifaun_password or '').strip(), groups=['base.group_system'])
         icp.set_param('unifaun.url', (self.unifaun_url or '').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.environment', (self.unifaun_environment or '').strip(), groups=['base.group_system'])
+        icp.set_param('unifaun.parcel_description', (self.unifaun_package_contents or '').strip(), groups=['base.group_system'])
+        icp.set_param('unifaun.receiver_name_method', (self.unifaun_receiver_name_method or 'default').strip(), groups=['base.group_system'])
 
     @api.model
-    def get_default_all(self, fields=None):
+    def get_default_unifaun(self, fields=None):
         icp = self.env['ir.config_parameter']
         return {
             'unifaun_apikey': icp.get_param('unifaun.api_key', default=''),
             'unifaun_password': icp.get_param('unifaun.passwd', default=''),
             'unifaun_url': icp.get_param('unifaun.url', default='https://api.unifaun.com/rs-extapi/v1'),
-            'unifaun_environment': icp.get_param('unifaun.environment', default='test'),
+            'unifaun_package_contents': icp.get_param('unifaun.parcel_description', default='Goods'),
+            'unifaun_receiver_name_method': icp.get_param('unifaun.receiver_name_method', default='default'),
         }
 
 

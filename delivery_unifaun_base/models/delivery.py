@@ -408,6 +408,12 @@ class ProductPackaging(models.Model):
     
     shipper_package_code = fields.Char(string='Shipper Packaging Ref')
 
+class StockPackOperation(models.Model):
+    _inherit = 'stock.pack.operation'
+    
+    result_package_weight = fields.Float(related='result_package_id.weight')
+    result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
+
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
 
@@ -513,6 +519,62 @@ class stock_picking(models.Model):
             'valuePerParcel': self.number_of_packages < 2,
         }]
     
+    @api.multi
+    def unifaun_sender_record(self, sender):
+        # ~ sender_contact = None
+        # ~ if sender.parent_id and sender.type == 'contact':
+            # ~ sender_contact = sender
+            # ~ sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
+        rec = {
+                'name': sender.name,
+                'address1': sender.street or '',
+                'address2': sender.street2 or '',
+                'zipcode': sender.zip or '',
+                'city': sender.city or '',
+                'state': sender.state_id and sender.state_id.name or '',
+                'country': sender.country_id and sender.country_id.code or '',
+                'phone': sender.phone or sender.mobile or '',
+                'mobile': sender.mobile or '',
+                'email': sender.email or '',
+            }
+        # ~ if sender_contact:
+            # ~ rec.update({
+                # ~ 'phone': sender_contact.phone or sender_contact.mobile or '',
+                # ~ 'mobile': sender_contact.mobile or '',
+                # ~ 'email': sender_contact.email or '',
+                # ~ 'contact': sender_contact.name,
+            # ~ })
+        return rec
+    
+    @api.multi
+    def unifaun_receiver_contact(self, receiver, current_values):
+        """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
+        contact_data = {}
+        if hasattr(self, 'sale_id'):
+            contact_data['contact'] = self.sale_id.partner_id.name
+        return contact_data
+    
+    @api.multi
+    def unifaun_receiver_record(self, receiver):
+        rec = {
+                'name': receiver.name,
+                'address1': receiver.street or '',
+                'address2': receiver.street2 or '',
+                'zipcode': receiver.zip or '',
+                'city': receiver.city or '',
+                'state': receiver.state_id and receiver.state_id.name or '',
+                'country': receiver.country_id and receiver.country_id.code or '',
+                'phone': receiver.phone or receiver.mobile or '',
+                'mobile': receiver.mobile or '',
+                'email': receiver.email or '',
+            }
+        name_method = self.env['ir.config_parameter'].get_param('unifaun.receiver_name_method', 'default')
+        if name_method == 'parent' and receiver.parent_id:
+            rec['name'] = receiver.parent_id.name
+        elif name_method == 'commercial':
+            rec['name'] = receiver.commercial_partner_id.name
+        return rec
+    
     @api.one
     def order_stored_shipment(self):
         """Create a stored shipment."""
@@ -537,50 +599,15 @@ class stock_picking(models.Model):
         elif self.picking_type_id.code == 'outgoing':
             sender = self.picking_type_id.warehouse_id.partner_id
             receiver = self.partner_id
-        receiver_contact = sender_contact = None
-        if receiver.parent_id and receiver.type == 'contact':
-            receiver_contact = receiver
-            receiver = self.env['res.partner'].browse(receiver.parent_id.address_get(['delivery'])['delivery'])
-        if sender.parent_id and sender.type == 'contact':
-            sender_contact = sender
-            sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
-        if receiver.parent_id:
-            if receiver.name:
-                receiver_name = '%s, %s' % (receiver.parent_id.name, receiver.name)
-            else:
-                receiver_name = receiver.parent_id.name
-        else:
-            receiver_name = receiver.name
+        receiver_record = self.unifaun_receiver_record(receiver)
+        receiver_record.update(self.unifaun_receiver_contact(receiver, receiver_record))
         rec = {
-            'sender': {
-                # ~ 'quickId': '1',
-                'name': sender.name,
-                'address1': sender.street or '',
-                'address2': sender.street2 or '',
-                'zipcode': sender.zip or '',
-                'city': sender.city or '',
-                'state': sender.state_id and sender.state_id.name or '',
-                'country': sender.country_id and sender.country_id.code or '',
-                'phone': sender.phone or sender.mobile or '',
-                'mobile': sender.mobile or '',
-                'email': sender.email or '',
-            },
+            'sender': self.unifaun_sender_record(sender),
             'senderPartners': [{
                 'id': self.carrier_id.unifaun_sender or '',
                 'custNo': self.carrier_id.unifaun_customer_no or '',
             }],
-            'receiver': {
-                'name': receiver_name,
-                'address1': receiver.street or '',
-                'address2': receiver.street2 or '',
-                'zipcode': receiver.zip or '',
-                'city': receiver.city or '',
-                'state': receiver.state_id and receiver.state_id.name or '',
-                'country': sender.country_id and sender.country_id.code or '',
-                'phone': receiver.phone or receiver.mobile or '',
-                'mobile': receiver.mobile or '',
-                'email': receiver.email or '',
-            },
+            'receiver': receiver_record,
             'service': {
                 'id': self.carrier_id.unifaun_service_code or '',
             },
@@ -596,20 +623,7 @@ class stock_picking(models.Model):
                 #~ "from": "info@unifaun.com"
             #~ }],
         }
-        if sender_contact:
-            rec['sender'].update({
-                'phone': sender_contact.phone or sender_contact.mobile or '',
-                'mobile': sender_contact.mobile or '',
-                'email': sender_contact.email or '',
-                'contact': sender_contact.name,
-            })
-        if receiver_contact:
-            rec['receiver'].update({
-                'phone': receiver_contact.phone or receiver_contact.mobile or '',
-                'mobile': receiver_contact.mobile or '',
-                'email': receiver_contact.email or '',
-                'contact': receiver_contact.name,
-            })
+        
         if self.unifaun_param_ids:
             self.unifaun_param_ids.add_to_record(rec)
 
