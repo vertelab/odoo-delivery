@@ -369,17 +369,16 @@ class StockQuantPackage(models.Model):
     _inherit = "stock.quant.package"
     
     unifaun_parcelno = fields.Char(string='Unifaun Reference')
-    weight = fields.Float(compute='_compute_weight')
+    weight = fields.Float(string='Weight', compute='_compute_weight')
     shipping_weight = fields.Float(string='Shipping Weight', help="Can be changed during the 'put in pack' to adjust the weight of the shipping.")
     
     @api.one
     @api.depends('quant_ids', 'children_ids')
     def _compute_weight(self):
-        weight = 0
+        weight = self.ul_id and self.ul_id.weight or 0.0
         for quant in self.quant_ids:
             weight += quant.qty * quant.product_id.weight
         for pack in self.children_ids:
-            pack._compute_weight()
             weight += pack.weight
         self.weight = weight
     
@@ -411,8 +410,23 @@ class ProductPackaging(models.Model):
 class StockPackOperation(models.Model):
     _inherit = 'stock.pack.operation'
     
+    result_package_working_weight = weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
     result_package_weight = fields.Float(related='result_package_id.weight')
     result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
+    
+    @api.one
+    def _compute_working_weight(self):
+        # TODO: Add support for packages in packages.
+        if self.picking_id.state == 'assigned':
+            weight = 0.0
+            _logger.warn('_compute_working_weight: %s' % weight)
+            if self.result_package_id:
+                weight = self.result_package_id.ul_id and self.result_package_id.ul_id.weight or 0.0
+                for op in self.picking_id.pack_operation_ids.filtered(lambda o: o.result_package_id == self.result_package_id):
+                    weight += op.product_qty * op.product_id.weight
+            self.result_package_working_weight = weight
+        else:
+            self.result_package_working_weight = self.result_package_weight
 
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
