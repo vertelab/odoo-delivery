@@ -58,7 +58,8 @@ class delivery_carrier(models.Model):
         response = requests.get(pdf['href'], auth=HTTPBasicAuth(username, password))
         return self.env['ir.attachment'].create({
             'type': 'binary',
-            'name': 'Unifaun %s %s' % (pdf['description'], pdf['href'].split("/")[-1]),
+            'name': 'Unifaun %s %s.pdf' % (pdf['description'], pdf['href'].split("/")[-1]),
+            'mimetype': 'application/pdf',
             'datas': base64.b64encode(response.content),
         })
 
