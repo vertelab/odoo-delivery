@@ -21,6 +21,7 @@
 from openerp import models, fields, api, _
 from openerp.exceptions import Warning
 from openerp.tools import safe_eval
+import openerp.addons.decimal_precision as dp
 import requests
 from requests.auth import HTTPBasicAuth
 import json
@@ -374,7 +375,7 @@ class StockQuantPackage(models.Model):
     shipping_weight = fields.Float(string='Shipping Weight', help="Can be changed during the 'put in pack' to adjust the weight of the shipping.")
     
     @api.one
-    @api.depends('quant_ids', 'children_ids')
+    @api.depends('quant_ids.qty', 'quant_ids.product_id.weight', 'children_ids')
     def _compute_weight(self):
         weight = self.ul_id and self.ul_id.weight or 0.0
         for quant in self.quant_ids:
@@ -411,7 +412,7 @@ class ProductPackaging(models.Model):
 class StockPackOperation(models.Model):
     _inherit = 'stock.pack.operation'
     
-    result_package_working_weight = weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
+    result_package_working_weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
     result_package_weight = fields.Float(related='result_package_id.weight')
     result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
     
@@ -419,12 +420,13 @@ class StockPackOperation(models.Model):
     def _compute_working_weight(self):
         # TODO: Add support for packages in packages.
         if self.picking_id.state == 'assigned':
+            # Packaging is not finalized. Calculate from packop lines.
             weight = 0.0
-            _logger.warn('_compute_working_weight: %s' % weight)
             if self.result_package_id:
                 weight = self.result_package_id.ul_id and self.result_package_id.ul_id.weight or 0.0
                 for op in self.picking_id.pack_operation_ids.filtered(lambda o: o.result_package_id == self.result_package_id):
-                    weight += op.product_qty * op.product_id.weight
+                    qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+                    weight += qty * op.product_id.weight
             self.result_package_working_weight = weight
         else:
             self.result_package_working_weight = self.result_package_weight
@@ -439,12 +441,49 @@ class stock_picking(models.Model):
     unifaun_status_ids = fields.One2many(comodel_name='stock.picking.unifaun.status', inverse_name='picking_id', string='Unifaun Status')
     unifaun_param_ids = fields.One2many(comodel_name='stock.picking.unifaun.param', inverse_name='picking_id', string='Parameters')
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
+    weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
+    weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
+    
+    @api.one
+    @api.depends(
+        'move_lines.state',
+        'move_lines.product_id',
+        'move_lines.product_uom_qty',
+        'move_lines.product_uom',
+        'pack_operation_ids.result_package_id.quant_ids',
+        'pack_operation_ids.result_package_id.children_ids',
+        'pack_operation_ids.result_package_id.quant_ids.qty',
+        'pack_operation_ids.result_package_id.quant_ids.product_id.weight',
+        'pack_operation_ids.product_uom_id',
+        'pack_operation_ids.product_qty',
+        'pack_operation_ids.product_id.uom_id'
+    )
+    def _calculate_weight(self):
+        total_weight = total_weight_net = 0.00
+        # Original weight calculation
+        for move in self.move_lines:
+            if move.state != 'cancel':
+                total_weight += move.weight
+                total_weight_net += move.weight_net
+        # Package weights
+        if self.pack_operation_ids:
+            total_weight = 0.00
+        # Package weights
+        for package in self.package_ids:
+            total_weight += package.shipping_weight or package.weight or 0
+        # Pack operations weight (except packages)
+        for op in self.pack_operation_ids.filtered(lambda o: not o.result_package_id):
+            qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+            total_weight += op.product_id.weight * qty
+        self.weight = total_weight
+        self.weight_net = total_weight_net
     
     # https://www.unifaunonline.se/rs-docs/
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
     
     @api.one
+    # ~ @api.depends('pack_operation_ids.result_package_id')
     def _compute_package_ids(self):
         self.package_ids = self.pack_operation_ids.mapped('result_package_id')
         
