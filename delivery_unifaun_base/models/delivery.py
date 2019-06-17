@@ -579,10 +579,8 @@ class stock_picking(models.Model):
         min_weight = self.carrier_id.unifaun_min_weight
         
         for package in packages:
-            _logger.warn("\n\nFöre: %s\n" % package['weight'])
             if package['weight'] < min_weight:
                 package['weight'] = min_weight 
-            _logger.warn("\n\nEfter: %s\n" % package['weight'])
         
         return packages
     
