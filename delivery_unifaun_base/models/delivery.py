@@ -44,6 +44,8 @@ class delivery_carrier(models.Model):
     unifaun_customer_no = fields.Char(string='Customer Number', help="The paying party's customer number with the carrier.")
     unifaun_param_ids = fields.One2many(comodel_name='delivery.carrier.unifaun.param', inverse_name='carrier_id', string='Parameters')
     unifaun_print_settings_id = fields.Many2one(comodel_name='delivery.carrier.unifaun.print_settings', string='Unifaun Print Settings')
+    unifaun_min_weight = fields.Float(string='Minimum weight per package', help="The minimum weight per package allowed. Lower weights will be set to the minimum value.", default=0.00)
+
     #~ unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
 
     #~ @api.multi
@@ -560,18 +562,29 @@ class stock_picking(models.Model):
         #     Parcel numbers. The array should have copies number of parcel numbers. Note: A special license key is required to use this value.
         # stackable (boolean)
         #     Parcel can be stacked. Used for certain services.
-
+        
         if self.package_ids:
             packages = []
             for package in self.package_ids:
                 packages.append(package.unifaun_get_parcel_values())
-            return packages
-        return [{
-            'copies': self.number_of_packages or 1,
-            'weight': self.weight,
-            'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
-            'valuePerParcel': self.number_of_packages < 2,
-        }]
+        else:
+            packages = [{
+                'copies': self.number_of_packages or 1,
+                'weight': self.weight,
+                'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
+                'valuePerParcel': self.number_of_packages < 2,
+            }]
+
+        # TODO: add check
+        min_weight = self.carrier_id.unifaun_min_weight
+        
+        for package in packages:
+            _logger.warn("\n\nFöre: %s\n" % package['weight'])
+            if package['weight'] < min_weight:
+                package['weight'] = min_weight 
+            _logger.warn("\n\nEfter: %s\n" % package['weight'])
+        
+        return packages
     
     @api.multi
     def unifaun_sender_record(self, sender):

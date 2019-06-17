@@ -19,6 +19,7 @@
                             <field name="unifaun_sender" />
                             <field name="unifaun_customer_no" />
                             <field name="unifaun_print_settings_id" />
+                            <field name="unifaun_min_weight" />
                             <!--
                                  <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
                             -->
