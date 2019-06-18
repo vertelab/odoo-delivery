@@ -9,11 +9,13 @@
                 <form class="oe_form_configuration" position="inside">
                     <separator string="Unifaun" />
                     <group name="unifaun">
+                        <field name="unifaun_send_email" />
                         <field name="unifaun_apikey" />
                         <field name="unifaun_password" />
                         <field name="unifaun_url" />
                         <field name="unifaun_receiver_name_method" />
                         <field name="unifaun_package_contents" />
+                        <field name="unifaun_template_id" />
                     </group>
                 </form>
             </field>

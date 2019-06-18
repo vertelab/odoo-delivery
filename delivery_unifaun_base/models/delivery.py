@@ -27,6 +27,7 @@ from requests.auth import HTTPBasicAuth
 import json
 import base64
 from urllib import urlencode
+import traceback
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -446,6 +447,24 @@ class stock_picking(models.Model):
     weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     
+    @api.multi
+    def get_unifaun_language(self):
+        translate = {
+            'en_US': 'gb',
+            'sv_SE': 'se',
+            'no_NO': 'no',
+            'nn_NO': 'no',
+            'nb_NO': 'no',
+            'fi_FI': 'fi',
+            'da-DK': 'dk'
+        }
+        
+        return translate.get(self.partner_id.lang,'gb') 
+    
+    @api.multi
+    def get_unifaun_sender_reference(self):
+        return self.name 
+    
     @api.one
     @api.depends(
         'move_lines.state',
@@ -518,13 +537,15 @@ class stock_picking(models.Model):
     def unifaun_track_and_trace_url(self):
         """Return an URL for Unifaun Track & Trace."""
         # https://www.unifaunonline.se/ufoweb-prod-201812111106/public/SUP/UO/UO-101-TrackandTrace-en.pdf
-        # TODO: Add support for regions and languages
+        # TODO: Add support for regions (what does regions even do?)
         parameters = {
             'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
-            'reference': self.name}
+            'reference': self.get_unifaun_sender_reference(),
+            'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
+        
         region = 'se'
-        lang = 'se'
-        return 'https://www.unifaunonline.com/ext.uo.%s.%s.track?%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
+        lang = self.get_unifaun_language()
+        return 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
 
     @api.multi
     def unifaun_get_parcel_data(self):
@@ -678,7 +699,7 @@ class stock_picking(models.Model):
             },
             'parcels': self.unifaun_get_parcel_data(),
             'orderNo': self.name,
-            'senderReference': self.origin,
+            'senderReference': self.get_unifaun_sender_reference(),
             #~ "receiverReference": "receiver ref 345",
             #~ "options": [{
                 #~ "message": "This is order number 123",
@@ -817,6 +838,7 @@ class stock_picking(models.Model):
                 'model': self._name,
                 'type': 'notification',
             })
+            self.send_mail_silent()
         else:
             self.env['mail.message'].create({
                 'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (rec, response)),
@@ -855,5 +877,25 @@ class stock_picking(models.Model):
             'target': 'new',
             'context': ctx,
         }
+        
+    @api.multi
+    def send_mail_silent(self):
+        self.ensure_one()
+        _logger.warn(self.env['ir.config_parameter'].get_param('unifaun.sendemail'))
+        if self.env['ir.config_parameter'].get_param('unifaun.sendemail', '1') == '1':
+
+            template = self.env.ref('delivery_unifaun_base.unifaun_email_template')
+            
+            try:
+                template.send_mail(self.id)
+            except:
+                self.env['mail.message'].create({
+                    'body': _("Mail error!<br/>Could not send email<br/>%s" % traceback.format_exc().replace('\n', '<br/>')),
+                    'subject': "Send tracking mail",
+                    'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
+                    'res_id': self.id,
+                    'model': self._name,
+                    'type': 'notification',
+                })
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
