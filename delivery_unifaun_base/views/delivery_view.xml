@@ -81,6 +81,10 @@
                 </field>
                 <notebook position="inside">
                     <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
+						<group>
+							<field name="unifaun_parcel_count"/>
+							<field name="unifaun_parcel_weight"/>
+						</group>
                         <label for="unifaun_pdf_ids"/>
                         <field name="unifaun_pdf_ids"/>
                         <label for="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}" />

@@ -436,16 +436,20 @@ class StockPackOperation(models.Model):
 
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
-
+    
     is_unifaun = fields.Boolean(related='carrier_id.is_unifaun')
     unifaun_shipmentid = fields.Char(string='Unifaun Shipment ID', copy=False)
     unifaun_stored_shipmentid = fields.Char(string='Unifaun Stored Shipment ID', copy=False)
     unifaun_pdf_ids = fields.One2many(string='Unifaun PDFs', comodel_name='stock.picking.unifaun.pdf', inverse_name='picking_id', copy=False)
     unifaun_status_ids = fields.One2many(comodel_name='stock.picking.unifaun.status', inverse_name='picking_id', string='Unifaun Status')
     unifaun_param_ids = fields.One2many(comodel_name='stock.picking.unifaun.param', inverse_name='picking_id', string='Parameters')
+    unifaun_parcel_count = fields.Integer(string='Unifaun Parcel Count', copy=False, help="Fill in this field to override package data. Will override data from packages if used.")
+    unifaun_parcel_weight = fields.Float(string='Unifaun Parcel Weight', copy=False, help="Fill in this field to override package data. Will override weight unless the data is generated from packages.")
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
     weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
+    
+
     
     @api.multi
     def get_unifaun_language(self):
@@ -584,16 +588,18 @@ class stock_picking(models.Model):
         # stackable (boolean)
         #     Parcel can be stacked. Used for certain services.
         
-        if self.package_ids:
+        if self.package_ids and not self.unifaun_parcel_count:
             packages = []
             for package in self.package_ids:
                 packages.append(package.unifaun_get_parcel_values())
         else:
+            number_of_packages = self.unifaun_parcel_count or self.number_of_packages or 1
+            weight = self.unifaun_parcel_weight or self.weight
             packages = [{
-                'copies': self.number_of_packages or 1,
-                'weight': self.weight,
+                'copies': number_of_packages,
+                'weight': weight,
                 'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
-                'valuePerParcel': self.number_of_packages < 2,
+                'valuePerParcel': number_of_packages < 2,
             }]
 
         # TODO: add check
