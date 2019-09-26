@@ -594,7 +594,7 @@ class stock_picking(models.Model):
                 packages.append(package.unifaun_get_parcel_values())
         else:
             number_of_packages = self.unifaun_parcel_count or self.number_of_packages or 1
-            weight = self.unifaun_parcel_weight or self.weight
+            weight = (self.unifaun_parcel_weight or self.weight) / number_of_packages
             packages = [{
                 'copies': number_of_packages,
                 'weight': weight,
