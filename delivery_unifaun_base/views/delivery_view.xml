@@ -238,7 +238,7 @@
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
                 <button name="do_print_picking" position="before">
-                    <button name="send_mail" string="Send Mail" groups="stock.group_stock_user" type="object" attrs="{'invisible': [('state', 'not in', ('assigned', 'partially_available')), ('is_unifaun', '=', False)]}"/>
+                    <button name="unifaun_send_track_mail_silent" string=" Send Track &amp; Trace" groups="stock.group_stock_user" type="object" attrs="{'invisible': [('state', 'not in', ('assigned', 'partially_available', 'done')), ('is_unifaun', '=', False)]}" context="{'unifaun_track_force_send': True}" />
                 </button>
             </field>
         </record>

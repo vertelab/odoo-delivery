@@ -844,7 +844,7 @@ class stock_picking(models.Model):
                 'model': self._name,
                 'type': 'notification',
             })
-            self.send_mail_silent()
+            self.unifaun_send_track_mail_silent()
         else:
             self.env['mail.message'].create({
                 'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (rec, response)),
@@ -857,7 +857,7 @@ class stock_picking(models.Model):
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
 
     @api.multi
-    def send_mail(self):
+    def unifaun_send_track_mail(self):
         self.ensure_one()
         template_id = self.env.ref('delivery_unifaun_base.unifaun_email_template').id
         try:
@@ -884,14 +884,10 @@ class stock_picking(models.Model):
             'context': ctx,
         }
         
-    @api.multi
-    def send_mail_silent(self):
-        self.ensure_one()
-        _logger.warn(self.env['ir.config_parameter'].get_param('unifaun.sendemail'))
-        if self.env['ir.config_parameter'].get_param('unifaun.sendemail', '1') == '1':
-
+    @api.one
+    def unifaun_send_track_mail_silent(self):
+        if self.env.context.get('unifaun_track_force_send') or self.env['ir.config_parameter'].get_param('unifaun.sendemail', '1') == '1':
             template = self.env.ref('delivery_unifaun_base.unifaun_email_template')
-            
             try:
                 template.send_mail(self.id)
             except:
