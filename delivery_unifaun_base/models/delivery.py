@@ -542,14 +542,21 @@ class stock_picking(models.Model):
         """Return an URL for Unifaun Track & Trace."""
         # https://www.unifaunonline.se/ufoweb-prod-201812111106/public/SUP/UO/UO-101-TrackandTrace-en.pdf
         # TODO: Add support for regions (what does regions even do?)
-        parameters = {
-            'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
-            'reference': self.get_unifaun_sender_reference(),
-            'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
+        if self.is_unifaun and self.unifaun_shipmentid:
+            parameters = {
+                'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
+                'reference': self.get_unifaun_sender_reference(),
+                'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
+            
+            region = 'se'
+            lang = self.get_unifaun_language()
+            
+            res = 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
+        else:
+            res = ''
         
-        region = 'se'
-        lang = self.get_unifaun_language()
-        return 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
+        return res
+
 
     @api.multi
     def unifaun_get_parcel_data(self):
