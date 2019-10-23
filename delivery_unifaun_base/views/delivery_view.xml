@@ -238,7 +238,7 @@
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
                 <button name="do_print_picking" position="before">
-                    <button name="unifaun_send_track_mail_silent" string=" Send Track &amp; Trace" groups="stock.group_stock_user" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ('assigned', 'partially_available', 'done')), ('is_unifaun', '=', False), ('unifaun_shipmentid', '=', False)]}" context="{'unifaun_track_force_send': True}" />
+                    <button name="unifaun_send_track_mail_silent" string=" Send Track &amp; Trace" groups="stock.group_stock_user" type="object" attrs="{'invisible': [('state', 'not in', ('assigned', 'partially_available', 'done')), ('is_unifaun', '=', False), ('unifaun_shipmentid', '=', False)]}" context="{'unifaun_track_force_send': True}" />
                 </button>
             </field>
         </record>
@@ -247,7 +247,7 @@
             <field name="name">Unifaun Email Template</field>
             <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
             <field name="subject">Unifaun ${object.name} tracking link</field>
-            <field name="email_to">${object.unifaun_track_and_trace_get_recipient()}</field>
+            <field name="email_to">${object.partner_id.email or object.partner_id.commercial_partner_id.email}</field>
             <field name="lang">${object.lang}</field>
             <field name="model_id" ref="stock.model_stock_picking"/>
             <field name="auto_delete" eval="True"/>

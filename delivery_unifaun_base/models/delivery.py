@@ -536,7 +536,28 @@ class stock_picking(models.Model):
                 'picking_id': self.id,
             })
         # ~ {u'field': u'Party_CustNo', u'message': u'invalid check digit', u'type': u'error', u'location': u'', u'messageCode': u'Checkdigit'}
-    
+
+    @api.multi
+    def unifaun_track_and_trace_url(self):
+        """Return an URL for Unifaun Track & Trace."""
+        # https://www.unifaunonline.se/ufoweb-prod-201812111106/public/SUP/UO/UO-101-TrackandTrace-en.pdf
+        # TODO: Add support for regions (what does regions even do?)
+        if self.is_unifaun and self.unifaun_shipmentid:
+            parameters = {
+                'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
+                'reference': self.get_unifaun_sender_reference(),
+                'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
+            
+            region = 'se'
+            lang = self.get_unifaun_language()
+            
+            res = 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
+        else:
+            res = ''
+        
+        return res
+
+
     @api.multi
     def unifaun_get_parcel_data(self):
         """Return a list of parcel dicts to send in unifaun shipment records."""
@@ -590,13 +611,10 @@ class stock_picking(models.Model):
 
         # TODO: add check
         min_weight = self.carrier_id.unifaun_min_weight
-        if min_weight:
-            for package in packages:
-                package_min_weight = min_weight
-                if package.get('valuePerParcel'):
-                    package_min_weight *= package['copies']
-                if package['weight'] < package_min_weight:
-                    package['weight'] = package_min_weight 
+        
+        for package in packages:
+            if package['weight'] < min_weight:
+                package['weight'] = min_weight 
         
         return packages
     
@@ -844,44 +862,7 @@ class stock_picking(models.Model):
                 'type': 'notification',
             })
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
-    
-    @api.multi
-    def unifaun_track_and_trace_url(self):
-        """Return an URL for Unifaun Track & Trace."""
-        # https://www.unifaunonline.se/ufoweb-prod-201812111106/public/SUP/UO/UO-101-TrackandTrace-en.pdf
-        # TODO: Add support for regions (what does regions even do?)
-        parameters = {
-            'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
-            'reference': self.get_unifaun_sender_reference(),
-            'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
-        
-        region = 'se'
-        lang = self.get_unifaun_language()
-        return 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
-        
-    @api.multi
-    def unifaun_track_and_trace_get_recipient(self):
-        """Return a recipient mail address for Unifaun Track & Trace."""
-        if self.partner_id.email:
-            return self.partner_id.email
-        # Find sale orders connected to this shipping and partner. Normally only gonna give one hit.
-        sale_orders = self.env['sale.order'].search([
-                ('procurement_group_id', '=', self.procurement_group_id.id),
-                ('partner_id.email', '!=', False)
-            ]).filtered(
-                lambda so: so.partner_id.commercial_partner_id == self.partner_id.commercial_partner_id)
-        _logger.warn('sale_orders: %s' % sale_orders)
-        # Match an order with the correct delivery address
-        for order in sale_orders.filtered(lambda so: so.partner_shipping_id == self.partner_id):
-            _logger.warn('order.partner_id.email.filtered: %s' % order.partner_id.email)
-            return order.partner_id.email
-        # Match any of the orders
-        for order in sale_orders:
-            _logger.warn('order.partner_id.email: %s' % order.partner_id.email)
-            return order.partner_id.email
-        # No match found
-        raise Warning(_("Couldn't find an email recipient for Unifaun Track & Trace."))
-    
+
     @api.multi
     def unifaun_send_track_mail(self):
         self.ensure_one()
@@ -909,21 +890,17 @@ class stock_picking(models.Model):
             'target': 'new',
             'context': ctx,
         }
-    
+        
     @api.one
     def unifaun_send_track_mail_silent(self):
         if self.env.context.get('unifaun_track_force_send') or self.env['ir.config_parameter'].get_param('unifaun.sendemail', '1') == '1':
             template = self.env.ref('delivery_unifaun_base.unifaun_email_template')
             try:
                 template.send_mail(self.id)
-            except Exception as e:
-                if e.message == _("Couldn't find an email recipient for Unifaun Track & Trace."):
-                    body = e.message
-                else:
-                    body = _("Mail error!\nCould not send email\n%s" % traceback.format_exc())
+            except:
                 self.env['mail.message'].create({
-                    'body': body.replace('\n', '<br/>'),
-                    'subject': _("Error sending Unifaun TRack & Trace mail"),
+                    'body': _("Mail error!<br/>Could not send email<br/>%s" % traceback.format_exc().replace('\n', '<br/>')),
+                    'subject': "Send tracking mail",
                     'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                     'res_id': self.id,
                     'model': self._name,
