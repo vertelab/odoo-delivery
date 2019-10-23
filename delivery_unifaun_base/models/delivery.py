@@ -611,11 +611,13 @@ class stock_picking(models.Model):
 
         # TODO: add check
         min_weight = self.carrier_id.unifaun_min_weight
-        
-        for package in packages:
-            if package['weight'] < min_weight:
-                package['weight'] = min_weight 
-        
+        if min_weight:
+            for package in packages:
+                package_min_weight = min_weight
+                if package.get('valuePerParcel'):
+                    package_min_weight *= package['copies']
+                if package['weight'] < package_min_weight:
+                    package['weight'] = package_min_weight
         return packages
     
     @api.multi
