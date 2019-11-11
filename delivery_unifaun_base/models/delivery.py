@@ -601,7 +601,7 @@ class stock_picking(models.Model):
                 packages.append(package.unifaun_get_parcel_values())
         else:
             number_of_packages = self.unifaun_parcel_count or self.number_of_packages or 1
-            weight = (self.unifaun_parcel_weight or self.weight) / number_of_packages
+            weight = (self.unifaun_parcel_weight or self.weight) #/ number_of_packages # We're setting valuePerParcel to False, so this should be the total weight
             packages = [{
                 'copies': number_of_packages,
                 'weight': weight,
@@ -614,7 +614,7 @@ class stock_picking(models.Model):
         if min_weight:
             for package in packages:
                 package_min_weight = min_weight
-                if package.get('valuePerParcel'):
+                if not package.get('valuePerParcel'):
                     package_min_weight *= package['copies']
                 if package['weight'] < package_min_weight:
                     package['weight'] = package_min_weight
