@@ -7,11 +7,11 @@
             <field name="model">delivery.carrier</field>
             <field name="inherit_id" ref="delivery.view_delivery_carrier_form" />
             <field name="arch" type="xml">
-                <field name="active" position="after">
+                <field name="integration_level" position="after">
                     <field name="is_unifaun" />
                 </field>
-                <field name="integration_level" position="after">
-                    <div attrs="{'invisible': [('is_unifaun', '==', False)]}">
+                <page name="destination" position="after">
+                    <page string="Unifaun" name="unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
                         <separator string="Unifaun"/>
                         <group>
                             <field name="unifaun_service_code" />
@@ -25,8 +25,8 @@
                         </group>
                         <label for="unifaun_param_ids"/>
                         <field name="unifaun_param_ids"/>
-                    </div>
-                </field>
+                    </page>
+                </page>
             </field>
         </record>
         
