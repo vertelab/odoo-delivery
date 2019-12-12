@@ -10,7 +10,7 @@
                 <field name="active" position="after">
                     <field name="is_unifaun" />
                 </field>
-                <field name="categ_id" position="after">
+                <field name="integration_level" position="after">
                     <div attrs="{'invisible': [('is_unifaun', '==', False)]}">
                         <separator string="Unifaun"/>
                         <group>

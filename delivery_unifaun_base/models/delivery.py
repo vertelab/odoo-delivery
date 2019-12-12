@@ -385,7 +385,8 @@ class StockPackOperation(models.Model):
             if self.result_package_id:
                 weight = self.result_package_id.ul_id and self.result_package_id.ul_id.weight or 0.0
                 for op in self.picking_id.pack_operation_ids.filtered(lambda o: o.result_package_id == self.result_package_id):
-                    qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+                    qty = op.product_uom_id._compute_quantity(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+                    # qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
                     weight += qty * op.product_id.weight
             self.result_package_working_weight = weight
         else:
@@ -456,7 +457,8 @@ class stock_picking(models.Model):
             total_weight += package.shipping_weight or package.weight or 0
         # Pack operations weight (except packages)
         for op in self.pack_operation_ids.filtered(lambda o: not o.result_package_id):
-            qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+            qty = op.product_uom_id._compute_quantity(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+            # qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
             total_weight += op.product_id.weight * qty
         self.weight = total_weight
         self.weight_net = total_weight_net
