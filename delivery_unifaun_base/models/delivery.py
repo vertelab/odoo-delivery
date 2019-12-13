@@ -193,7 +193,8 @@ class DeliveryCarrierUnifaunParam(models.Model):
     default_compute = fields.Char(string='Default Compute', help="Expression to compute default value for this parameter. variable param = the parameter object. Example: 'param.picking_id.sale_id.name'")
 
     @api.multi
-    def get_default_value(self):
+    def get_default_value(self): # I dont think that this function is used.
+        _logger.warn("DAER: get_default_value %s" % 'start')
         try:
             if self.type == 'string':
                 return {'value_char': self.default_value}
@@ -215,8 +216,9 @@ class DeliveryCarrierUnifaunParam(models.Model):
                 'parameter': param.parameter,
                 'type': param.type,
                 'param_id': param.id,
+                'value': param.default_value
             }
-            vals.update(param.get_default_value())
+            vals.update(param.get_default_value()) # I dont think that this does anything
             values.append(vals)
         return values
 
