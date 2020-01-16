@@ -61,7 +61,7 @@ class delivery_carrier(osv.osv):
                     continue
                 if grid.zip_to and (contact.zip or '')> grid.zip_to:
                     continue
-                if grid.pricelist_ids and contact.property_product_pricelist.id in pricelist_ids:
+                if grid.pricelist_ids and contact.property_product_pricelist.id not in pricelist_ids:
                     continue
                 return grid.id
         return False
