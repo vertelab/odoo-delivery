@@ -246,7 +246,7 @@
             <field name="name">Unifaun Email Template</field>
             <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
             <field name="subject">Unifaun ${object.name} tracking link</field>
-            <field name="email_to">${object.partner_id.email or object.partner_id.commercial_partner_id.email}</field>
+            <field name="partner_to">${object.partner_id.id}</field>
             <field name="lang">${object.lang}</field>
             <field name="model_id" ref="stock.model_stock_picking"/>
             <field name="auto_delete" eval="True"/>
