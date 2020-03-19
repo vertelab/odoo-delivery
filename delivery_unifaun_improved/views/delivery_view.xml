@@ -2,254 +2,267 @@
 <openerp>
     <data>
         
-        <!-- Delivery Carriers -->
-        <record id="view_delivery_carrier_form" model="ir.ui.view">
-            <field name="name">delivery.carrier.form.unifaun</field>
-            <field name="model">delivery.carrier</field>
-            <field name="inherit_id" ref="delivery.view_delivery_carrier_form" />
-            <field name="arch" type="xml">
-                <field name="active" position="after">
-                    <field name="is_unifaun" />
-                </field>
-                <field name="pricelist_ids" position="after">
-                    <div attrs="{'invisible': [('is_unifaun', '==', False)]}">
-                        <separator string="Unifaun"/>
-                        <group>
-                            <field name="unifaun_service_code" />
-                            <field name="unifaun_sender" />
-                            <field name="unifaun_customer_no" />
-                            <field name="unifaun_print_settings_id" />
-                            <field name="unifaun_min_weight" />
-                            <!--
-                                 <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
-                            -->
-                        </group>
-                        <label for="unifaun_param_ids"/>
-                        <field name="unifaun_param_ids"/>
-                    </div>
-                </field>
-            </field>
-        </record>
-        
-        <record id="product_packaging_form_view" model="ir.ui.view">
-            <field name="name">product.packaging.form.unifaun</field>
-            <field name="model">product.packaging</field>
-            <field name="inherit_id" ref="product.product_packaging_form_view" />
-            <field name="arch" type="xml">
-                <field name="ean" position="after">
-                    <field name="shipper_package_code" />
-                </field>
-            </field>
-        </record>
-        
-        <record id="view_quant_package_form" model="ir.ui.view">
-            <field name="name">stock.quant.package.form.unifaun</field>
-            <field name="model">stock.quant.package</field>
-            <field name="inherit_id" ref="stock.view_quant_package_form" />
-            <field name="arch" type="xml">
-                <field name="packaging_id" position="after">
-                    <field name="shipping_weight" />
-                    <field name="weight" />
-                </field>
-            </field>
-        </record>
-
         <record id="view_stock_picking_form" model="ir.ui.view">
-            <field name="name">stock.picking.form.unifaun</field>
+            <field name="name">stock.picking.form.unifaun_improved</field>
             <field name="model">stock.picking</field>
-            <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
+            <field name="inherit_id" ref="stock.view_picking_form" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <field name="number_of_packages" position="replace" />
-                <separator position="after">
-                    <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '==', False), ('state', '!=', 'done'), ('unifaun_shipmentid', '!=', False)]}" />
-                    <button name="delete_stored_shipment" string="Delete" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
-                    <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': ['|', ('unifaun_stored_shipmentid', '==', False), ('unifaun_shipmentid', '!=', False)]}" />
-                    <span>
-                        <label for="number_of_packages" class="oe_inline" />
-                        <field name="number_of_packages" class="oe_inline" />
-                    </span>
-                </separator>
-                <field name="carrier_tracking_ref" position="after">
-                    <label for="unifaun_stored_shipmentid" />
-                    <div>
-                        <field name="unifaun_stored_shipmentid" />
-                        <button name="delete_stored_shipment" class="oe_right" string="Delete" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
-                    </div>
-                    <field name="unifaun_shipmentid" />
-                    <field name="is_unifaun" invisible="1" />
-                </field>
-                <notebook position="inside">
-                    <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
-						<group>
-							<field name="unifaun_parcel_count"/>
-							<field name="unifaun_parcel_weight"/>
-						</group>
-                        <label for="unifaun_pdf_ids"/>
-                        <field name="unifaun_pdf_ids"/>
-                        <label for="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}" />
-                        <field name="unifaun_status_ids" attrs="{'invisible': [('unifaun_status_ids', '==', False)]}">
-                            <tree>
-                                <field name="type" />
-                                <field name="field" />
-                                <field name="name" />
-                                <field name="location" />
-                                <field name="message_code" />
-                            </tree>
-                        </field>
-                        <label for="unifaun_param_ids" />
-                        <field name="unifaun_param_ids" />
-                    </page>
-                </notebook>
-                <notebook position="before">
-                    <h3 attrs="{'invisible': ['|', ('is_unifaun', '=', False), ('unifaun_status_ids', '=', [])]}" style="color: red;">Errors in the Unifaun message!</h3>
-                </notebook>
-            </field>
-        </record>
-        
-        <record id="view_picking_internal_search" model="ir.ui.view">
-            <field name="name">stock.picking.internal.search.unifaun</field>
-            <field name="model">stock.picking</field>
-            <field name="inherit_id" ref="stock.view_picking_internal_search" />
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <field name="name" position="attributes">
-                    <attribute name="filter_domain">['|', ('pack_operation_ids.result_package_id.unifaun_parcelno', 'ilike', self), ('name', 'ilike', self)]</attribute>
-                </field>
-            </field>
-        </record>
-        
-        <record id="view_unifaun_print_settings_form" model="ir.ui.view">
-            <field name="name">delivery.carrier.unifaun.print_settings.form</field>
-            <field name="model">delivery.carrier.unifaun.print_settings</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form>
-                    <sheet>
-                        <label for="name" />
-                        <h1><field name="name"/></h1>
-                        <separator string="1st Label" />
-                        <group>
-                            <field name="format_1" />
-                            <field name="x_offset_1" />
-                            <field name="y_offset_1" />
-                        </group>
-                        <separator string="2nd Label" />
-                        <group>
-                            <field name="format_2" />
-                            <field name="x_offset_2" />
-                            <field name="y_offset_2" />
-                        </group>
-                        <separator string="3rd Label" />
-                        <group>
-                            <field name="format_3" />
-                            <field name="x_offset_3" />
-                            <field name="y_offset_3" />
-                        </group>
-                        <separator string="4th Label" />
-                        <group>
-                            <field name="format_4" />
-                            <field name="x_offset_4" />
-                            <field name="y_offset_4" />
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-        
-        <record id="view_delivery_carrier_unifaun_param_form" model="ir.ui.view">
-            <field name="name">delivery.carrier.unifaun.param.form</field>
-            <field name="model">delivery.carrier.unifaun.param</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form>
-                    <sheet>
-                        <group>
-                            <field name="name"/>
-                            <field name="parameter"/>
-                            <field name="type"/>
-                            <field name="default_value"/>
-                            <field name="default_compute"/>
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-
-        <record id="view_delivery_carrier_unifaun_param_tree" model="ir.ui.view">
-            <field name="name">delivery.carrier.unifaun.param.tree</field>
-            <field name="model">delivery.carrier.unifaun.param</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="name"/>
-                    <field name="parameter"/>
-                    <field name="type"/>
-                    <field name="default_value"/>
-                </tree>
-            </field>
-        </record>
-
-        <record id="view_stock_picking_unifaun_param_form" model="ir.ui.view">
-            <field name="name">stock.picking.unifaun.param.form</field>
-            <field name="model">stock.picking.unifaun.param</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form>
-                    <sheet>
-                        <group>
-                            <field name="name"/>
-                            <field name="parameter"/>
-                            <field name="type"/>
-                            <field name="value_shown"/>
-<!--
-                            <field name="value_char" attrs="{'invisible': [('type', '!=', 'string')]}" />
-                            <field name="value_int" attrs="{'invisible': [('type', '!=', 'int')]}" />
-                            <field name="value_float" attrs="{'invisible': [('type', '!=', 'float')]}" />
--->
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-
-        <record id="view_stock_picking_unifaun_param_tree" model="ir.ui.view">
-            <field name="name">stock.picking.unifaun.param.tree</field>
-            <field name="model">stock.picking.unifaun.param</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="name"/>
-                    <field name="type"/>
-                    <field name="value_shown" />
-<!--
-                    <field name="value_char" attrs="{'invisible': [('type', '!=', 'string')]}" />
-                    <field name="value_int" attrs="{'invisible': [('type', '!=', 'int')]}" />
-                    <field name="value_float" attrs="{'invisible': [('type', '!=', 'float')]}" />
--->
-                    <field name="parameter"/>
-                </tree>
-            </field>
-        </record>
-
-        <record id="view_picking_form" model="ir.ui.view">
-            <field name="name">stock.picking.form.inherited.delivery_unifaun_base</field>
-            <field name="model">stock.picking</field>
-            <field name="inherit_id" ref="stock.view_picking_form"/>
-            <field name="arch" type="xml">
-                <button name="do_print_picking" position="before">
-                    <button name="unifaun_send_track_mail_silent" string=" Send Track &amp; Trace" groups="stock.group_stock_user" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ('assigned', 'partially_available', 'done')), ('is_unifaun', '=', False), ('unifaun_shipmentid', '=', False)]}" context="{'unifaun_track_force_send': True}" />
+                <button name="action_confirm" position="after">
+                    <button name="create_unifaun_order" class="oe_highlight" string="Create Unifaun Order" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '=', False), ('unifaun_id', '!=', False), ('state', '!=', 'done')]}" />
                 </button>
+                <field name="partner_id" position="after">
+                    <field name="unifaun_id" attrs="{'invisible': ['|', ('is_unifaun', '=', False), ('state', '!=', 'done')]}"/>
+                </field>
+            </field>
+        </record>
+        
+        <record id="view_unifaun_order_form" model="ir.ui.view">
+            <field name="name">unifaun.order.form</field>
+            <field name="model">unifaun.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unifaun Order">
+                <header>
+                    <button name="order_stored_shipment" string="Order Transport" class="oe_highlight" type="object" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('shipmentid', '!=', False)]}" />
+                    <button name="confirm_stored_shipment" string="Confirm Transport" class="oe_highlight" type="object" attrs="{'invisible': ['|', '|', ('state', '!=', 'sent'), ('stored_shipmentid', '==', False), ('shipmentid', '!=', False)]}" />
+                    <button name="delete_stored_shipment" string="Delete" type="object" attrs="{'invisible': ['|', ('state', 'not in', ('sent', 'error')), ('stored_shipmentid', '=', False)]}" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,sent,done" statusbar_colors="{&quot;error&quot;:&quot;red&quot;,&quot;cancel&quot;:&quot;red&quot;,&quot;sent&quot;:&quot;blue&quot;}"/>
+                </header>
+                <sheet>
+                    <div class="oe_right oe_button_box">
+<!--
+                        <button name="do_partial_open_barcode" groups="stock.group_stock_user" type="object" class="oe_stock_scan_button" attrs="{'invisible': ['|',('pack_operation_exist', '=', True),('state','not in',('assigned', 'partially_available'))]}"><img src="/stock/static/src/img/scan.png" class="oe_stock_scan_image oe_stock_scan_image_btn"/></button>
+                        <button name="open_barcode_interface" groups="stock.group_stock_user" type="object" class="oe_stock_scan_button" attrs="{'invisible': ['|',('pack_operation_exist', '=', False),('state','not in',('assigned', 'partially_available'))]}"><img src="/stock/static/src/img/scan.png" class="oe_stock_scan_image oe_stock_scan_image_btn"/></button>
+-->
+                    </div>
+                    <h1>
+                        <field name="name" class="oe_inline"/>
+                    </h1>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="contact_partner_id"/>
+                            <field name="carrier_id"/>
+                            <field name="carrier_tracking_ref"/>
+                            <label for="stored_shipmentid" />
+                            <div>
+                                <field name="stored_shipmentid" />
+                                <button name="delete_stored_shipment" class="oe_right" string="Delete" type="object" attrs="{'invisible': [('stored_shipmentid', '==', False)]}" />
+                            </div>
+                            <field name="shipmentid" />
+                        </group>
+                        <group>
+                            <field name="sender_partner_id"/>
+                            <field name="date"/>
+                            <field name="parcel_count"/>
+                            <field name="weight"/>
+                            <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Packages" name="packages">
+                            <field name="package_ids"/>
+                        </page>
+                        <page string="Products" name="products">
+                            <field name="line_ids"/>
+                        </page>
+                        <page string="PDFs and Messages" name="messages">
+                            <label for="pdf_ids"/>
+                            <field name="pdf_ids"/>
+                            <label for="status_ids"/>
+                            <field name="status_ids">
+                                <tree>
+                                    <field name="type" />
+                                    <field name="field" />
+                                    <field name="name" />
+                                    <field name="location" />
+                                    <field name="message_code" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Parameters" name="parameters">
+                            <field name="param_ids" />
+                        </page>
+                        <page string="Pickings" name="pickings">
+                            <field name="picking_ids" />
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+                </form>
+            </field>
+        </record>
+        
+        <record id="view_unifaun_order_tree" model="ir.ui.view">
+            <field name="name">unifaun.order.tree</field>
+            <field name="model">unifaun.order</field>
+            <field name="arch" type="xml">
+                <tree string="Unifaun Orders" color="state" date_start="date">
+                    <field name="date"/>
+                    <field name="state"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="carrier_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_unifaun_order_calendar" model="ir.ui.view">
+            <field name="name">unifaun.order.calendar</field>
+            <field name="model">unifaun.order</field>
+            <field name="arch" type="xml">
+                <calendar string="Unifaun Orders" color="state" date_start="date">
+                    <field name="name"/>
+                    <field name="state"/>
+                    <field name="partner_id"/>
+                </calendar>
             </field>
         </record>
 
-        <record id="unifaun_email_template" model="email.template">
+        <record id="view_unifaun_package_tree" model="ir.ui.view">
+            <field name="name">unifaun.package.tree</field>
+            <field name="model">unifaun.package</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="contents"/>
+                    <field name="ul_id"/>
+                    <field name="packaging_id"/>
+                    <field name="weight"/>
+                    <field name="shipper_package_code"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_unifaun_package_form" model="ir.ui.view">
+            <field name="name">unifaun.package.form</field>
+            <field name="model">unifaun.package</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unifaun Package">
+                    <sheet>
+                        <h1>
+                            <field name="name" class="oe_inline"/>
+                        </h1>
+                        <group>
+                            <field name="unifaun_id"/>
+                            <field name="contents"/>
+                            <field name="ul_id"/>
+                            <field name="packaging_id"/>
+                            <field name="weight"/>
+                            <field name="weight_spec"/>
+                            <field name="shipper_package_code"/>
+                        </group>
+                        <label for="line_ids"/>
+                        <field name="line_ids"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_unifaun_package_line_tree" model="ir.ui.view">
+            <field name="name">unifaun.package.line.tree</field>
+            <field name="model">unifaun.package.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="product_id"/>
+                    <field name="package_id"/>
+                    <field name="qty"/>
+                    <field name="uom_id"/>
+<!--
+                    <field name="product_qty" invisible="1"/>
+-->
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_unifaun_package_line_form" model="ir.ui.view">
+            <field name="name">unifaun.package.line.form</field>
+            <field name="model">unifaun.package.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unifaun Package">
+                    <sheet>
+                        <h1>
+                            <field name="name" class="oe_inline"/>
+                        </h1>
+                        <group>
+                            <field name="product_id"/>
+                            <field name="package_id"/>
+                            <field name="qty"/>
+                            <field name="uom_id"/>
+<!--
+                            <field name="product_qty"/>
+-->
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <record id="product_ul_form_view" model="ir.ui.view">
+            <field name="name">product.ul.unifaun.form.view</field>
+            <field name="model">product.ul</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_ul_form_view"/>
+            <field name="arch" type="xml">
+                <sheet position="inside">
+                    <label for="unifaun_code_ids"/>
+                    <field name="unifaun_code_ids">
+                        <tree string="Unifaun Shipping Code" editable="top">
+                            <field name="name" />
+                            <field name="carrier_id" />
+                        </tree>
+                    </field>
+                </sheet>
+            </field>
+        </record>
+        
+        <record id="view_product_ul_unifaun_code_tree" model="ir.ui.view">
+            <field name="name">product.ul.unifaun_code.tree</field>
+            <field name="model">product.ul.unifaun_code</field>
+            <field name="arch" type="xml">
+                <tree string="Unifaun Shipping Codes" editable="top">
+                    <field name="name" />
+                    <field name="ul_id" />
+                    <field name="carrier_id" />
+                </tree>
+            </field>
+        </record>
+        
+        <menuitem id="menu_stock_unifaun" name="Unifaun" parent="stock.menu_stock_root" sequence="2"/>
+        
+        <record id="action_unifaun_order" model="ir.actions.act_window">
+            <field name="name">Unifaun Orders</field>
+            <field name="res_model">unifaun.order</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,calendar,form</field>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create a new Unifaun order. 
+              </p>
+            </field>
+        </record>
+        
+        <menuitem
+            action="action_unifaun_order"
+            id="menu_action_unifaun_order"
+            parent="menu_stock_unifaun" sequence="1"/>
+
+        <record id="delivery_unifaun_base.unifaun_order_email_template" model="email.template">
             <field name="name">Unifaun Email Template</field>
             <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
             <field name="subject">Unifaun ${object.name} tracking link</field>
             <field name="email_to">${object.partner_id.email or object.partner_id.commercial_partner_id.email}</field>
             <field name="lang">${object.lang}</field>
-            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="model_id" ref="model_unifaun_order"/>
             <field name="auto_delete" eval="True"/>
             <field name="body_html">
 <![CDATA[

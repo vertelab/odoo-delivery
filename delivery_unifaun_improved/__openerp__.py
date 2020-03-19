@@ -31,9 +31,9 @@
 'depends': ['delivery_unifaun_base'],
 'data': [
     #'data/delivery_data.xml',
-    #'views/delivery_view.xml',
+    'views/delivery_view.xml',
     #'views/res_config_view.xml',
-    #'security/ir.model.access.csv',
+    'security/ir.model.access.csv',
     ],
 'installable': True,
 }

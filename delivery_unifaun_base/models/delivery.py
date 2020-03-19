@@ -410,6 +410,7 @@ class StockQuantPackage(models.Model):
 class ProductPackaging(models.Model):
     _inherit = 'product.packaging'
     
+    # TODO: This is the wrong packaging for this. It should be on the product.ul model.
     shipper_package_code = fields.Char(string='Shipper Packaging Ref')
 
 class StockPackOperation(models.Model):
