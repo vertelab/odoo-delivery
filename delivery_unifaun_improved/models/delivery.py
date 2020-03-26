@@ -264,7 +264,7 @@ class UnifaunOrder(models.Model):
                 if order and order != picking.unifaun_id:
                     raise Warning(_("Found multiple Unifaun orders already on the pickings!"))
                 order = picking.unifaun_id
-        if order and order.state != 'draft':
+        if order and order.state not in ('group', 'draft'):
             raise Warning(_("Found a Unifaun orders already on the pickings. State is not Draft!"))
         values = self.get_order_vals_from_pickings(pickings)
         _logger.warn(values)
@@ -303,8 +303,7 @@ class UnifaunOrder(models.Model):
             'identical': [
                 'carrier_id',
                 'partner_id',
-                'warehouse_id',
-                'picking_type_id',
+                # ~ 'picking_type_id',
                 ],
             }
         # Lazy handling of sale_id to avoid an extra unifaun_sale module
@@ -326,12 +325,13 @@ class UnifaunOrder(models.Model):
         # TODO: Make name a sequence of its own?
         values = {
             'name': picking.name,
+            'state': 'draft',
             'partner_id': receiver.id,
             'contact_partner_id': contact and contact.id or None,
             'sender_partner_id': sender.id,
             'carrier_id': picking.carrier_id.id,
             'company_id': picking.company_id.id,
-            'date': max([pickings.date_done]),
+            'date': max([p.date_done for p in pickings]),
             'package_ids': self.get_package_values_from_pickings(pickings),
         }
         return values

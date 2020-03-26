@@ -54,6 +54,7 @@ class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', copy=False)
+    unifaun_state = fields.Selection(related='unifaun_id.state')
     unifaun_own_package = fields.Boolean(string='Own Package', help="Unifauns hould treat any non-packaged lines in this picking as belonging to their own unique package")
 
     @api.multi
@@ -71,10 +72,11 @@ class StockPicking(models.Model):
     @api.multi
     def unifaun_check_if_ready(self):
         """Check if this picking is ready to be sent as Unifaun Order"""
-        if self.state != 'done':
-            raise Warning("Picking must be done before sending as unifaun order.")
-        if not self.is_unifaun:
-            raise Warning("Carrier is not a Unifaun partner.")
+        for picking in self:
+            if picking.state != 'done':
+                raise Warning("Picking must be done before sending as unifaun order.")
+            if not picking.is_unifaun:
+                raise Warning("Carrier is not a Unifaun partner.")
 
 class StockPackOperation(models.Model):
     _inherit = 'stock.pack.operation'

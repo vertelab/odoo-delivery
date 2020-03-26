@@ -9,10 +9,11 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <button name="action_confirm" position="after">
-                    <button name="create_unifaun_order" class="oe_highlight" string="Create Unifaun Order" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '=', False), ('unifaun_id', '!=', False), ('state', '!=', 'done')]}" />
+                    <button name="create_unifaun_order" class="oe_highlight" string="Create Unifaun Order" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '=', False), '&amp;', ('unifaun_id', '!=', False), ('unifaun_state', '!=', 'group'), ('state', '!=', 'done')]}" />
                 </button>
                 <field name="partner_id" position="after">
                     <field name="unifaun_id" attrs="{'invisible': ['|', ('is_unifaun', '=', False), ('state', '!=', 'done')]}"/>
+                    <field name="unifaun_state" invisible="1"/>
                 </field>
             </field>
         </record>
