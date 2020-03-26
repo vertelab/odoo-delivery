@@ -55,7 +55,6 @@
                         <group>
                             <field name="sender_partner_id"/>
                             <field name="date"/>
-                            <field name="parcel_count"/>
                             <field name="weight"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                         </group>
@@ -117,7 +116,6 @@
             <field name="arch" type="xml">
                 <calendar string="Unifaun Orders" color="state" date_start="date">
                     <field name="name"/>
-                    <field name="state"/>
                     <field name="partner_id"/>
                 </calendar>
             </field>
@@ -130,11 +128,11 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
+                    <field name="copies"/>
                     <field name="contents"/>
-                    <field name="ul_id"/>
-                    <field name="packaging_id"/>
                     <field name="weight"/>
                     <field name="shipper_package_code"/>
+                    <field name="state" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -151,12 +149,18 @@
                         </h1>
                         <group>
                             <field name="unifaun_id"/>
+                            <field name="copies"/>
                             <field name="contents"/>
                             <field name="ul_id"/>
                             <field name="packaging_id"/>
                             <field name="weight"/>
-                            <field name="weight_spec"/>
+                            <label for="weight_spec"/>
+                            <span>
+                                <field name="weight_spec" class="oe_inline"/>
+                                (<field name="weight_calc" class="oe_inline"/> calculated)
+                            </span>
                             <field name="shipper_package_code"/>
+                            <field name="state" invisible="1"/>
                         </group>
                         <label for="line_ids"/>
                         <field name="line_ids"/>
@@ -175,6 +179,7 @@
                     <field name="package_id"/>
                     <field name="qty"/>
                     <field name="uom_id"/>
+                    <field name="state" invisible="1"/>
 <!--
                     <field name="product_qty" invisible="1"/>
 -->
@@ -197,6 +202,7 @@
                             <field name="package_id"/>
                             <field name="qty"/>
                             <field name="uom_id"/>
+                            <field name="state" invisible="1"/>
 <!--
                             <field name="product_qty"/>
 -->

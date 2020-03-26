@@ -1,1 +1,3 @@
-import delivery
+from . import delivery
+from . import stock
+from . import product

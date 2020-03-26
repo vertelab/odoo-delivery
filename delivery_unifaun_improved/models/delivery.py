@@ -39,104 +39,7 @@ _logger = logging.getLogger(__name__)
 #stock.picking.unifaun.param
 #stock.picking.unifaun.pdf
 
-class stock_picking_unifaun_status(models.Model):
-    _inherit = 'stock.picking.unifaun.status'
-
-    unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order' required=True, ondelete='cascade')
-    picking_id = fields.Many2one(required=False, ondelete=None)
-
-class StockPickingUnifaunParam(models.Model):
-    _inherit = 'stock.picking.unifaun.param'
-
-    unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order' required=True, ondelete='cascade')
-    picking_id = fields.Many2one(required=False, ondelete=None)
-
-class StockPickingUnifuanPdf(models.Model):
-    _inherit = 'stock.picking.unifaun.pdf'
-
-    unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade')
-    picking_id = fields.Many2one(required=False, ondelete=None)
-
-class StockPicking(models.Model):
-    _inherit = 'stock.picking'
-
-    unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    unifaun_own_package = fields.Boolean(string='Own Package', help="Unifauns hould treat any non-packaged lines in this picking as belonging to their own unique package")
-
-    @api.multi
-    def create_unifaun_order(self):
-        self.unifaun_check_if_ready()
-        order = self.env['unifaun.order'].create_from_pickings(self)
-        action = self.env['ir.actions.act_window'].for_xml_id('delivery_unifaun_improved', 'action_unifaun_order')
-        action['domain'] = [('id', '=', order.id)]
-        return action
-    
-    @api.multi
-    def unifaun_check_if_ready(self):
-        """Check if this picking is ready to be sent as Unifaun Order"""
-        if self.state != 'done':
-            raise Warning("Picking must be done before sending as unifaun order.")
-        if not self.is_unifaun:
-            raise Warning("Carrier is not a Unifaun partner.")
-
-class LogisticalUnit(models.Model):
-    _inherit = "product.ul"
-    
-    unifaun_code_ids = fields.One2many(comodel_name='product.ul.unifaun_code', inverse_name='ul_id', string='Unifaun Codes')
-
-    @api.multi
-    def get_unifaun_code(self, carrier):
-        code = self.unifaun_code_ids.filtered(lambda uc: uc.carrier_id == carrier)
-        return code and code.name or None
-
-class LogisticalUnitUnifaunCode(models.Model):
-    _name = 'product.ul.unifaun_code'
-    _description = 'Unifaun Shipping Code'
-    _sql_constraints = [
-            ('unique_ul_by_carrier',
-             'unique(ul_id, carrier_id)',
-             "You can not have two Unifaun codes for the same carrier and logistical unit.")
-        ]
-
-    # TODO: Replace with python constraint (wantt to be able to have 2 without ul_id).
-    # Make constraint for default
-    name = fields.Char(string='Code', required=True)
-    ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit')
-    carrier_id = fields.Many2one(comodel_name='delivery.carrier', string='Carrier', required=True)
-    default = fields.Boolean(string='Default Code', help="Use this code for this carrier if nothing else is specified.")
-
-class StockPackOperation(models.Model):
-    _inherit = 'stock.pack.operation'
-
-    @api.multi
-    def unifaun_package_line_values(self):
-        """Return a value dict for a unifaun.package.line"""
-        self.ensure_one()
-        values = {
-            'product_id': self.product_id.id,
-            'uom_id': self.product_uom_id.id,
-            'qty': self.qty_done,
-        }
-        return values
-
-class StockQuantPackage(models.Model):
-    _inherit = "stock.quant.package"
-
-    @api.multi
-    def unifaun_package_values(self):
-        """Return a value dict for a unifaun.package"""
-        return {
-            'name': self.name,
-            #'contents': '',
-            'weight_spec': self.shipping_weight or self.weight, # Fix weight to package weight
-            'ul_id': self.ul_id and self.ul_id.id or None,
-            'packaging_id': self.packaging_id and self.packaging_id.id or None,
-            'line_ids': [],
-            # TODO: Add volume, length, width, height
-        }
+READ_ONLY_STATES = {'done': [('readonly', True)], 'sent': [('readonly', True)], 'cancel': [('readonly', True)]}
 
 class UnifaunPackage(models.Model):
     _name = 'unifaun.package'
@@ -144,18 +47,20 @@ class UnifaunPackage(models.Model):
 
     def _default_contents(self):
         return _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods'))
-    
-    unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade')
-    ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit')
-    packaging_id = fields.Many2one(comodel_name='product.packaging', string='Packaging', help="This field should be completed only if everything inside the package share the same product, otherwise it doesn't really make sense.")
-    shipper_package_code = fields.Char(string='Package Code', help="The shipping company's code for this packaging type.")
-    line_ids = fields.One2many(comodel_name='unifaun.package.line', inverse_name='package_id', string='Contents')
-    name = fields.Char(string='Reference')
-    contents = fields.Char(string='Contents', default=_default_contents)
+
+    state = fields.Selection(related='unifaun_id.state')
+    unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade', states=READ_ONLY_STATES)
+    ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit', states=READ_ONLY_STATES)
+    packaging_id = fields.Many2one(comodel_name='product.packaging', string='Packaging', help="This field should be completed only if everything inside the package share the same product, otherwise it doesn't really make sense.", states=READ_ONLY_STATES)
+    shipper_package_code = fields.Char(string='Package Code', help="The shipping company's code for this packaging type.", states=READ_ONLY_STATES)
+    line_ids = fields.One2many(comodel_name='unifaun.package.line', inverse_name='package_id', string='Products')
+    name = fields.Char(string='Reference', states=READ_ONLY_STATES)
+    contents = fields.Char(string='Contents', default=_default_contents, states=READ_ONLY_STATES)
+    copies = fields.Integer(string='Copies', default=1, states=READ_ONLY_STATES)
     weight = fields.Float(string='Weight', compute='_calculate_weight', store=True, digits_compute=dp.get_precision('Stock Weight'))
     weight_calc = fields.Float(string='Weight', compute='_calculate_weight', store=True, digits_compute=dp.get_precision('Stock Weight'))
-    weight_spec = fields.Float(string='Specified Weight', digits_compute=dp.get_precision('Stock Weight'), help="Use this field to override the calculated weight.")
-    
+    weight_spec = fields.Float(string='Specified Weight', digits_compute=dp.get_precision('Stock Weight'), help="Use this field to override the calculated weight.", states=READ_ONLY_STATES)
+
     @api.multi
     @api.depends('line_ids.product_id', 'line_ids.uom_id',
                  'line_ids.qty', 'weight_spec')
@@ -164,6 +69,7 @@ class UnifaunPackage(models.Model):
         uom_obj = self.env['product.uom']
         for package in self:
             # TODO: Does this check work or will it be set to 0 if state != draft?
+            _logger.warn(self.unifaun_id.state)
             if package.unifaun_id.state == 'draft':
                 weight = 0.00
                 for line in package.line_ids:
@@ -184,10 +90,10 @@ class UnifaunPackage(models.Model):
     def get_parcel_values(self):
         """Return a dict of parcel data to be used in a Unifaun shipment record."""
         vals = {
-            'copies': 1,
+            'copies': self.copies,
             'weight': self.weight,
             'contents': self.contents,
-            'valuePerParcel': True,
+            'valuePerParcel': False,
         }
         if self.name:
             vals['reference'] = self.name # ??? Not saved in shipment
@@ -203,11 +109,12 @@ class UnifaunPackageLine(models.Model):
     _name = 'unifaun.package.line'
     _description = 'Unifaun Order Line'
 
-    package_id = fields.Many2one(comodel_name='unifaun.package', string='Package', required=True, ondelete='cascade')
-    product_id = fields.Many2one(comodel_name='product.product', string='Product', required=True)
+    state = fields.Selection(related='unifaun_id.state')
+    package_id = fields.Many2one(comodel_name='unifaun.package', string='Package', required=True, ondelete='cascade', states=READ_ONLY_STATES)
+    product_id = fields.Many2one(comodel_name='product.product', string='Product', required=True, states=READ_ONLY_STATES)
     name = fields.Char(related='product_id.display_name')
-    uom_id = fields.Many2one(comodel_name='product.uom', string='Unit of Measure', required=True)
-    qty = fields.Float(string='Quantity')
+    uom_id = fields.Many2one(comodel_name='product.uom', string='Unit of Measure', required=True, states=READ_ONLY_STATES)
+    qty = fields.Float(string='Quantity', states=READ_ONLY_STATES)
     product_qty = fields.Float(string='Quantity', compute='_calculate_product_qty')
     unifaun_id = fields.Many2one(related='package_id.unifaun_id')
 
@@ -225,24 +132,76 @@ class UnifaunOrder(models.Model):
     _inherit = ['mail.thread']
     _description = 'Unifaun Order'
 
-    state = fields.Selection(string='State', selection=[('draft', 'Draft'), ('sent', 'Sent'), ('done', 'Confirmed'), ('cancel', 'Cancelled'), ('error', 'Error')], default='draft', required=True)
-    name = fields.Char(string='Reference', select=True, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, copy=False)
-    partner_id = fields.Many2one(comodel_name='res.partner', string='Recipient', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, required=True)
-    sender_partner_id = fields.Many2one(comodel_name='res.partner', string='Sender', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, required=True)
-    contact_partner_id = fields.Many2one(comodel_name='res.partner', string='Recipient Contact', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]})
-    picking_ids = fields.One2many(comodel_name='stock.picking', inverse_name='unifaun_id', string='Picking Orders')
+    state = fields.Selection(
+        string='State',
+        selection=[
+            ('group', 'Group'),
+            ('draft', 'Draft'),
+            ('sent', 'Sent'),
+            ('done', 'Confirmed'),
+            ('cancel', 'Cancelled'),
+            ('error', 'Error')],
+        default='draft',
+        required=True,
+        help="""*[group]: Waiting for pickings to be completed.""")
+    name = fields.Char(
+        string='Reference',
+        select=True,
+        states=READ_ONLY_STATES,
+        copy=False)
+    partner_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Recipient',
+        states=READ_ONLY_STATES,
+        required=True)
+    sender_partner_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Sender',
+        states=READ_ONLY_STATES,
+        required=True)
+    contact_partner_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Recipient Contact',
+        states=READ_ONLY_STATES)
+    picking_ids = fields.One2many(
+        comodel_name='stock.picking',
+        inverse_name='unifaun_id',
+        string='Picking Orders')
     shipmentid = fields.Char(string='Unifaun Shipment ID', copy=False)
     stored_shipmentid = fields.Char(string='Unifaun Stored Shipment ID', copy=False)
-    pdf_ids = fields.One2many(string='Unifaun PDFs', comodel_name='stock.picking.unifaun.pdf', inverse_name='unifaun_id', copy=False)
-    status_ids = fields.One2many(comodel_name='stock.picking.unifaun.status', inverse_name='unifaun_id', string='Unifaun Status')
-    param_ids = fields.One2many(comodel_name='stock.picking.unifaun.param', inverse_name='unifaun_id', string='Parameters')
-    parcel_count = fields.Integer(string='Unifaun Parcel Count', copy=False, help="Fill in this field to override package data. Will override data from packages if used.")
-    weight = fields.Float(string='Weight', digits_compute=dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
+    pdf_ids = fields.One2many(
+        string='Unifaun PDFs',
+        comodel_name='stock.picking.unifaun.pdf',
+        inverse_name='unifaun_id',
+        copy=False)
+    status_ids = fields.One2many(
+        comodel_name='stock.picking.unifaun.status',
+        inverse_name='unifaun_id',
+        string='Unifaun Status',
+        copy=False)
+    param_ids = fields.One2many(
+        string='Parameters',
+        comodel_name='stock.picking.unifaun.param',
+        inverse_name='unifaun_id')
+    weight = fields.Float(
+        string='Weight',
+        digits_compute=dp.get_precision('Stock Weight'),
+        compute='_calculate_weight',
+        store=True)
     carrier_id = fields.Many2one(comodel_name='delivery.carrier', string='Carrier', required=True)
     carrier_tracking_ref = fields.Char(string='Carrier Tracking Ref', copy=False)
-    company_id = fields.Many2one(comodel_name='res.company', string='Company', required=True, select=True, default=lambda self: self.env['res.company']._company_default_get('stock.picking'))
-    date = fields.Datetime(string='Date', help="The planned date of the delivery", select=True, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, track_visibility='onchange')
-    
+    company_id = fields.Many2one(
+        comodel_name='res.company',
+        string='Company',
+        required=True,
+        select=True,
+        default=lambda self: self.env['res.company']._company_default_get('stock.picking'))
+    date = fields.Datetime(
+        string='Date',
+        help="The planned date of the delivery",
+        select=True,
+        states=READ_ONLY_STATES,
+        track_visibility='onchange')
     package_ids = fields.One2many(comodel_name='unifaun.package', inverse_name='unifaun_id', string='Packages')
     line_ids = fields.One2many(related='package_ids.line_ids', string='Package Contents')
 
@@ -257,7 +216,7 @@ class UnifaunOrder(models.Model):
         if self.state == 'draft':
             weight = 0.00
             for package in self.package_ids:
-                weight += package.weight_spec or package.weight
+                weight += package.weight
             self.weight = weight
     
     # https://www.unifaunonline.se/rs-docs/
@@ -299,11 +258,22 @@ class UnifaunOrder(models.Model):
             raise Warning(_("Could not make a Unifaun order from %s.\n%s") % (
                 ', '.join([p.name for p in pickings]),
                 '\n'.join(problems)))
+        order = None
+        for picking in pickings:
+            if picking.unifaun_id:
+                if order and order != picking.unifaun_id:
+                    raise Warning(_("Found multiple Unifaun orders already on the pickings!"))
+                order = picking.unifaun_id
+        if order and order.state != 'draft':
+            raise Warning(_("Found a Unifaun orders already on the pickings. State is not Draft!"))
         values = self.get_order_vals_from_pickings(pickings)
         _logger.warn(values)
-        res = self.create(values)
-        pickings.write({'unifaun_id': res.id})
-        return res
+        if order:
+            order.write(values)
+        else:
+            order = self.create(values)
+        pickings.write({'unifaun_id': order.id})
+        return order
 
     @api.model
     def check_picking_compatibility(self, pickings):
@@ -359,7 +329,6 @@ class UnifaunOrder(models.Model):
             'partner_id': receiver.id,
             'contact_partner_id': contact and contact.id or None,
             'sender_partner_id': sender.id,
-            # ~ 'picking_ids': [(6, 0, pickings._ids)], # Possible problem
             'carrier_id': picking.carrier_id.id,
             'company_id': picking.company_id.id,
             'date': max([pickings.date_done]),
@@ -378,6 +347,29 @@ class UnifaunOrder(models.Model):
     @api.model
     def get_package_values_from_pickings(self, pickings):
         packages = []
+        pickings_spec = pickings.filtered(lambda p: p.unifaun_parcel_weight and p.unifaun_parcel_count)
+        if pickings_spec:
+            # Package weight and count has been specified on pickings
+            lines = []
+            # Handle lines on pickings not specified
+            for op in (pickings - pickings_spec).mapped('pack_operation_ids'):
+                values = op.unifaun_package_line_values()
+                if values:
+                    lines.append((0, 0, values))
+            for picking in pickings_spec:
+                for op in picking.pack_operation_ids:
+                    values = op.unifaun_package_line_values()
+                    if values:
+                        lines.append((0, 0, values))
+                packages.append((0, 0, {
+                    'name': 'Package %s' % picking.name,
+                    'copies': picking.unifaun_parcel_count,
+                    'weight_spec': picking.unifaun_parcel_weight,
+                    'line_ids': lines,
+                }))
+                lines = []
+            return packages
+        # TODO: Everything below needs to tested and probably reworked
         ### Handle packages from the pickings ###
         for package in pickings.mapped('package_ids'):
             values = package.unifaun_package_values()
@@ -392,7 +384,9 @@ class UnifaunOrder(models.Model):
             if ops:
                 pack_ops.append(ops)
         # Handle pickings that are in the same package
-        ops = pickings.filtered(lambda p: not p.unifaun_own_package).mapped('pack_operation_ids').filtered(lambda o: not o.result_package_id)
+        ops = pickings.filtered(
+            lambda p: not p.unifaun_own_package).mapped(
+                'pack_operation_ids').filtered(lambda o: not o.result_package_id)
         if ops:
             pack_ops.append(ops)
         # Create packages from the non-packaged packops
@@ -597,8 +591,8 @@ class UnifaunOrder(models.Model):
             self.stored_shipmentid = response.get('id', '')
 
             self.env['mail.message'].create({
-                # ~ 'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (printer.pprint(rec), printer.pprint(response))),
-                'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
+                'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (printer.pformat(rec), printer.pformat(response))),
+                # ~ 'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
                 'subject': "Order Transport",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
@@ -613,8 +607,8 @@ class UnifaunOrder(models.Model):
                 self.state = 'error'
         else:
             self.env['mail.message'].create({
-                'body': _("Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
-                # ~ 'body': _("Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (printer.pprint(rec), printer.pprint(response))),
+                # ~ 'body': _("Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
+                'body': _("Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (printer.pformat(rec), printer.pformat(response))),
                 'subject': "Order Transport",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
@@ -672,6 +666,7 @@ class UnifaunOrder(models.Model):
                     'target%sXOffset' % i: x_offset,
                     'target%sYOffset' % i: y_offset,
                 })
+        printer = PrettyPrinter()
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.stored_shipmentid, None, rec)
         if type(response) == list:
             _logger.warn('\n%s\n' % response)
@@ -685,11 +680,12 @@ class UnifaunOrder(models.Model):
                 if r.get('id'):
                     unifaun_shipmentid.append(r.get('id'))
                 if r.get('pdfs'):
-                    unifaun_pdfs.append(r['pdfs'])
+                    unifaun_pdfs += r['pdfs']
             self.carrier_tracking_ref = ', '.join(carrier_tracking_ref)
             self.shipmentid = ', '.join(unifaun_shipmentid)
             # create an attachment
             # TODO: several pdfs?
+            _logger.warn(unifaun_pdfs)
             for pdf in unifaun_pdfs:
                 attachment = self.carrier_id.unifaun_download(pdf)
                 attachment.write({
@@ -705,7 +701,7 @@ class UnifaunOrder(models.Model):
                 })
             
             self.env['mail.message'].create({
-                'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (rec, response)),
+                'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (printer.pformat(rec), printer.pformat(response))),
                 'subject': "Shipment(s) Created",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
@@ -715,7 +711,7 @@ class UnifaunOrder(models.Model):
             self.unifaun_send_track_mail_silent()
         else:
             self.env['mail.message'].create({
-                'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (rec, response)),
+                'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (printer.pformat(rec), printer.pformat(response))),
                 'subject': "Create Shipment",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
