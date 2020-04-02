@@ -9,7 +9,8 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <button name="action_confirm" position="after">
-                    <button name="create_unifaun_order" class="oe_highlight" string="Create Unifaun Order" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '=', False), '&amp;', ('unifaun_id', '!=', False), ('unifaun_state', '!=', 'group'), ('state', '!=', 'done')]}" />
+                    <button name="create_unifaun_order" class="oe_highlight" string="Create Unifaun Order" type="object"
+                            attrs="{'invisible': ['|', '|', ('is_unifaun', '=', False), '&amp;', ('unifaun_id', '!=', False), ('unifaun_state', '!=', 'group'), ('state', '!=', 'done')]}" />
                 </button>
                 <field name="partner_id" position="after">
                     <field name="unifaun_id" attrs="{'invisible': ['|', ('is_unifaun', '=', False), ('state', '!=', 'done')]}"/>
@@ -25,7 +26,7 @@
             <field name="arch" type="xml">
                 <form string="Unifaun Order">
                 <header>
-                    <button name="order_stored_shipment" string="Order Transport" class="oe_highlight" type="object" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('shipmentid', '!=', False)]}" />
+                    <button name="order_stored_shipment" string="Order Transport" class="oe_highlight" type="object" attrs="{'invisible': ['|', ('state', 'not in', ('group', 'draft')), ('shipmentid', '!=', False)]}" />
                     <button name="confirm_stored_shipment" string="Confirm Transport" class="oe_highlight" type="object" attrs="{'invisible': ['|', '|', ('state', '!=', 'sent'), ('stored_shipmentid', '==', False), ('shipmentid', '!=', False)]}" />
                     <button name="delete_stored_shipment" string="Delete" type="object" attrs="{'invisible': ['|', ('state', 'not in', ('sent', 'error')), ('stored_shipmentid', '=', False)]}" />
                     <field name="state" widget="statusbar" statusbar_visible="draft,sent,done" statusbar_colors="{&quot;error&quot;:&quot;red&quot;,&quot;cancel&quot;:&quot;red&quot;,&quot;sent&quot;:&quot;blue&quot;}"/>
