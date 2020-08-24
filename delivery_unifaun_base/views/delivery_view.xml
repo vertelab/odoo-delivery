@@ -83,7 +83,7 @@
                     <page string="Unifaun" attrs="{'invisible': [('is_unifaun', '==', False)]}">
 						<group>
 							<field name="unifaun_parcel_count"/>
-							<field name="unifaun_parcel_weight"/>
+							<field name="unifaun_parcel_weight_ids" widget="one2many_tags"/>
 						</group>
                         <label for="unifaun_pdf_ids"/>
                         <field name="unifaun_pdf_ids"/>

@@ -434,6 +434,11 @@ class StockPackOperation(models.Model):
             self.result_package_working_weight = weight
         else:
             self.result_package_working_weight = self.result_package_weight
+            
+class unifaun_parcel_weight(models.Model):
+    _name = 'unifaun.parcel.weight'
+    weight = fields.Float(string='Weight')
+    picking_id = fields.Many2one(comodel_name='stock.picking', string='Picking')
 
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
@@ -449,6 +454,7 @@ class stock_picking(models.Model):
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
     weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
+    unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id', copy=False)
     
 
     
@@ -623,10 +629,10 @@ class stock_picking(models.Model):
     
     @api.multi
     def unifaun_sender_record(self, sender):
-        # ~ sender_contact = None
-        # ~ if sender.parent_id and sender.type == 'contact':
-            # ~ sender_contact = sender
-            # ~ sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
+        sender_contact = None
+        if sender.parent_id and sender.type == 'contact':
+            sender_contact = sender
+            sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
         rec = {
                 'name': sender.name,
                 'address1': sender.street or '',
@@ -639,13 +645,13 @@ class stock_picking(models.Model):
                 'mobile': sender.mobile or '',
                 'email': sender.email or '',
             }
-        # ~ if sender_contact:
-            # ~ rec.update({
-                # ~ 'phone': sender_contact.phone or sender_contact.mobile or '',
-                # ~ 'mobile': sender_contact.mobile or '',
-                # ~ 'email': sender_contact.email or '',
-                # ~ 'contact': sender_contact.name,
-            # ~ })
+        if sender_contact:
+            rec.update({
+                'phone': sender_contact.phone or sender_contact.mobile or '',
+                'mobile': sender_contact.mobile or '',
+                'email': sender_contact.email or '',
+                'contact': sender_contact.name,
+            })
         return rec
     
     @api.multi
