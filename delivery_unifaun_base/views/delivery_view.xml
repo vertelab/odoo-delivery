@@ -242,10 +242,6 @@
                 <button name="do_print_picking" position="before">
                     <button name="unifaun_send_track_mail_silent" string=" Send Track &amp; Trace" groups="stock.group_stock_user" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ('assigned', 'partially_available', 'done')), ('is_unifaun', '=', False), ('unifaun_shipmentid', '=', False)]}" context="{'unifaun_track_force_send': True}" />
                 </button>
-                <field name="partner_id" position="after" >
-                    <field name="receiver_contact_id" />
-                    <field name="sender_contact_id" />
-                </field>
             </field>
         </record>
 

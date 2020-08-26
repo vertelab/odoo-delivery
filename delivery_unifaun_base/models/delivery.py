@@ -944,12 +944,6 @@ class stock_picking(models.Model):
                     'model': self._name,
                     'type': 'notification',
                 })
-class StockWarehouse(models.Model):
-    _inherit = 'stock.warehouse'
-    sender_contact_id = fields.Many2one(
-        comodel_name='res.partner',
-        string='Contact Person',
-        
-        )
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
