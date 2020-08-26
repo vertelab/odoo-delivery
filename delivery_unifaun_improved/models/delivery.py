@@ -127,6 +127,13 @@ class UnifaunPackageLine(models.Model):
             if line.unifaun_id.state == 'draft':
                 line.product_qty = uom_obj._compute_qty_obj(line.uom_id, line.qty, line.product_id.uom_id)
 
+class StockWarehouse(models.Model):
+    _inherit = 'stock.warehouse'
+    sender_contact_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Contact Person',
+        )
+
 class UnifaunOrder(models.Model):
     _name = 'unifaun.order'
     _inherit = ['mail.thread']
@@ -159,6 +166,11 @@ class UnifaunOrder(models.Model):
         string='Sender',
         states=READ_ONLY_STATES,
         required=True)
+    sender_contact_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Sender Contact',
+        states=READ_ONLY_STATES,
+        )
     contact_partner_id = fields.Many2one(
         comodel_name='res.partner',
         string='Recipient Contact',
@@ -273,6 +285,7 @@ class UnifaunOrder(models.Model):
         else:
             order = self.create(values)
         pickings.write({'unifaun_id': order.id})
+        order.onchange_carrier()
         return order
 
     @api.model
@@ -321,14 +334,16 @@ class UnifaunOrder(models.Model):
         elif picking.picking_type_id.code == 'outgoing':
             sender = picking.picking_type_id.warehouse_id.partner_id
             receiver = picking.partner_id
-        contact = None
+        receiver_contact = self.get_contact_from_pickings(picking, receiver)
+        sender_contact = picking.picking_type_id.warehouse_id.sender_contact_id
         # TODO: Make name a sequence of its own?
         values = {
             'name': picking.name,
             'state': 'draft',
             'partner_id': receiver.id,
-            'contact_partner_id': contact and contact.id or None,
+            'contact_partner_id': receiver_contact and receiver_contact.id or None,
             'sender_partner_id': sender.id,
+            'sender_contact_id': sender_contact and sender_contact.id or None,
             'carrier_id': picking.carrier_id.id,
             'company_id': picking.company_id.id,
             'date': max([p.date_done for p in pickings]),
@@ -343,6 +358,17 @@ class UnifaunOrder(models.Model):
             for picking in pickings:
                 if picking.sale_id:
                     return picking.sale_id.partner_id
+                    
+    # ~ @api.model
+    # ~ def get_sender_contact_from_pickings(self, pickings, parnter_id):
+        # ~ """Return the receiving partner contact."""
+        # ~ if hasattr(pickings, 'sale_id'):
+            # ~ for picking in pickings:
+                # ~ if picking.sale_id:
+                    # ~ return picking.sale_id.partner_id
+        
+        
+        
 
     @api.model
     def get_package_values_from_pickings(self, pickings):
@@ -493,10 +519,10 @@ class UnifaunOrder(models.Model):
     
     @api.multi
     def unifaun_sender_record(self, sender):
-        # ~ sender_contact = None
-        # ~ if sender.parent_id and sender.type == 'contact':
-            # ~ sender_contact = sender
-            # ~ sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
+        sender_contact = None
+        if sender.parent_id and sender.type == 'contact':
+            sender_contact = sender
+            sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
         rec = {
                 'name': sender.name,
                 'address1': sender.street or '',
@@ -509,13 +535,13 @@ class UnifaunOrder(models.Model):
                 'mobile': sender.mobile or '',
                 'email': sender.email or '',
             }
-        # ~ if sender_contact:
-            # ~ rec.update({
-                # ~ 'phone': sender_contact.phone or sender_contact.mobile or '',
-                # ~ 'mobile': sender_contact.mobile or '',
-                # ~ 'email': sender_contact.email or '',
-                # ~ 'contact': sender_contact.name,
-            # ~ })
+        if sender_contact:
+            rec.update({
+                'phone': sender_contact.phone or sender_contact.mobile or '',
+                'mobile': sender_contact.mobile or '',
+                'email': sender_contact.email or '',
+                'contact': sender_contact.name,
+            })
         return rec
     
     @api.multi
@@ -524,6 +550,14 @@ class UnifaunOrder(models.Model):
         contact_data = {}
         if self.contact_partner_id:
             contact_data['contact'] = self.contact_partner_id.name
+        return contact_data
+        
+    @api.multi
+    def unifaun_sender_contact(self, sender, current_values):
+        """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
+        contact_data = {}
+        if self.sender_contact_id:
+            contact_data['contact'] = self.sender_contact_id.name
         return contact_data
     
     @api.multi
@@ -558,8 +592,10 @@ class UnifaunOrder(models.Model):
             self.delete_stored_shipment()
         receiver_record = self.unifaun_receiver_record(self.partner_id)
         receiver_record.update(self.unifaun_receiver_contact(self.partner_id, receiver_record))
+        sender_record = self.unifaun_sender_record(self.sender_partner_id)
+        sender_record.update(self.unifaun_sender_contact(self.sender_partner_id, sender_record))
         rec = {
-            'sender': self.unifaun_sender_record(self.sender_partner_id),
+            'sender': sender_record,
             'senderPartners': [{
                 'id': self.carrier_id.unifaun_sender or '',
                 'custNo': self.carrier_id.unifaun_customer_no or '',

@@ -238,13 +238,13 @@ class DeliveryCarrierUnifaunParam(models.Model):
     def get_default_value(self):
         try:
             if self.type == 'string':
-                return {'value_char': self.default_value}
+                return {'value': self.default_value}
             elif not self.default_value:
                 return False
             elif self.type == 'integer':
-                return {'value_int': int(self.default_value)}
+                return {'value': int(self.default_value)}
             elif self.type == 'float':
-                return {'value_float': float(self.default_value)}
+                return {'value': float(self.default_value)}
         except:
             raise Warning(_("Could not convert the default value (%s) to type %s") % (self.default_value, self.type))
 
@@ -258,6 +258,7 @@ class DeliveryCarrierUnifaunParam(models.Model):
                 'type': param.type,
                 'param_id': param.id,
             }
+           
             vals.update(param.get_default_value())
             values.append(vals)
         return values
@@ -278,6 +279,7 @@ class StockPickingUnifaunParam(models.Model):
     param_id =  fields.Many2one(comodel_name='delivery.carrier.unifaun.param', string='Carrier Parameter', ondelete='set null')
 
     @api.one
+    @api.onchange('value')
     def _get_value_shown(self):
         self.value_shown = self.value
 
@@ -361,7 +363,7 @@ class StockPickingUnifaunParam(models.Model):
             value = param.get_value()
             write_param(rec, param.get_value(), param.parameter)
 
-class StockPickingUnifuanPdf(models.Model):
+class StockPickingUnifaunPdf(models.Model):
     _name = 'stock.picking.unifaun.pdf'
     
     name = fields.Char(string='Description', required=True)
@@ -613,6 +615,7 @@ class stock_picking(models.Model):
                 'copies': number_of_packages,
                 'weight': weight,
                 'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
+                # ~ 'packageCode':'PACKAGES',
                 'valuePerParcel': number_of_packages < 2,
             }]
 
