@@ -32,6 +32,7 @@ import traceback
 import logging
 _logger = logging.getLogger(__name__)
 
+READ_ONLY_STATES = {'done': [('readonly', True)], 'sent': [('readonly', True)], 'cancel': [('readonly', True)]}
 
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
@@ -457,7 +458,15 @@ class stock_picking(models.Model):
     weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id', copy=False)
-    
+    sender_contact_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Contact Person',
+        
+        ) 
+    receiver_contact_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Recipient Contact',
+        ) 
 
     
     @api.multi
@@ -615,7 +624,7 @@ class stock_picking(models.Model):
                 'copies': number_of_packages,
                 'weight': weight,
                 'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
-                # ~ 'packageCode':'PACKAGES',
+                'packageCode':self.carrier_id.unifaun_param_ids.default_value,
                 'valuePerParcel': number_of_packages < 2,
             }]
 
@@ -637,6 +646,7 @@ class stock_picking(models.Model):
             sender_contact = sender
             sender = self.env['res.partner'].browse(sender.parent_id.address_get(['delivery'])['delivery'])
         rec = {
+                'contact': sender.name,
                 'name': sender.name,
                 'address1': sender.street or '',
                 'address2': sender.street2 or '',
@@ -664,10 +674,19 @@ class stock_picking(models.Model):
         if hasattr(self, 'sale_id'):
             contact_data['contact'] = self.sale_id.partner_id.name
         return contact_data
+        
+    @api.multi
+    def unifaun_sender_contact(self, sender, current_values):
+        """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
+        contact_data = {}
+        if self.sender_contact_id:
+            contact_data['contact'] = self.sender_contact_id.name
+        return contact_data
     
     @api.multi
     def unifaun_receiver_record(self, receiver):
         rec = {
+                'contact': receiver.name,
                 'name': receiver.name,
                 'address1': receiver.street or '',
                 'address2': receiver.street2 or '',
@@ -712,13 +731,20 @@ class stock_picking(models.Model):
             receiver = self.partner_id
         receiver_record = self.unifaun_receiver_record(receiver)
         receiver_record.update(self.unifaun_receiver_contact(receiver, receiver_record))
+        sender_record = self.unifaun_sender_record(sender)
+        sender_record.update(self.unifaun_sender_contact(sender, sender_record))
+        receiver_contact_info = self.partner_id
+        sender_contact_info = self.picking_type_id.warehouse_id.sender_contact_id
         rec = {
-            'sender': self.unifaun_sender_record(sender),
+            
+            'sender': sender_record,
+            'contact': sender_contact_info and sender_contact_info.id or None,
             'senderPartners': [{
                 'id': self.carrier_id.unifaun_sender or '',
                 'custNo': self.carrier_id.unifaun_customer_no or '',
             }],
             'receiver': receiver_record,
+            'contact': receiver_contact_info and receiver_contact_info.id or None,
             'service': {
                 'id': self.carrier_id.unifaun_service_code or '',
             },
@@ -918,5 +944,12 @@ class stock_picking(models.Model):
                     'model': self._name,
                     'type': 'notification',
                 })
+class StockWarehouse(models.Model):
+    _inherit = 'stock.warehouse'
+    sender_contact_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Contact Person',
+        
+        )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
