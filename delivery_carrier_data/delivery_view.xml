@@ -1,4 +1,5 @@
-<openerp>
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
   <data>
 
     <template id="payment_delivery" name="Delivery Carrier Data" inherit_id="website_sale_delivery.payment_delivery">
@@ -14,4 +15,4 @@
     </template>
 
   </data>
-</openerp>
+</odoo>

@@ -18,8 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
+
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ _logger = logging.getLogger(__name__)
 
 class stock_config_settings(models.TransientModel):
     _inherit = 'stock.config.settings'
+    #_inherit = 'res.config.settings'
 
     unifaun_apikey = fields.Char(string="API-key")
     unifaun_password = fields.Char(string='Password')

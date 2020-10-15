@@ -21,10 +21,10 @@
 
 import logging
 import time
-from openerp.osv import fields,osv
-from openerp.tools.translate import _
-import openerp.addons.decimal_precision as dp
-from openerp.tools.safe_eval import safe_eval as eval
+from odoo.osv import fields,osv
+from odoo.tools.translate import _
+import odoo.addons.decimal_precision as dp
+from odoo.tools.safe_eval import safe_eval as eval
 
 _logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class delivery_carrier(osv.osv):
                   try:
                     price=grid_obj.get_price(cr, uid, carrier_grid, order, time.strftime('%Y-%m-%d'), context)
                     available = True
-                  except osv.except_osv, e:
+                  except osv.except_osv as e:
                     # no suitable delivery method found, probably configuration error
                     _logger.error("Carrier %s: %s\n%s" % (carrier.name, e.name, e.value))
                     price = 0.0

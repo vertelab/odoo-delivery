@@ -18,15 +18,15 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
-from openerp.tools import safe_eval
-import openerp.addons.decimal_precision as dp
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
+from odoo.tools import safe_eval
+import odoo.addons.decimal_precision as dp
 import requests
 from requests.auth import HTTPBasicAuth
 import json
 import base64
-from urllib import urlencode
+from urllib.parse import urlencode
 import traceback
 from math import ceil
 from pprint import PrettyPrinter

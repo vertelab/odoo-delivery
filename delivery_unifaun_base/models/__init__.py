@@ -1,2 +1,2 @@
-import delivery
-import res_config
+from . import delivery
+from . import res_config

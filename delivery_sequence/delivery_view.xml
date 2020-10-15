@@ -1,4 +1,5 @@
-<openerp>
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
     <data>
         <record id="view_delivery_carrier_tree" model="ir.ui.view">
             <field name="name">delivery.carrier.tree</field>
@@ -11,4 +12,4 @@
             </field>
         </record>
     </data>
-</openerp>
+</odoo>

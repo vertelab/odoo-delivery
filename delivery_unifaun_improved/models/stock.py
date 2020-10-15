@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class StockPicking(models.Model):
                 raise Warning("Carrier is not a Unifaun partner.")
 
 class StockPackOperation(models.Model):
-    _inherit = 'stock.pack.operation'
+    _inherit = 'stock.move.line'
 
     @api.multi
     def unifaun_package_line_values(self):

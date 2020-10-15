@@ -21,9 +21,9 @@
 #
 ##############################################################################
 
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
-import openerp
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
+import odoo
 
 import requests
 from lxml import etree

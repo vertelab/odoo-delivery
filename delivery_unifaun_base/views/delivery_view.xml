@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
     <data>
         
         <!-- Delivery Carriers -->
@@ -11,7 +11,7 @@
                 <field name="active" position="after">
                     <field name="is_unifaun" />
                 </field>
-                <field name="pricelist_ids" position="after">
+                <page position="after">
                     <div attrs="{'invisible': [('is_unifaun', '==', False)]}">
                         <separator string="Unifaun"/>
                         <group>
@@ -27,7 +27,7 @@
                         <label for="unifaun_param_ids"/>
                         <field name="unifaun_param_ids"/>
                     </div>
-                </field>
+                </page>
             </field>
         </record>
         
@@ -36,9 +36,9 @@
             <field name="model">product.packaging</field>
             <field name="inherit_id" ref="product.product_packaging_form_view" />
             <field name="arch" type="xml">
-                <field name="ean" position="after">
+                <group name="qty" position="after">
                     <field name="shipper_package_code" />
-                </field>
+                </group>
             </field>
         </record>
         
@@ -60,14 +60,14 @@
             <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <field name="number_of_packages" position="replace" />
+                <group position="after" />
                 <separator position="after">
                     <button name="order_stored_shipment" string="Order Transport" type="object" attrs="{'invisible': ['|', '|', ('is_unifaun', '==', False), ('state', '!=', 'done'), ('unifaun_shipmentid', '!=', False)]}" />
                     <button name="delete_stored_shipment" string="Delete" type="object" attrs="{'invisible': [('unifaun_stored_shipmentid', '==', False)]}" />
                     <button name="confirm_stored_shipment" string="Confirm Transport" type="object" attrs="{'invisible': ['|', ('unifaun_stored_shipmentid', '==', False), ('unifaun_shipmentid', '!=', False)]}" />
                     <span>
-                        <label for="number_of_packages" class="oe_inline" />
-                        <field name="number_of_packages" class="oe_inline" />
+                        <!-- <label for="number_of_packages" class="oe_inline" />
+                        <field name="number_of_packages" class="oe_inline" /> -->
                     </span>
                 </separator>
                 <field name="carrier_tracking_ref" position="after">
@@ -245,7 +245,7 @@
             </field>
         </record>
 
-        <record id="unifaun_email_template" model="email.template">
+        <record id="unifaun_email_template" model="mail.template">
             <field name="name">Unifaun Email Template</field>
             <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
             <field name="subject">Unifaun ${object.name} tracking link</field>
@@ -265,4 +265,4 @@ Click the link below:<br/>
         </record>
 
     </data>
-</openerp>
+</odoo>

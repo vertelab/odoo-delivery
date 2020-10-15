@@ -18,15 +18,15 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
-from openerp.tools import safe_eval
-import openerp.addons.decimal_precision as dp
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
+from odoo.tools import safe_eval
+import odoo.addons.decimal_precision as dp
 import requests
 from requests.auth import HTTPBasicAuth
 import json
 import base64
-from urllib import urlencode
+from urllib.parse import urlencode
 import traceback
 
 import logging
@@ -381,11 +381,11 @@ class StockQuantPackage(models.Model):
     shipping_weight = fields.Float(string='Shipping Weight', help="Can be changed during the 'put in pack' to adjust the weight of the shipping.")
     
     @api.one
-    @api.depends('quant_ids.qty', 'quant_ids.product_id.weight', 'children_ids')
+    @api.depends('quant_ids.quantity', 'quant_ids.product_id.weight', 'children_ids')
     def _compute_weight(self):
         weight = self.ul_id and self.ul_id.weight or 0.0
         for quant in self.quant_ids:
-            weight += quant.qty * quant.product_id.weight
+            weight += quant.quantity * quant.product_id.weight
         for pack in self.children_ids:
             weight += pack.weight
         self.weight = weight
@@ -418,7 +418,8 @@ class ProductPackaging(models.Model):
 
 class StockPackOperation(models.Model):
     _inherit = 'stock.pack.operation'
-    
+    #_inherit = 'stock.move.line'
+
     result_package_working_weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
     result_package_weight = fields.Float(related='result_package_id.weight')
     result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
@@ -455,14 +456,17 @@ class stock_picking(models.Model):
     unifaun_parcel_count = fields.Integer(string='Unifaun Parcel Count', copy=False, help="Fill in this field to override package data. Will override data from packages if used.")
     unifaun_parcel_weight = fields.Float(string='Unifaun Parcel Weight', copy=False, help="Fill in this field to override package data. Will override weight unless the data is generated from packages.")
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
+    unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id', copy=False)
+    
     weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
-    unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id', copy=False)
+    #move_lines = fields.One2many(comodel_name='stock.move', inverse_name='picking_id', state={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, copy=True)
+    
     sender_contact_id = fields.Many2one(
         comodel_name='res.partner',
         string='Contact Person',
-        
         ) 
+
     receiver_contact_id = fields.Many2one(
         comodel_name='res.partner',
         string='Recipient Contact',
@@ -486,7 +490,7 @@ class stock_picking(models.Model):
     @api.multi
     def get_unifaun_sender_reference(self):
         return self.name 
-    
+
     @api.one
     @api.depends(
         'move_lines.state',
@@ -495,7 +499,7 @@ class stock_picking(models.Model):
         'move_lines.product_uom',
         'pack_operation_ids.result_package_id.quant_ids',
         'pack_operation_ids.result_package_id.children_ids',
-        'pack_operation_ids.result_package_id.quant_ids.qty',
+        'pack_operation_ids.result_package_id.quant_ids.quantity',
         'pack_operation_ids.result_package_id.quant_ids.product_id.weight',
         'pack_operation_ids.product_uom_id',
         'pack_operation_ids.product_qty',
@@ -507,7 +511,7 @@ class stock_picking(models.Model):
         for move in self.move_lines:
             if move.state != 'cancel':
                 total_weight += move.weight
-                total_weight_net += move.weight_net
+                #total_weight_net += move.weight_net
         # Package weights
         if self.pack_operation_ids:
             total_weight = 0.00
@@ -529,7 +533,7 @@ class stock_picking(models.Model):
     # ~ @api.depends('pack_operation_ids.result_package_id')
     def _compute_package_ids(self):
         self.package_ids = self.pack_operation_ids.mapped('result_package_id')
-        
+
     @api.onchange('carrier_id')
     def onchange_carrier(self):
         self.unifaun_param_ids = None

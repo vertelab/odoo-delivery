@@ -18,11 +18,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 
 import logging
 _logger = logging.getLogger(__name__)
+
+class product_ul(models.Model):
+    _name = "product.ul"
+    _description = "Logistic Unit"
+    
+    name = fields.Char('Name', select=True, required=True, translate=True)
+    type = fields.Selection([('unit','Unit'),('pack','Pack'),('box', 'Box'), ('pallet', 'Pallet')], 'Type', required=True)
+    height = fields.Float('Height', help='The height of the package')
+    width = fields.Float('Width', help='The width of the package')
+    length = fields.Float('Length', help='The length of the package')
+    weight = fields.Float('Empty Package Weight')
 
 class LogisticalUnit(models.Model):
     _inherit = "product.ul"

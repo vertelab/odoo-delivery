@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
     <data>
         
         <record id="view_stock_picking_form" model="ir.ui.view">
@@ -99,9 +99,11 @@
             </field>
         </record>
         
+<!--        
         <record id="view_unifaun_order_tree" model="ir.ui.view">
             <field name="name">unifaun.order.tree</field>
             <field name="model">unifaun.order</field>
+
             <field name="arch" type="xml">
                 <tree string="Unifaun Orders" color="state" date_start="date">
                     <field name="date"/>
@@ -112,6 +114,7 @@
                 </tree>
             </field>
         </record>
+-->
         
         <record id="view_warehouse_unifaun_contact" model="ir.ui.view">
             <field name="name">unifaun.warehouse.order.contact</field>
@@ -227,6 +230,8 @@
             </field>
         </record>
         
+<!--
+        
         <record id="product_ul_form_view" model="ir.ui.view">
             <field name="name">product.ul.unifaun.form.view</field>
             <field name="model">product.ul</field>
@@ -244,6 +249,7 @@
                 </sheet>
             </field>
         </record>
+-->
         
         <record id="view_product_ul_unifaun_code_tree" model="ir.ui.view">
             <field name="name">product.ul.unifaun_code.tree</field>
@@ -297,4 +303,4 @@ Click the link below:<br/>
         </record>
 
     </data>
-</openerp>
+</odoo>

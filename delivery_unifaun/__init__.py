@@ -1,1 +1,1 @@
-import delivery
+from . import delivery
