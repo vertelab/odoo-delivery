@@ -146,48 +146,6 @@ class stock_picking_unifaun_status(models.Model):
     message_code = fields.Char(string='messageCode')
     raw_data = fields.Char(string='Raw Data')
     picking_id = fields.Many2one(comodel_name='stock.picking')
-    # ~ trans_id = fields.Many2one(comodel_name='stock.picking.unifaun.status_trans', string='Human Readable Message')
-    # ~ trans_message = fields.Char(string='Message', related='trans_id.name')
-    
-    # ~ @api.one
-    # ~ def translate_message(self):
-        # ~ self.trans_id = self.env['stock.picking.unifaun.status_trans'].search([
-            # ~ '|',
-                # ~ ('field', '=', self.field),
-                # ~ ('field', '=', '*'),
-            # ~ '|',
-                # ~ ('message', '=', self.name),
-                # ~ ('message', '=', '*'),
-            # ~ '|',
-                # ~ ('type', '=', self.type),
-                # ~ ('type', '=', '*'),
-            # ~ '|',
-                # ~ ('location', '=', self.location),
-                # ~ ('location', '=', '*'),
-            # ~ '|',
-                # ~ ('message_code', '=', self.message_code),
-                # ~ ('message_code', '=', '*'),
-        # ~ ], limit=1)
-    
-    # ~ @api.model
-    # ~ @api.returns('self', lambda value: value.id)
-    # ~ def create(self, vals):
-        # ~ res = super(stock_picking_unifaun_status, self).create(vals)
-        # ~ res.translate_message()
-        # ~ return res
-
-# ~ #access_stock_stock_picking_unifaun_status_trans_user,access_stock_stock_picking_unifaun_status_trans_user,model_stock_picking_unifaun_status_trans,stock.group_stock_user,1,1,1,1
-# ~ class stock_picking_unifaun_status_trans(models.Model):
-    # ~ _name = 'stock.picking.unifaun.status_trans'
-    # ~ _order = 'sequence'
-
-    # ~ name = fields.Char(string='Message', required=True, translate=True)
-    # ~ sequence = fields.Integer(string='Sequence', default=100)
-    # ~ field = fields.Char(string='field')
-    # ~ message = fields.Char(string='message')
-    # ~ type = fields.Char(string='type')
-    # ~ location = fields.Char(string='location')
-    # ~ message_code = fields.Char(string='messageCode')
 
 # Definition of format selection fields for DeliveryCarrierUnifaunPrintSettings
 print_format_selection = [
@@ -274,9 +232,6 @@ class StockPickingUnifaunParam(models.Model):
     type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
     value = fields.Char(string='Value')
     value_shown = fields.Char(string='Value', compute='_get_value_shown', inverse='_set_value_shown')
-    # ~ value_char = fields.Char(string='Value')
-    # ~ value_int = fields.Integer(string='Value')
-    # ~ value_float = fields.Float(string='Value')
     param_id =  fields.Many2one(comodel_name='delivery.carrier.unifaun.param', string='Carrier Parameter', ondelete='set null')
 
     @api.one
@@ -381,7 +336,8 @@ class StockQuantPackage(models.Model):
     shipping_weight = fields.Float(string='Shipping Weight', help="Can be changed during the 'put in pack' to adjust the weight of the shipping.")
     
     @api.one
-    @api.depends('quant_ids.quantity', 'quant_ids.product_id.weight', 'children_ids')
+    #@api.depends('quant_ids.quantity', 'quant_ids.product_id.weight', 'children_ids.weight')
+    @api.depends('quant_ids.quantity', 'quant_ids.product_id.weight')
     def _compute_weight(self):
         weight = self.ul_id and self.ul_id.weight or 0.0
         for quant in self.quant_ids:
@@ -417,8 +373,8 @@ class ProductPackaging(models.Model):
     shipper_package_code = fields.Char(string='Shipper Packaging Ref')
 
 class StockPackOperation(models.Model):
-    _inherit = 'stock.pack.operation'
-    #_inherit = 'stock.move.line'
+    #_inherit = 'stock.pack.operation'
+    _inherit = 'stock.move.line'
 
     result_package_working_weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
     result_package_weight = fields.Float(related='result_package_id.weight')
@@ -458,9 +414,14 @@ class stock_picking(models.Model):
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
     unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id', copy=False)
     
+    # added for odooutv12
+    pack_operation_ids = fields.One2many('stock.move.line', 'picking_id', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, string='Related Packing Operations')
+    children_ids = fields.One2many('stock.picking', 'parent_id', 'Contained Packages',readonly=True)
+    parent_id = fields.Many2one('stock.picking', 'Parent Package', help="The package containing this item", ondelete='restrict',readonly=True)
+    result_package_id = fields.Many2one('stock.quant.package', 'Destination Package', help="If set, the operations are packed into this package", required=False, ondelete='cascade')
+    
     weight = fields.Float(string='Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits_compute= dp.get_precision('Stock Weight'), compute='_calculate_weight', store=True)
-    #move_lines = fields.One2many(comodel_name='stock.move', inverse_name='picking_id', state={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, copy=True)
     
     sender_contact_id = fields.Many2one(
         comodel_name='res.partner',
@@ -498,7 +459,7 @@ class stock_picking(models.Model):
         'move_lines.product_uom_qty',
         'move_lines.product_uom',
         'pack_operation_ids.result_package_id.quant_ids',
-        'pack_operation_ids.result_package_id.children_ids',
+        #'pack_operation_ids.result_package_id.children_ids',
         'pack_operation_ids.result_package_id.quant_ids.quantity',
         'pack_operation_ids.result_package_id.quant_ids.product_id.weight',
         'pack_operation_ids.product_uom_id',
@@ -520,7 +481,7 @@ class stock_picking(models.Model):
             total_weight += package.shipping_weight or package.weight or 0
         # Pack operations weight (except packages)
         for op in self.pack_operation_ids.filtered(lambda o: not o.result_package_id):
-            qty = op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
+            qty = 0 #op.product_uom_id._compute_qty_obj(op.product_uom_id, op.product_qty, op.product_id.uom_id)
             total_weight += op.product_id.weight * qty
         self.weight = total_weight
         self.weight_net = total_weight_net
