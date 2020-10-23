@@ -7,6 +7,7 @@
       <field name="model">stock.picking</field>
       <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
       <field name="type">form</field>
+<!--
       <field name="arch" type="xml">
         <separator string="Carrier Information" position="after">
           <button name="order_stored_shipment" string="Order Transport" type='object' attrs="{'invisible': [('is_unifaun', '==', False)]}" />
@@ -18,6 +19,7 @@
           <field name="is_unifaun" invisible="1"/>
         </field>
       </field>
+-->
     </record>
     
     <record id="view_delivery_carrier_form" model="ir.ui.view">

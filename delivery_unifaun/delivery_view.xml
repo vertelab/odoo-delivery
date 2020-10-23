@@ -2,7 +2,9 @@
 <odoo>
     <data>
         <!-- Delivery Carriers -->
+<!--
         <menuitem id="menu_delivery" name="Delivery" parent="stock.menu_stock_configuration" groups="base.group_no_one" sequence="50"/>
+-->
 
         <record id="view_delivery_carrier_tree" model="ir.ui.view">
             <field name="name">delivery.carrier.tree</field>
@@ -109,7 +111,9 @@
             </field>
         </record>
 
+<!--
         <menuitem action="action_delivery_carrier_form" id="menu_action_delivery_carrier_form" parent="stock.menu_stock_configuration" sequence="15"/>
+-->
 
         <!-- Delivery Grids -->
         <record id="view_delivery_grid_tree" model="ir.ui.view">

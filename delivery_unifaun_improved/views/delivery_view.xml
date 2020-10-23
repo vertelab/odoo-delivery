@@ -283,6 +283,8 @@
             id="menu_action_unifaun_order"
             parent="menu_stock_unifaun" sequence="1"/>
 
+<!--
+
         <record id="delivery_unifaun_base.unifaun_order_email_template" model="email.template">
             <field name="name">Unifaun Email Template</field>
             <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
@@ -301,6 +303,7 @@ Click the link below:<br/>
 ]]>
             </field>
         </record>
+-->
 
     </data>
 </odoo>
