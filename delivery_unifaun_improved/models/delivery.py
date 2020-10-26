@@ -215,6 +215,7 @@ class UnifaunOrder(models.Model):
         states=READ_ONLY_STATES,
         track_visibility='onchange')
     package_ids = fields.One2many(comodel_name='unifaun.package', inverse_name='unifaun_id', string='Packages')
+    package_id = fields.Many2one(comodel_name='unifaun.package', string='Package', required=True, ondelete='cascade', states=READ_ONLY_STATES)
     line_ids = fields.One2many(related='package_ids.line_ids', string='Package Contents')
 
     @api.one
