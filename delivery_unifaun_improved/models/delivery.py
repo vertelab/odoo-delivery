@@ -69,7 +69,7 @@ class UnifaunPackage(models.Model):
         uom_obj = self.env['product.uom']
         for package in self:
             # TODO: Does this check work or will it be set to 0 if state != draft?
-            _logger.warn(self.unifaun_id.state)
+            _logger.warn(package.unifaun_id.state)
             if package.unifaun_id.state == 'draft':
                 weight = 0.00
                 for line in package.line_ids:
@@ -86,7 +86,7 @@ class UnifaunPackage(models.Model):
                 else:
                     package.weight = weight
 
-    @api.one
+    @api.multi
     def get_parcel_values(self):
         """Return a dict of parcel data to be used in a Unifaun shipment record."""
         vals = {
@@ -215,7 +215,7 @@ class UnifaunOrder(models.Model):
         states=READ_ONLY_STATES,
         track_visibility='onchange')
     package_ids = fields.One2many(comodel_name='unifaun.package', inverse_name='unifaun_id', string='Packages')
-    package_id = fields.Many2one(comodel_name='unifaun.package', string='Package', required=True, ondelete='cascade', states=READ_ONLY_STATES)
+    package_id = fields.Many2one(comodel_name='unifaun.package', string='Package')
     line_ids = fields.One2many(related='package_ids.line_ids', string='Package Contents')
 
     @api.one
@@ -400,9 +400,9 @@ class UnifaunOrder(models.Model):
         ### Handle packages from the pickings ###
         for package in pickings.mapped('package_ids'):
             values = package.unifaun_package_values()
-            for op in pickings.mapped('pack_operation_ids').filtered(lambda op: op.package_id == package_id):
-                values['line_ids'].append((0, 0, op.unifaun_package_line_values()))
-            packages.append((0, 0, values))
+            for op in pickings.mapped('pack_operation_ids').filtered(lambda op: op.package_id == self.package_id):
+                values['line_ids'].append((op.unifaun_package_line_values()))
+            packages.append(package)
         ### Check for packops not in packages ###
         pack_ops = []
         # Handle pickings that should all be their own package
@@ -444,7 +444,7 @@ class UnifaunOrder(models.Model):
     def get_unifaun_sender_reference(self):
         return self.name 
 
-    @api.one
+    @api.multi
     def set_unifaun_status(self, statuses):
         if self.status_ids:
             self.status_ids.unlink()
@@ -572,7 +572,7 @@ class UnifaunOrder(models.Model):
                 'state': receiver.state_id and receiver.state_id.name or '',
                 'country': receiver.country_id and receiver.country_id.code or '',
                 'phone': receiver.phone or receiver.mobile or '',
-                'mobile': receiver.mobile or '',
+                'mobile': receiver.phone or receiver.mobile or '',
                 'email': receiver.email or '',
             }
         name_method = self.env['ir.config_parameter'].get_param('unifaun.receiver_name_method', 'default')
@@ -582,7 +582,28 @@ class UnifaunOrder(models.Model):
             rec['name'] = receiver.commercial_partner_id.name
         return rec
     
-    @api.one
+    # ~ @api.multi
+    # ~ def order_stored_shipment(self):
+        # ~ self.split_order()
+        
+            
+    # ~ @api.one
+    # ~ def split_order(self):
+        # ~ for package in self.package_ids:
+            
+            
+            # ~ # remove package from self.package_ids
+            
+            # ~ vals = {
+                # ~ '': '',
+            # ~ }
+            
+            # ~ copy(self)
+            # ~ order = self.env['unifaun.order'].create(vals)
+            # ~ order['package_ids'] = package
+            # ~ order.order_create()
+            
+    @api.multi
     def order_stored_shipment(self):
         """Create a stored shipment."""
         if self.carrier_tracking_ref:

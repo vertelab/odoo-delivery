@@ -695,7 +695,7 @@ class stock_picking(models.Model):
                 'state': receiver.state_id and receiver.state_id.name or '',
                 'country': receiver.country_id and receiver.country_id.code or '',
                 'phone': receiver.phone or receiver.mobile or '',
-                'mobile': receiver.mobile or '',
+                'mobile': receiver.phone or receiver.mobile or '',
                 'email': receiver.email or '',
             }
         name_method = self.env['ir.config_parameter'].get_param('unifaun.receiver_name_method', 'default')
@@ -705,7 +705,26 @@ class stock_picking(models.Model):
             rec['name'] = receiver.commercial_partner_id.name
         return rec
     
-    @api.one
+    # ~ @api.multi
+    # ~ def order_stored_shipment(self):
+        # ~ """Create a stored shipment."""
+        # ~ for package in self.package_ids:
+            # ~ package.env['stock.picking'].order_create()
+    # ~ @api.multi
+    # ~ def create_unifaun_order(values):
+        # ~ order = self.env['sale.order'].create(values)
+        # ~ res = order.onchange(order.read()[0], 'partner_id', order._onchange_spec())
+        # ~ if res.get('value'):
+            # ~ order.write(res['value'])
+        # ~ return order
+        
+        # ~ order = None
+        # ~ orders = []
+        # ~ ordernummer = ''
+        # ~ orderdatum = ''
+    
+            # ~ lines = content.splitlines()
+    @api.multi
     def order_stored_shipment(self):
         """Create a stored shipment."""
         if self.carrier_tracking_ref:
@@ -763,6 +782,11 @@ class stock_picking(models.Model):
         
         if self.unifaun_param_ids:
             self.unifaun_param_ids.add_to_record(rec)
+        # ~ if self.package_ids:
+            # ~ res = super(stock_picking,self).order_create()
+            # ~ for package in self.package_ids:
+                # ~ return res
+                
 
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         if type(response) == type({}):
