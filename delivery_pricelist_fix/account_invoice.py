@@ -41,7 +41,8 @@ class stock_picking(models.Model):
         """
         res = super(stock_picking,self)._prepare_shipping_invoice_line(picking,invoice)
         _logger.warn('%s Haze' %invoice.picking_id.sale_id.pricelist_id.id)
-        res['price_unit'] = picking.carrier_id.product_id.get_pricelist_chart_line(invoice.picking_id.sale_id.pricelist_id.id).price
-        _logger.warn('Haze %s' %res['price_unit'])
+        if res:
+            res['price_unit'] = picking.carrier_id.product_id.get_pricelist_chart_line(invoice.picking_id.sale_id.pricelist_id.id).price
+            _logger.warn('Haze %s' %res['price_unit'])
         
         return res
