@@ -34,12 +34,15 @@ _logger = logging.getLogger(__name__)
 
 READ_ONLY_STATES = {'done': [('readonly', True)], 'sent': [('readonly', True)], 'cancel': [('readonly', True)]}
 
-class delivery_carrier(models.Model):
-    _inherit = "delivery.carrier"
+class UnifaunResConfigSettings(models.TransientModel):
+    _inherit = 'res.config.settings'
+    module_delivery_unifaun = fields.Boolean("Unifaun")
 
-    # TODO: Implement models for SenderPartner and Service Code.
-    # We need them to properly handle various stuff, such as packaging
-    # codes, and other code list items.
+class ProviderUnifaun(models.Model):
+    _inherit = 'delivery.carrier'
+    _description = "Provider Unifaun"
+    delivery_type = fields.Selection(selection_add=[("unifaun", "Unifaun")])
+    
     unifaun_service_code = fields.Char('Service Code')
     is_unifaun = fields.Boolean('Is Unifaun')
     unifaun_sender = fields.Char(string='SenderPartners id', help="Code describing the carrier. See Unifaun help pages.")
@@ -47,15 +50,6 @@ class delivery_carrier(models.Model):
     unifaun_param_ids = fields.One2many(comodel_name='delivery.carrier.unifaun.param', inverse_name='carrier_id', string='Parameters')
     unifaun_print_settings_id = fields.Many2one(comodel_name='delivery.carrier.unifaun.print_settings', string='Unifaun Print Settings')
     unifaun_min_weight = fields.Float(string='Minimum weight per package', help="The minimum weight per package allowed. Lower weights will be set to the minimum value.", default=0.00)
-
-    #~ unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
-
-    #~ @api.multi
-    #~ def test_environment(self):
-        #~ self.ensure_one()
-        #~ if 'test' in (self.env['ir.config_parameter'].get_param('unifaun.environment', 'prod'), self.unifaun_environment):
-            #~ return True
-        #~ return False
 
     def unifaun_download(self, pdf):
         username = self.env['ir.config_parameter'].get_param('unifaun.api_key')
@@ -146,48 +140,6 @@ class stock_picking_unifaun_status(models.Model):
     message_code = fields.Char(string='messageCode')
     raw_data = fields.Char(string='Raw Data')
     picking_id = fields.Many2one(comodel_name='stock.picking')
-    # ~ trans_id = fields.Many2one(comodel_name='stock.picking.unifaun.status_trans', string='Human Readable Message')
-    # ~ trans_message = fields.Char(string='Message', related='trans_id.name')
-    
-    # ~ @api.one
-    # ~ def translate_message(self):
-        # ~ self.trans_id = self.env['stock.picking.unifaun.status_trans'].search([
-            # ~ '|',
-                # ~ ('field', '=', self.field),
-                # ~ ('field', '=', '*'),
-            # ~ '|',
-                # ~ ('message', '=', self.name),
-                # ~ ('message', '=', '*'),
-            # ~ '|',
-                # ~ ('type', '=', self.type),
-                # ~ ('type', '=', '*'),
-            # ~ '|',
-                # ~ ('location', '=', self.location),
-                # ~ ('location', '=', '*'),
-            # ~ '|',
-                # ~ ('message_code', '=', self.message_code),
-                # ~ ('message_code', '=', '*'),
-        # ~ ], limit=1)
-    
-    # ~ @api.model
-    # ~ @api.returns('self', lambda value: value.id)
-    # ~ def create(self, vals):
-        # ~ res = super(stock_picking_unifaun_status, self).create(vals)
-        # ~ res.translate_message()
-        # ~ return res
-
-# ~ #access_stock_stock_picking_unifaun_status_trans_user,access_stock_stock_picking_unifaun_status_trans_user,model_stock_picking_unifaun_status_trans,stock.group_stock_user,1,1,1,1
-# ~ class stock_picking_unifaun_status_trans(models.Model):
-    # ~ _name = 'stock.picking.unifaun.status_trans'
-    # ~ _order = 'sequence'
-
-    # ~ name = fields.Char(string='Message', required=True, translate=True)
-    # ~ sequence = fields.Integer(string='Sequence', default=100)
-    # ~ field = fields.Char(string='field')
-    # ~ message = fields.Char(string='message')
-    # ~ type = fields.Char(string='type')
-    # ~ location = fields.Char(string='location')
-    # ~ message_code = fields.Char(string='messageCode')
 
 # Definition of format selection fields for DeliveryCarrierUnifaunPrintSettings
 print_format_selection = [
