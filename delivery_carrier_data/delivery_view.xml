@@ -1,5 +1,5 @@
-<openerp>
-  <data>
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
 
     <template id="payment_delivery" name="Delivery Carrier Data" inherit_id="website_sale_delivery.payment_delivery">
         <xpath expr="//div[@t-field='delivery.website_description']" position="before">
@@ -14,4 +14,4 @@
     </template>
 
   </data>
-</openerp>
+</odoo>

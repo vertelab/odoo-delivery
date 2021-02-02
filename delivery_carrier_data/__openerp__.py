@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-# OpenERP, Open Source Management Solution, third party addon
-# Copyright (C) 2017- Vertel AB (<http://vertel.se>).
+# Odoo, Open Source Management Solution, third party addon
+# Copyright (C) 2021- Vertel AB (<http://vertel.se>).
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -19,18 +19,20 @@
 #
 ##############################################################################
 {
-'name': 'Delivery Carrier Data',
-'version': '0.1',
-'summary': 'Add extra input field to delivery method',
-'category': 'stock',
-'description': """
-Show input field in check out form in website_sale
-==================================================
-Financed by Cavarosa LTD""",
-'author': 'Vertel AB',
+    'name': 'Delivery Carrier Data',
+    'version': '13.0.0.1',
+    'summary': 'Add extra input field to delivery method',
+    'category': 'stock',
+    'description': """
+    Show input field in check out form in website_sale
+    ==================================================
+    Financed by Cavarosa LTD""",
+    'author': 'Vertel AB',
     'license': 'AGPL-3',
-'website': 'http://www.vertel.se',
-'depends': ['website_sale_delivery',],
-'data': ['delivery_view.xml'],
-'installable': True,
+    'website': 'http://www.vertel.se',
+    'depends': [
+        'website_sale_delivery',
+    ],
+    'data': ['delivery_view.xml'],
+    'installable': True,
 }
