@@ -36,10 +36,11 @@ class delivery_carrier(models.Model):
         _logger.warn('sandra')
         for pickup in self: 
             if pickup.pickup_location:
-                pickup.carrier_data = _('<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \
+                pickup.carrier_data = _('<select name="carrier_data" class="selectpicker form-control carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \
                                   '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in pickup.env['res.partner'].search([('pickup_location','=',True)])])
             else:
-                super(delivery_carrier, pickup)._carrier_data()
+
+                #super(delivery_carrier, pickup)._carrier_data()
 
     @api.model
     def lookup_carrier(self, carrier_id, carrier_data, order):

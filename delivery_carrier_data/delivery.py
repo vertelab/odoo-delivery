@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
-from openerp import models, fields, api, _
-from openerp import http
-from openerp.http import request
+from odoo import models, fields, api, _
+from odoo import http
+from odoo.http import request
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -29,12 +29,11 @@ _logger = logging.getLogger(__name__)
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
 
-    @api.one
     def _carrier_data(self):
-        #if self.my_delivery_type:
-            #self._carrier_data = '<input name="carrier_data" .../>
-        #else:
-            #super(delivery_carrier, self)._carrier_data()
+        # if self.my_delivery_type:
+        #     self._carrier_data = '<input name="carrier_data" .../>
+        # else:
+        #     super(delivery_carrier, self)._carrier_data()
         pass
     carrier_data = fields.Text(compute="_carrier_data")
 

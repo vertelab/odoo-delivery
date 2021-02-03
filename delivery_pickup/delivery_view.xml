@@ -1,4 +1,4 @@
-<openerp>
+<odoo>
     <data>
         <record id="view_delivery_carrier_form" model="ir.ui.view">
             <field name="name">delivery.carrier.pickup.form</field>
@@ -17,4 +17,4 @@
             </xpath>
         </template>
     </data>
-</openerp>
+</odoo>

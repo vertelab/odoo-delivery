@@ -1,17 +1,27 @@
-<openerp>
+<odoo>
   <data>
-
+ 
     <template id="payment_delivery" name="Delivery Carrier Data" inherit_id="website_sale_delivery.payment_delivery">
-        <xpath expr="//div[@t-field='delivery.website_description']" position="before">
+        <xpath expr="//li" position="inside">
+              <t t-if="delivery.pickup_location">
                 <span><t t-raw="delivery.carrier_data"/></span>
+              </t>           
         </xpath>
-    </template>
+    </template> 
 
     <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Carrier Data Assets">
       <xpath expr="." position="inside">
-        <script type="text/javascript" src="/delivery_carrier_data/static/src/js/main.js"></script>
+
+           <script type="text/javascript">
+            odoo.define(function (require){
+              var ajax = require('web.ajax');
+              ajax.loadJS("/delivery_carrier_data/static/src/js/main.js");
+            });
+          </script> 
+
+
       </xpath>
     </template>
 
   </data>
-</openerp>
+</odoo>
