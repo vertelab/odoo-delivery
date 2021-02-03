@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 # OpenERP, Open Source Management Solution, third party addon
@@ -19,11 +18,11 @@
 #
 ##############################################################################
 
-import openerp.exceptions
-from openerp import models, fields, api, _
-from openerp import http
-from openerp.http import request
-import openerp.addons.website_sale.controllers.main
+import odoo.exceptions
+from odoo import models, fields, api, _
+from odoo import http
+from odoo.http import request
+import odoo.addons.website_sale.controllers.main
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -32,13 +31,14 @@ class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
 
     pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the Carrier Type is a pickup location for deliveries.")
-    @api.one
     def _carrier_data(self):
-        if self.pickup_location:
-            self.carrier_data = _('<select name="carrier_data" class="selectpicker form-control carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \
-                              '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in self.env['res.partner'].search([('pickup_location','=',True)])])
-        else:
-            super(delivery_carrier, self)._carrier_data()
+        _logger.warn('sandra')
+        for pickup in self: 
+            if pickup.pickup_location:
+                pickup.carrier_data = _('<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \
+                                  '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in pickup.env['res.partner'].search([('pickup_location','=',True)])])
+            else:
+                super(delivery_carrier, pickup)._carrier_data()
 
     @api.model
     def lookup_carrier(self, carrier_id, carrier_data, order):

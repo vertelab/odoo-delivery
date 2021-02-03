@@ -1,2 +1,1 @@
-# -*- coding: utf-8 -*-
-import delivery
+from . import delivery
