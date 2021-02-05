@@ -11,7 +11,7 @@
     </template>
 
     <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Carrier Data Assets">
-      <xpath expr="." position="inside">
+      <xpath expr="head" position="after">
 	<script type="text/javascript">
             odoo.define(function (require){
               var ajax = require('web.ajax');

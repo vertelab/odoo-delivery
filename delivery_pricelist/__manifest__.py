@@ -21,7 +21,7 @@
 {
 'name': 'Delivery Pricelist',
 'version': '0.1',
-'summary': 'Delivery choosen by customers pricelist',
+'summary': 'Delivery choosen by customers pricelist.',
 'category': 'stock',
 'description': """
     Delivery is choosen by customers prislis.
