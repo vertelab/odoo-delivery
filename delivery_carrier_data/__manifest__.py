@@ -23,10 +23,7 @@
     'version': '13.0.0.1',
     'summary': 'Add extra input field to delivery method',
     'category': 'stock',
-    'description': """
-    Show input field in check out form in website_sale
-    ==================================================
-    Financed by Cavarosa LTD""",
+    'description': 'Show input field in check out form in website_sale================================================== Financed by Cavarosa LTD',
     'author': 'Vertel AB',
     'license': 'AGPL-3',
     'website': 'http://www.vertel.se',
