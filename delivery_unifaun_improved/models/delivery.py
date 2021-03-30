@@ -231,24 +231,24 @@ class UnifaunOrder(models.Model):
             for package in self.package_ids:
                 weight += package.weight
             self.weight = weight
-    
+
     # https://www.unifaunonline.se/rs-docs/
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
-    
+
     # ~ @api.one
     # ~ @api.depends('picking_ids.pack_operation_ids.result_package_id')
     # ~ def _compute_package_ids(self):
         # ~ if self.state == 'draft':
             # ~ self.package_ids = self.picking_ids.mapped('pack_operation_ids').mapped('result_package_id')
-        
+
     @api.onchange('carrier_id')
     def onchange_carrier(self):
         self.param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
             self.param_ids.compute_default_value()
-    
+
     @api.multi
     def get_unifaun_language(self):
         translate = {
@@ -260,9 +260,9 @@ class UnifaunOrder(models.Model):
             'fi_FI': 'fi',
             'da_DK': 'dk'
         }
-        
-        return translate.get(self.partner_id.lang, 'gb') 
-    
+
+        return translate.get(self.partner_id.lang, 'gb')
+
     @api.model
     def create_from_pickings(self, pickings):
         """Create a Unifaun Order from one or more Picking Orders."""
@@ -306,7 +306,7 @@ class UnifaunOrder(models.Model):
                 if not all([v == values[0] for v in values]):
                     problems.append(_("Differing values for %s.") % field)
         return problems
-    
+
     @api.model
     def get_picking_compatibility_data(self, pickings):
         result = {
@@ -359,7 +359,7 @@ class UnifaunOrder(models.Model):
             for picking in pickings:
                 if picking.sale_id:
                     return picking.sale_id.partner_id
-                    
+
     # ~ @api.model
     # ~ def get_sender_contact_from_pickings(self, pickings, parnter_id):
         # ~ """Return the receiving partner contact."""
@@ -367,9 +367,9 @@ class UnifaunOrder(models.Model):
             # ~ for picking in pickings:
                 # ~ if picking.sale_id:
                     # ~ return picking.sale_id.partner_id
-        
-        
-        
+
+
+
 
     @api.model
     def get_package_values_from_pickings(self, pickings):
@@ -438,11 +438,11 @@ class UnifaunOrder(models.Model):
                 }))
                 p_count += 1
         return packages
-            
+
 
     @api.multi
     def get_unifaun_sender_reference(self):
-        return self.name 
+        return self.name
 
     @api.multi
     def set_unifaun_status(self, statuses):
@@ -470,10 +470,10 @@ class UnifaunOrder(models.Model):
                 'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
                 'reference': self.get_unifaun_sender_reference(),
                 'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
-            
+
             region = 'se'
             lang = self.get_unifaun_language()
-            
+
             res = 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
         else:
             res = ''
@@ -517,7 +517,7 @@ class UnifaunOrder(models.Model):
         # stackable (boolean)
         #     Parcel can be stacked. Used for certain services.
         return self.package_ids.get_parcel_values()
-    
+
     @api.multi
     def unifaun_sender_record(self, sender):
         sender_contact = None
@@ -544,7 +544,7 @@ class UnifaunOrder(models.Model):
                 'contact': sender_contact.name,
             })
         return rec
-    
+
     @api.multi
     def unifaun_receiver_contact(self, receiver, current_values):
         """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
@@ -552,7 +552,7 @@ class UnifaunOrder(models.Model):
         if self.contact_partner_id:
             contact_data['contact'] = self.contact_partner_id.name
         return contact_data
-        
+
     @api.multi
     def unifaun_sender_contact(self, sender, current_values):
         """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
@@ -560,7 +560,7 @@ class UnifaunOrder(models.Model):
         if self.sender_contact_id:
             contact_data['contact'] = self.sender_contact_id.name
         return contact_data
-    
+
     @api.multi
     def unifaun_receiver_record(self, receiver):
         rec = {
@@ -581,37 +581,32 @@ class UnifaunOrder(models.Model):
         elif name_method == 'commercial':
             rec['name'] = receiver.commercial_partner_id.name
         return rec
-    
+
     # ~ @api.multi
     # ~ def order_stored_shipment(self):
         # ~ self.split_order()
-        
-            
+
+
     # ~ @api.one
     # ~ def split_order(self):
         # ~ for package in self.package_ids:
-            
-            
+
+
             # ~ # remove package from self.package_ids
-            
+
             # ~ vals = {
                 # ~ '': '',
             # ~ }
-            
+
             # ~ copy(self)
             # ~ order = self.env['unifaun.order'].create(vals)
             # ~ order['package_ids'] = package
             # ~ order.order_create()
-            
     @api.multi
-    def order_stored_shipment(self):
-        """Create a stored shipment."""
-        if self.carrier_tracking_ref:
-            raise Warning(_('Transport already ordered (there is a Tracking ref)'))
-        if self.shipmentid:
-            raise Warning(_('The stored shipment has already been confirmed (there is a Shipment id).'))
-        if self.stored_shipmentid:
-            self.delete_stored_shipment()
+    def build_stored_shipment_dict(self):
+        '''
+        Construct dict used for getting stored-shipments
+        '''
         receiver_record = self.unifaun_receiver_record(self.partner_id)
         receiver_record.update(self.unifaun_receiver_contact(self.partner_id, receiver_record))
         sender_record = self.unifaun_sender_record(self.sender_partner_id)
@@ -638,7 +633,19 @@ class UnifaunOrder(models.Model):
                 #~ "from": "info@unifaun.com"
             #~ }],
         }
-        
+        return rec
+
+    @api.multi
+    def order_stored_shipment(self):
+        """Create a stored shipment."""
+        if self.carrier_tracking_ref:
+            raise Warning(_('Transport already ordered (there is a Tracking ref)'))
+        if self.shipmentid:
+            raise Warning(_('The stored shipment has already been confirmed (there is a Shipment id).'))
+        if self.stored_shipmentid:
+            self.delete_stored_shipment()
+        rec = self.build_stored_shipment_dict()
+
         if self.param_ids:
             self.param_ids.add_to_record(rec)
 
@@ -757,7 +764,7 @@ class UnifaunOrder(models.Model):
                     'attachment_id': attachment.id,
                     'unifaun_id': self.id,
                 })
-            
+
             self.env['mail.message'].create({
                 'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (printer.pformat(rec), printer.pformat(response))),
                 'subject': "Shipment(s) Created",
@@ -805,7 +812,7 @@ class UnifaunOrder(models.Model):
             'target': 'new',
             'context': ctx,
         }
-        
+
     @api.one
     def unifaun_send_track_mail_silent(self):
         if self.env.context.get('unifaun_track_force_send') or self.env['ir.config_parameter'].get_param('unifaun.sendemail', '1') == '1':
