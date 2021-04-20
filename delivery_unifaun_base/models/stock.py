@@ -18,8 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -53,11 +53,12 @@ class StockPickingUnifuanPdf(models.Model):
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+    number_of_packages = fields.Integer(string="Number of Packages")
+
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', copy=False)
     unifaun_state = fields.Selection(related='unifaun_id.state')
     unifaun_own_package = fields.Boolean(string='Own Package', help="Unifauns hould treat any non-packaged lines in this picking as belonging to their own unique package")
 
-    @api.multi
     def create_unifaun_order(self):
         if self.unifaun_id:
             pickings = self.unifaun_id.picking_ids
@@ -69,7 +70,6 @@ class StockPicking(models.Model):
         action['domain'] = [('id', '=', order.id)]
         return action
     
-    @api.multi
     def unifaun_check_if_ready(self):
         """Check if this picking is ready to be sent as Unifaun Order"""
         for picking in self:
@@ -79,9 +79,9 @@ class StockPicking(models.Model):
                 raise Warning("Carrier is not a Unifaun partner.")
 
 class StockPackOperation(models.Model):
-    _inherit = 'stock.pack.operation'
+    # _inherit = 'stock.pack.operation'
+    _inherit = 'stock.move'
 
-    @api.multi
     def unifaun_package_line_values(self):
         """Return a value dict for a unifaun.package.line"""
         self.ensure_one()
@@ -95,7 +95,6 @@ class StockPackOperation(models.Model):
 class StockQuantPackage(models.Model):
     _inherit = "stock.quant.package"
 
-    @api.multi
     def unifaun_package_values(self):
         """Return a value dict for a unifaun.package"""
         return {

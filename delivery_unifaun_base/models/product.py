@@ -18,21 +18,23 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 
 import logging
 _logger = logging.getLogger(__name__)
 
-class LogisticalUnit(models.Model):
-    _inherit = "product.ul"
 
-    unifaun_code_ids = fields.One2many(comodel_name='product.ul.unifaun_code', inverse_name='ul_id', string='Unifaun Codes')
+# class LogisticalUnit(models.Model):
+#     _inherit = "product.ul"
+#
+#     unifaun_code_ids = fields.One2many(comodel_name='product.ul.unifaun_code', inverse_name='ul_id', string='Unifaun Codes')
+#
+#     @api.multi
+#     def get_unifaun_code(self, carrier):
+#         code = self.unifaun_code_ids.filtered(lambda uc: uc.carrier_id == carrier)
+#         return code and code.name or None
 
-    @api.multi
-    def get_unifaun_code(self, carrier):
-        code = self.unifaun_code_ids.filtered(lambda uc: uc.carrier_id == carrier)
-        return code and code.name or None
 
 class LogisticalUnitUnifaunCode(models.Model):
     _name = 'product.ul.unifaun_code'
@@ -46,7 +48,7 @@ class LogisticalUnitUnifaunCode(models.Model):
     # TODO: Replace with python constraint (want to be able to have 2 without ul_id).
     # Make constraint for default
     name = fields.Char(string='Code', required=True)
-    ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit')
+    # ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit')
     carrier_id = fields.Many2one(comodel_name='delivery.carrier', string='Carrier', required=True)
     default = fields.Boolean(string='Default Code', help="Use this code for this carrier if nothing else is specified.")
 

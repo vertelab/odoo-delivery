@@ -19,21 +19,22 @@
 #
 ##############################################################################
 {
-'name': 'Delivery Unifaun Base - Improved',
-'version': '0.2',
-'summary': "Halfway-point for upgrading Unifaun Base to new structure. Separates Unifaun data and functions to it's own object (unifaun.order).",
-'category': '',
-'description': """
-    """,
-'author': 'Vertel AB',
+    'name': 'Delivery Unifaun Base',
+    'version': '0.3',
+    'summary': 'Integrate Delivery with Unifaun Base-module',
+    'category': '',
+    'description': """
+        """,
+    'author': 'Vertel AB',
     'license': 'AGPL-3',
-'website': 'http://www.vertel.se',
-'depends': ['delivery_unifaun_base'],
-'data': [
-    #'data/delivery_data.xml',
-    'views/delivery_view.xml',
-    #'views/res_config_view.xml',
-    'security/ir.model.access.csv',
-    ],
-'installable': True,
+    'website': 'http://www.vertel.se',
+    'depends': ['delivery'],
+    'data': [
+        'data/delivery_data.xml',
+        'views/delivery_view.xml',
+        'views/improved_delivery_view.xml',
+        'views/res_config_view.xml',
+        'security/ir.model.access.csv',
+        ],
+    'installable': True,
 }

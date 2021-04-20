@@ -18,15 +18,15 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from openerp import models, fields, api, _
-from openerp.exceptions import Warning
+from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 
 import logging
 _logger = logging.getLogger(__name__)
 
 
 class stock_config_settings(models.TransientModel):
-    _inherit = 'stock.config.settings'
+    _inherit = 'res.config.settings'
 
     unifaun_apikey = fields.Char(string="API-key")
     unifaun_password = fields.Char(string='Password')
@@ -36,7 +36,6 @@ class stock_config_settings(models.TransientModel):
     unifaun_template_id = fields.Char(string='Template id')
     unifaun_send_email = fields.Boolean(string='Automatic order tracking emails')
     
-    @api.multi
     def set_unifaun(self):
         icp = self.env['ir.config_parameter']
         icp.set_param('unifaun.api_key', (self.unifaun_apikey or '').strip(), groups=['base.group_system'])
