@@ -13,6 +13,8 @@
                             attrs="{'invisible': ['|', '|', ('is_unifaun', '=', False), '&amp;', ('unifaun_id', '!=', False), ('unifaun_state', '!=', 'group'), ('state', '!=', 'done')]}" />
                 </button>
                 <field name="partner_id" position="after">
+                    <field name="is_unifaun"/>
+                    <field name="unifaun_shipmentid"/>
                     <field name="unifaun_id" attrs="{'invisible': ['|', ('is_unifaun', '=', False), ('state', '!=', 'done')]}"/>
                     <field name="unifaun_state" invisible="1"/>
                 </field>
@@ -103,7 +105,7 @@
             <field name="name">unifaun.order.tree</field>
             <field name="model">unifaun.order</field>
             <field name="arch" type="xml">
-                <tree string="Unifaun Orders" color="state" date_start="date">
+                <tree string="Unifaun Orders">
                     <field name="date"/>
                     <field name="state"/>
                     <field name="name"/>
@@ -166,7 +168,7 @@
                             <field name="unifaun_id"/>
                             <field name="copies"/>
                             <field name="contents"/>
-                            <field name="ul_id"/>
+<!--                            <field name="ul_id"/>-->
                             <field name="packaging_id"/>
                             <field name="weight"/>
                             <label for="weight_spec"/>
@@ -227,23 +229,23 @@
             </field>
         </record>
         
-        <record id="product_ul_form_view" model="ir.ui.view">
-            <field name="name">product.ul.unifaun.form.view</field>
-            <field name="model">product.ul</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_ul_form_view"/>
-            <field name="arch" type="xml">
-                <sheet position="inside">
-                    <label for="unifaun_code_ids"/>
-                    <field name="unifaun_code_ids">
-                        <tree string="Unifaun Shipping Code" editable="top">
-                            <field name="name" />
-                            <field name="carrier_id" />
-                        </tree>
-                    </field>
-                </sheet>
-            </field>
-        </record>
+<!--        <record id="product_ul_form_view" model="ir.ui.view">-->
+<!--            <field name="name">product.ul.unifaun.form.view</field>-->
+<!--            <field name="model">product.ul</field>-->
+<!--            <field name="type">form</field>-->
+<!--            <field name="inherit_id" ref="product.product_ul_form_view"/>-->
+<!--            <field name="arch" type="xml">-->
+<!--                <sheet position="inside">-->
+<!--                    <label for="unifaun_code_ids"/>-->
+<!--                    <field name="unifaun_code_ids">-->
+<!--                        <tree string="Unifaun Shipping Code" editable="top">-->
+<!--                            <field name="name" />-->
+<!--                            <field name="carrier_id" />-->
+<!--                        </tree>-->
+<!--                    </field>-->
+<!--                </sheet>-->
+<!--            </field>-->
+<!--        </record>-->
         
         <record id="view_product_ul_unifaun_code_tree" model="ir.ui.view">
             <field name="name">product.ul.unifaun_code.tree</field>
@@ -251,7 +253,7 @@
             <field name="arch" type="xml">
                 <tree string="Unifaun Shipping Codes" editable="top">
                     <field name="name" />
-                    <field name="ul_id" />
+<!--                    <field name="ul_id" />-->
                     <field name="carrier_id" />
                 </tree>
             </field>
@@ -263,7 +265,6 @@
             <field name="name">Unifaun Orders</field>
             <field name="res_model">unifaun.order</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="view_type">form</field>
             <field name="view_mode">tree,calendar,form</field>
             <field name="help" type="html">
               <p class="oe_view_nocontent_create">
@@ -277,7 +278,7 @@
             id="menu_action_unifaun_order"
             parent="menu_stock_unifaun" sequence="1"/>
 
-        <record id="delivery_unifaun_base.unifaun_order_email_template" model="email.template">
+        <record id="delivery_unifaun_base.unifaun_order_email_template" model="mail.template">
             <field name="name">Unifaun Email Template</field>
             <field name="email_from">${object.company_id and object.company_id.email or ''}</field>
             <field name="subject">Unifaun ${object.name} tracking link</field>

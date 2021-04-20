@@ -3,21 +3,88 @@
     <data>
         <record id="view_stock_config_settings" model="ir.ui.view">
             <field name="name">stock settings</field>
-            <field name="model">stock.config.settings</field>
-            <field name="inherit_id" ref="stock.view_stock_config_settings" />
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="stock.res_config_settings_view_form"/>
             <field name="arch" type="xml">
-                <form class="oe_form_configuration" position="inside">
-                    <separator string="Unifaun" />
-                    <group name="unifaun">
-                        <field name="unifaun_send_email" />
-                        <field name="unifaun_apikey" />
-                        <field name="unifaun_password" />
-                        <field name="unifaun_url" />
-                        <field name="unifaun_receiver_name_method" />
-                        <field name="unifaun_package_contents" />
-                        <field name="unifaun_template_id" />
-                    </group>
-                </form>
+                <xpath expr="//div[hasclass('app_settings_block')]/div[@name='barcode_setting_container']" position="after">
+                    <h2>Unifaun</h2>
+                    <div class="row mt16 o_settings_container" name="unifaun_send_email">
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_send_email">
+                            <div class="o_setting_left_pane">
+                                <field name="unifaun_send_email"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_send_email"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_apikey">
+                            <div class="o_setting_left_pane">
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_apikey"/>
+                                <div class="mt8">
+                                    <field name="unifaun_apikey"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_password">
+                            <div class="o_setting_left_pane">
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_password"/>
+                                <div class="mt8">
+                                    <field name="unifaun_password"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_url">
+                            <div class="o_setting_left_pane">
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_url"/>
+                                <div class="mt8">
+                                    <field name="unifaun_url"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_receiver_name_method">
+                            <div class="o_setting_left_pane">
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_receiver_name_method"/>
+                                <div class="mt8">
+                                    <field name="unifaun_receiver_name_method"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_package_contents">
+                            <div class="o_setting_left_pane">
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_package_contents"/>
+                                <div class="mt8">
+                                    <field name="unifaun_package_contents"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" id="unifaun_template_id">
+                            <div class="o_setting_left_pane">
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="unifaun_template_id"/>
+                                <div class="mt8">
+                                    <field name="unifaun_template_id"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
             </field>
         </record>
     </data>

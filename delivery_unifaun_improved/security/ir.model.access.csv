@@ -1,6 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_unifaun_package_user,unifaun.package user,model_unifaun_package,stock.group_stock_user,1,1,1,1
-access_unifaun_package_line_user,unifaun.package.line user,model_unifaun_package_line,stock.group_stock_user,1,1,1,1
-access_product_ul_unifaun_code_user,product.ul.unifaun_code user,model_product_ul_unifaun_code,base.group_user,1,0,0,0
-access_product_ul_unifaun_code_manager,product.ul.unifaun_code manager,model_product_ul_unifaun_code,stock.group_stock_manager,1,1,1,1
-access_product_ul_unifaun_order,unifaun.order user,model_unifaun_order,stock.group_stock_user,1,1,1,1
