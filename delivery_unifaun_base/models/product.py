@@ -40,15 +40,14 @@ class LogisticalUnitUnifaunCode(models.Model):
     _name = 'product.ul.unifaun_code'
     _description = 'Unifaun Shipping Code'
     _sql_constraints = [
-            ('unique_ul_by_carrier',
-             'unique(ul_id, carrier_id)',
-             "You can not have two Unifaun codes for the same carrier and logistical unit.")
+            ('unique_ul_by_carrier', 'unique(ul_id,carrier_id)', "You can not have two Unifaun codes for the same "
+                                                                  "carrier and logistical unit.")
         ]
 
     # TODO: Replace with python constraint (want to be able to have 2 without ul_id).
     # Make constraint for default
     name = fields.Char(string='Code', required=True)
-    # ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit')
+    ul_id = fields.Many2one(comodel_name='product.packaging', string='Logistical Unit')
     carrier_id = fields.Many2one(comodel_name='delivery.carrier', string='Carrier', required=True)
     default = fields.Boolean(string='Default Code', help="Use this code for this carrier if nothing else is specified.")
 
