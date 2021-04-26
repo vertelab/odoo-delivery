@@ -29,6 +29,8 @@ import base64
 import traceback
 import urllib3
 from werkzeug import urls
+import math
+import pprint
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -144,15 +146,15 @@ class UnifaunPackageLine(models.Model):
     state = fields.Selection(related='unifaun_id.state')
     package_id = fields.Many2one(comodel_name='unifaun.package', string='Package', required=True, ondelete='cascade', states=READ_ONLY_STATES)
     product_id = fields.Many2one(comodel_name='product.product', string='Product', required=True, states=READ_ONLY_STATES)
-    name = fields.Char(related='product_id.display_name')
-    uom_id = fields.Many2one(comodel_name='product.uom', string='Unit of Measure', required=True, states=READ_ONLY_STATES)
+    name = fields.Char(related='product_id.display_name', string="Name")
+    uom_id = fields.Many2one(comodel_name='uom.uom', string='Unit of Measure', required=True, states=READ_ONLY_STATES)
     qty = fields.Float(string='Quantity', states=READ_ONLY_STATES)
-    product_qty = fields.Float(string='Quantity', compute='_calculate_product_qty')
+    product_qty = fields.Float(string='Product Quantity', compute='_calculate_product_qty')
     unifaun_id = fields.Many2one(related='package_id.unifaun_id')
 
     @api.depends('product_id', 'uom_id', 'qty')
     def _calculate_product_qty(self):
-        uom_obj = self.env['product.uom']
+        uom_obj = self.env['uom.uom']
         for line in self:
             # TODO: Does this check work or will it be set to 0 if state != draft?
             if line.unifaun_id.state == 'draft':
@@ -168,7 +170,7 @@ class UnifaunPackage(models.Model):
 
     state = fields.Selection(related='unifaun_id.state')
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade', states=READ_ONLY_STATES)
-    ul_id = fields.Many2one(comodel_name='product.ul', string='Logistical Unit', states=READ_ONLY_STATES)
+    ul_id = fields.Many2one(comodel_name='product.packaging', string='Logistical Unit', states=READ_ONLY_STATES)
     packaging_id = fields.Many2one(comodel_name='product.packaging', string='Packaging', help="This field should be completed only if everything inside the package share the same product, otherwise it doesn't really make sense.", states=READ_ONLY_STATES)
     shipper_package_code = fields.Char(string='Package Code', help="The shipping company's code for this packaging type.", states=READ_ONLY_STATES)
     line_ids = fields.One2many(comodel_name='unifaun.package.line', inverse_name='package_id', string='Products')
@@ -176,14 +178,14 @@ class UnifaunPackage(models.Model):
     contents = fields.Char(string='Contents', default=_default_contents, states=READ_ONLY_STATES)
     copies = fields.Integer(string='Copies', default=1, states=READ_ONLY_STATES)
     weight = fields.Float(string='Weight', compute='_calculate_weight', store=True, digits='Stock Weight')
-    weight_calc = fields.Float(string='Weight', compute='_calculate_weight', store=True, digits='Stock Weight')
+    weight_calc = fields.Float(string='Weight Calc', compute='_calculate_weight', store=True, digits='Stock Weight')
     weight_spec = fields.Float(string='Specified Weight', digits='Stock Weight', help="Use this field to override the calculated weight.", states=READ_ONLY_STATES)
 
     @api.depends('line_ids.product_id', 'line_ids.uom_id',
                  'line_ids.qty', 'weight_spec')
     def _calculate_weight(self):
         """Calculate the weight of the packages. Includes boxes/pallets etc."""
-        uom_obj = self.env['product.uom']
+        uom_obj = self.env['uom.uom']
         for package in self:
             # TODO: Does this check work or will it be set to 0 if state != draft?
             _logger.warn(self.unifaun_id.state)
@@ -193,10 +195,10 @@ class UnifaunPackage(models.Model):
                     weight += line.product_qty * line.product_id.weight
                 # Box / Pallet
                 if package.ul_id:
-                    weight += package.ul_id.weight
+                    weight += package.ul_id.max_weight
                 # Product distribution packages, e.g. boxes stapled on a pallet.
                 if package.packaging_id:
-                    weight += ceil(package.product_qty / package.packaging_id.qty) * package.packaging_id.ul.weight
+                    weight += math.ceil(package.product_qty / package.packaging_id.qty) * package.packaging_id.ul.weight
                 package.weight_calc = weight
                 if package.weight_spec:
                     package.weight = package.weight_spec
@@ -214,7 +216,8 @@ class UnifaunPackage(models.Model):
         if self.name:
             vals['reference'] = self.name # ??? Not saved in shipment
         if self.ul_id:
-            package_code = self.ul_id.get_unifaun_package_code(self.carrier_id)
+            # package_code = self.ul_id.get_unifaun_package_code(self.carrier_id)
+            package_code = self.ul_id.shipper_package_code
             if package_code:
                 vals['packageCode'] = package_code
             #TODO: Add default package_code
@@ -224,6 +227,7 @@ class UnifaunPackage(models.Model):
 
 class stock_picking_unifaun_status(models.Model):
     _name = 'stock.picking.unifaun.status'
+    _description = 'Unifaun Status'
 
     field = fields.Char(string='field')
     name = fields.Char(string='message')
@@ -293,21 +297,21 @@ class DeliveryCarrierUnifaunPrintSettings(models.Model):
     
     name = fields.Char(string='Name', required=True)
     
-    format_1 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='laser-a4')
-    x_offset_1 = fields.Float(string='X Offset')
-    y_offset_1 = fields.Float(string='Y Offset')
+    format_1 = fields.Selection(string='Label Type Format 1', selection=print_format_selection, required=True, default='laser-a4')
+    x_offset_1 = fields.Float(string='X Offset Format 1')
+    y_offset_1 = fields.Float(string='Y Offset Format 1')
     
-    format_2 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
-    x_offset_2 = fields.Float(string='X Offset')
-    y_offset_2 = fields.Float(string='Y Offset')
+    format_2 = fields.Selection(string='Label Type Format 2', selection=print_format_selection, required=True, default='null')
+    x_offset_2 = fields.Float(string='X Offset Format 2')
+    y_offset_2 = fields.Float(string='Y Offset Format 2')
     
-    format_3 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
-    x_offset_3 = fields.Float(string='X Offset')
-    y_offset_3 = fields.Float(string='Y Offset')
+    format_3 = fields.Selection(string='Label Type Format 3', selection=print_format_selection, required=True, default='null')
+    x_offset_3 = fields.Float(string='X Offset Format 3')
+    y_offset_3 = fields.Float(string='Y Offset Format 3')
     
-    format_4 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
-    x_offset_4 = fields.Float(string='X Offset')
-    y_offset_4 = fields.Float(string='Y Offset')
+    format_4 = fields.Selection(string='Label Type Format 4', selection=print_format_selection, required=True, default='null')
+    x_offset_4 = fields.Float(string='X Offset Format 4')
+    y_offset_4 = fields.Float(string='Y Offset Format 4')
 
 class DeliveryCarrierUnifaunParam(models.Model):
     _name = 'delivery.carrier.unifaun.param'
@@ -356,7 +360,7 @@ class StockPickingUnifaunParam(models.Model):
     parameter = fields.Char(string='Parameter', required=True)
     type = fields.Selection(selection=[('string', 'String'), ('int', 'Integer'), ('float', 'Float')], default='string', required=True)
     value = fields.Char(string='Value')
-    value_shown = fields.Char(string='Value', compute='_get_value_shown', inverse='_set_value_shown')
+    value_shown = fields.Char(string='Shown Value', compute='_get_value_shown', inverse='_set_value_shown')
     # ~ value_char = fields.Char(string='Value')
     # ~ value_int = fields.Integer(string='Value')
     # ~ value_float = fields.Float(string='Value')
@@ -443,6 +447,7 @@ class StockPickingUnifaunParam(models.Model):
 
 class StockPickingUnifaunPdf(models.Model):
     _name = 'stock.picking.unifaun.pdf'
+    _description = 'Unifaun PDF'
     
     name = fields.Char(string='Description', required=True)
     href = fields.Char(string='Href')
@@ -459,11 +464,11 @@ class StockQuantPackage(models.Model):
     
     @api.depends('quant_ids.quantity', 'quant_ids.product_id.weight')
     def _compute_weight(self):
-        weight = self.ul_id and self.ul_id.weight or 0.0
+        weight = self.ul_id and self.ul_id.max_weight or 0.0
         for quant in self.quant_ids:
             weight += quant.qty * quant.product_id.weight
-        # for pack in self.children_ids:
-        #     weight += pack.weight
+        for pack in self.quant_ids:
+            weight += pack.product_id.weight
         self.weight = weight
     
     @api.onchange('weight')
@@ -507,7 +512,7 @@ class StockPackOperation(models.Model):
             # Packaging is not finalized. Calculate from packop lines.
             weight = 0.0
             if self.result_package_id:
-                weight = self.result_package_id.ul_id and self.result_package_id.ul_id.weight or 0.0
+                weight = self.result_package_id.ul_id and self.result_package_id.ul_id.max_weight or 0.0
                 for op in self.picking_id.move_lines.filtered(lambda o: o.result_package_id == self.result_package_id):
                     qty = op.product_uom_id._compute_quantity(op.product_uom_id, op.product_qty, op.product_id.uom_id)
                     weight += qty * op.product_id.weight
@@ -517,6 +522,8 @@ class StockPackOperation(models.Model):
             
 class unifaun_parcel_weight(models.Model):
     _name = 'unifaun.parcel.weight'
+    _description = 'Unifaun Parcel Weight Desc'
+
     weight = fields.Float(string='Weight')
     picking_id = fields.Many2one(comodel_name='stock.picking', string='Picking')
 
@@ -534,7 +541,8 @@ class stock_picking(models.Model):
     package_ids = fields.Many2many (comodel_name='stock.quant.package', compute='_compute_package_ids')
     weight = fields.Float(string='Weight', digits='Stock Weight', compute='_calculate_weight', store=True)
     weight_net = fields.Float(string='Net Weight', digits='Stock Weight', compute='_calculate_weight', store=True)
-    unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id', copy=False)
+    unifaun_parcel_weight_ids = fields.One2many(comodel_name='unifaun.parcel.weight', inverse_name='picking_id',
+                                                copy=False, string="Unifan Parcel Weight Lines")
     sender_contact_id = fields.Many2one(
         comodel_name='res.partner',
         string='Contact Person',
@@ -1486,13 +1494,13 @@ class UnifaunOrder(models.Model):
             self.param_ids.add_to_record(rec)
 
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
-        printer = PrettyPrinter()
+        # printer = PrettyPrinter()
         if type(response) == dict:
             _logger.warn('\n%s\n' % response)
             self.stored_shipmentid = response.get('id', '')
 
             self.env['mail.message'].create({
-                'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (printer.pformat(rec), printer.pformat(response))),
+                'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (pprint.pformat(rec), pprint.pformat(response))),
                 # ~ 'body': _(u"Unifaun<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
                 'subject': "Order Transport",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
@@ -1510,7 +1518,7 @@ class UnifaunOrder(models.Model):
             self.env['mail.message'].create({
                 # ~ 'body': _("Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (rec, response)),
                 'body': _(
-                    "Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (printer.pformat(rec), printer.pformat(response))),
+                    "Unifaun error!<br/>rec %s<br/>resp %s<br/>" % (pprint.pformat(rec), pprint.pformat(response))),
                 'subject': "Order Transport",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
@@ -1566,7 +1574,7 @@ class UnifaunOrder(models.Model):
                     'target%sXOffset' % i: x_offset,
                     'target%sYOffset' % i: y_offset,
                 })
-        printer = PrettyPrinter()
+        # printer = PrettyPrinter()
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.stored_shipmentid, None, rec)
         if type(response) == list:
             _logger.warn('\n%s\n' % response)
@@ -1601,7 +1609,7 @@ class UnifaunOrder(models.Model):
                 })
 
             self.env['mail.message'].create({
-                'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (printer.pformat(rec), printer.pformat(response))),
+                'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (pprint.pformat(rec), pprint.pformat(response))),
                 'subject': "Shipment(s) Created",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
@@ -1611,7 +1619,7 @@ class UnifaunOrder(models.Model):
             self.unifaun_send_track_mail_silent()
         else:
             self.env['mail.message'].create({
-                'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (printer.pformat(rec), printer.pformat(response))),
+                'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (pprint.pformat(rec), pprint.pformat(response))),
                 'subject': "Create Shipment",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
