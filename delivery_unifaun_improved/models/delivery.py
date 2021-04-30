@@ -638,6 +638,7 @@ class UnifaunOrder(models.Model):
     @api.multi
     def order_stored_shipment(self):
         """Create a stored shipment."""
+        _logger.warning("MyTag: Got to: order_stored_shipment in improved")
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
         if self.shipmentid:

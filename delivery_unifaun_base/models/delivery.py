@@ -148,7 +148,7 @@ class stock_picking_unifaun_status(models.Model):
     picking_id = fields.Many2one(comodel_name='stock.picking')
     # ~ trans_id = fields.Many2one(comodel_name='stock.picking.unifaun.status_trans', string='Human Readable Message')
     # ~ trans_message = fields.Char(string='Message', related='trans_id.name')
-    
+
     # ~ @api.one
     # ~ def translate_message(self):
         # ~ self.trans_id = self.env['stock.picking.unifaun.status_trans'].search([
@@ -168,7 +168,7 @@ class stock_picking_unifaun_status(models.Model):
                 # ~ ('message_code', '=', self.message_code),
                 # ~ ('message_code', '=', '*'),
         # ~ ], limit=1)
-    
+
     # ~ @api.model
     # ~ @api.returns('self', lambda value: value.id)
     # ~ def create(self, vals):
@@ -205,21 +205,21 @@ print_format_selection = [
 class DeliveryCarrierUnifaunPrintSettings(models.Model):
     _name = 'delivery.carrier.unifaun.print_settings'
     _description = 'Unifaun Print Settings'
-    
+
     name = fields.Char(string='Name', required=True)
-    
+
     format_1 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='laser-a4')
     x_offset_1 = fields.Float(string='X Offset')
     y_offset_1 = fields.Float(string='Y Offset')
-    
+
     format_2 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
     x_offset_2 = fields.Float(string='X Offset')
     y_offset_2 = fields.Float(string='Y Offset')
-    
+
     format_3 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
     x_offset_3 = fields.Float(string='X Offset')
     y_offset_3 = fields.Float(string='Y Offset')
-    
+
     format_4 = fields.Selection(string='Label Type', selection=print_format_selection, required=True, default='null')
     x_offset_4 = fields.Float(string='X Offset')
     y_offset_4 = fields.Float(string='Y Offset')
@@ -259,10 +259,54 @@ class DeliveryCarrierUnifaunParam(models.Model):
                 'type': param.type,
                 'param_id': param.id,
             }
-           
+
             vals.update(param.get_default_value())
             values.append(vals)
         return values
+
+    @api.multi
+    def add_to_record(self, rec):
+        '''
+        Add parameters to the input unifaun record. IE the dict presumably later
+        sent to Unifaun as a JSON.
+
+        Inspired by the corresponding method in stock.picking.unifaun.param
+        '''
+        def split_parameter(parameter):
+            if '.' in parameter:
+                return parameter.split('.', 1)
+            else:
+                return parameter, None
+
+        def write_param(node, value, parameter):
+            if type(node) == list:
+                if not node:
+                    # Create an object for the next level. Maybe not the desired result?
+                    node.append({})
+                for e in node:
+                    write_param(e, value, parameter)
+                return
+            name, parameter = split_parameter(parameter)
+            is_list = False
+            if name[-2:] == '[]':
+                is_list = True
+                name = name[:-2]
+            if name not in node:
+                if is_list:
+                    node[name] = []
+                elif parameter:
+                    node[name] = {}
+                else:
+                    node[name] = value
+                    return
+            elif not parameter:
+                node[name] = value
+                return
+            write_param(node[name], value, parameter)
+
+        for param in self:
+            _logger.warning("MyTag: Adding param: {} with value {}".format(param.name,  param.default_value))
+            write_param(rec, param.default_value, param.parameter) # Ignoring calculated value for now. This module is already in dire need for refactoring.
 
 class StockPickingUnifaunParam(models.Model):
     _name = 'stock.picking.unifaun.param'
@@ -287,7 +331,7 @@ class StockPickingUnifaunParam(models.Model):
     @api.one
     def _set_value_shown(self):
         self.set_value(self.value_shown or None)
-    
+
     @api.multi
     def get_value(self):
         try:
@@ -324,7 +368,7 @@ class StockPickingUnifaunParam(models.Model):
     def compute_default_value(self):
         if self.param_id and self.param_id.default_compute:
             self.set_value(safe_eval(self.param_id.default_compute, {'param': self}, locals_builtins=True))
-    
+
     @api.multi
     def add_to_record(self, rec):
         """Add this parameter to the given dict"""
@@ -366,20 +410,20 @@ class StockPickingUnifaunParam(models.Model):
 
 class StockPickingUnifaunPdf(models.Model):
     _name = 'stock.picking.unifaun.pdf'
-    
+
     name = fields.Char(string='Description', required=True)
     href = fields.Char(string='Href')
     unifaunid = fields.Char(string='Unifaun ID')
     attachment_id = fields.Many2one(string='PDF', comodel_name='ir.attachment', required=True)
     picking_id = fields.Many2one(string='Picking', comodel_name='stock.picking', required=True, ondelete='cascade')
-    
+
 class StockQuantPackage(models.Model):
     _inherit = "stock.quant.package"
-    
+
     unifaun_parcelno = fields.Char(string='Unifaun Reference')
     weight = fields.Float(string='Weight', compute='_compute_weight')
     shipping_weight = fields.Float(string='Shipping Weight', help="Can be changed during the 'put in pack' to adjust the weight of the shipping.")
-    
+
     @api.one
     @api.depends('quant_ids.qty', 'quant_ids.product_id.weight', 'children_ids')
     def _compute_weight(self):
@@ -389,7 +433,7 @@ class StockQuantPackage(models.Model):
         for pack in self.children_ids:
             weight += pack.weight
         self.weight = weight
-    
+
     @api.onchange('weight')
     def onchange_weight(self):
         self.shipping_weight = self.weight
@@ -412,17 +456,17 @@ class StockQuantPackage(models.Model):
 
 class ProductPackaging(models.Model):
     _inherit = 'product.packaging'
-    
+
     # TODO: This is the wrong packaging for this. It should be on the product.ul model.
     shipper_package_code = fields.Char(string='Shipper Packaging Ref')
 
 class StockPackOperation(models.Model):
     _inherit = 'stock.pack.operation'
-    
+
     result_package_working_weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
     result_package_weight = fields.Float(related='result_package_id.weight')
     result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
-    
+
     @api.one
     def _compute_working_weight(self):
         # TODO: Add support for packages in packages.
@@ -437,7 +481,7 @@ class StockPackOperation(models.Model):
             self.result_package_working_weight = weight
         else:
             self.result_package_working_weight = self.result_package_weight
-            
+
 class unifaun_parcel_weight(models.Model):
     _name = 'unifaun.parcel.weight'
     weight = fields.Float(string='Weight')
@@ -445,7 +489,7 @@ class unifaun_parcel_weight(models.Model):
 
 class stock_picking(models.Model):
     _inherit = 'stock.picking'
-    
+
     is_unifaun = fields.Boolean(related='carrier_id.is_unifaun')
     unifaun_shipmentid = fields.Char(string='Unifaun Shipment ID', copy=False)
     unifaun_stored_shipmentid = fields.Char(string='Unifaun Stored Shipment ID', copy=False)
@@ -461,14 +505,14 @@ class stock_picking(models.Model):
     sender_contact_id = fields.Many2one(
         comodel_name='res.partner',
         string='Contact Person',
-        
-        ) 
+
+        )
     receiver_contact_id = fields.Many2one(
         comodel_name='res.partner',
         string='Recipient Contact',
-        ) 
+        )
 
-    
+
     @api.multi
     def get_unifaun_language(self):
         translate = {
@@ -480,13 +524,13 @@ class stock_picking(models.Model):
             'fi_FI': 'fi',
             'da-DK': 'dk'
         }
-        
-        return translate.get(self.partner_id.lang,'gb') 
-    
+
+        return translate.get(self.partner_id.lang,'gb')
+
     @api.multi
     def get_unifaun_sender_reference(self):
-        return self.name 
-    
+        return self.name
+
     @api.one
     @api.depends(
         'move_lines.state',
@@ -520,24 +564,24 @@ class stock_picking(models.Model):
             total_weight += op.product_id.weight * qty
         self.weight = total_weight
         self.weight_net = total_weight_net
-    
+
     # https://www.unifaunonline.se/rs-docs/
     # Create shipment to be completed manually
     # catch carrier_tracking_ref (to be mailed? add on waybill)
-    
+
     @api.one
     # ~ @api.depends('pack_operation_ids.result_package_id')
     def _compute_package_ids(self):
         self.package_ids = self.pack_operation_ids.mapped('result_package_id')
-        
+
     @api.onchange('carrier_id')
     def onchange_carrier(self):
         self.unifaun_param_ids = None
         if self.carrier_id.is_unifaun and self.carrier_id.unifaun_param_ids:
             self.unifaun_param_ids = [(0, 0, d) for d in self.carrier_id.unifaun_param_ids.get_picking_param_values()]
             self.unifaun_param_ids.compute_default_value()
-            
-    
+
+
     @api.one
     def set_unifaun_status(self, statuses):
         if len(self.unifaun_status_ids) > 0:
@@ -565,14 +609,14 @@ class stock_picking(models.Model):
                 'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
                 'reference': self.get_unifaun_sender_reference(),
                 'templateId': self.env['ir.config_parameter'].get_param('unifaun.templateid')}
-            
+
             region = 'se'
             lang = self.get_unifaun_language()
-            
+
             res = 'https://www.unifaunonline.com/ext.uo.%s.%s.track?&%s' % (region, lang, urlencode(parameters).replace('&amp;', '&'))
         else:
             res = ''
-        
+
         return res
 
 
@@ -612,7 +656,7 @@ class stock_picking(models.Model):
         #     Parcel numbers. The array should have copies number of parcel numbers. Note: A special license key is required to use this value.
         # stackable (boolean)
         #     Parcel can be stacked. Used for certain services.
-        
+
         if self.package_ids and not self.unifaun_parcel_count:
             packages = []
             for package in self.package_ids:
@@ -624,7 +668,7 @@ class stock_picking(models.Model):
                 'copies': number_of_packages,
                 'weight': weight,
                 'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
-                'packageCode':self.carrier_id.unifaun_param_ids.default_value,
+                # 'packageCode':self.carrier_id.unifaun_param_ids.default_value, # Should be taken care of by delivery.carrier.unifaun.param -> add_to_record(...) . Remove when confirmed
                 'valuePerParcel': number_of_packages < 2,
             }]
 
@@ -638,7 +682,7 @@ class stock_picking(models.Model):
                 if package['weight'] < package_min_weight:
                     package['weight'] = package_min_weight
         return packages
-    
+
     @api.multi
     def unifaun_sender_record(self, sender):
         sender_contact = None
@@ -666,7 +710,7 @@ class stock_picking(models.Model):
                 'contact': sender_contact.name,
             })
         return rec
-    
+
     @api.multi
     def unifaun_receiver_contact(self, receiver, current_values):
         """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
@@ -674,7 +718,7 @@ class stock_picking(models.Model):
         if hasattr(self, 'sale_id'):
             contact_data['contact'] = self.sale_id.partner_id.name
         return contact_data
-        
+
     @api.multi
     def unifaun_sender_contact(self, sender, current_values):
         """Contact info for the receiver record. Default is just to add the contact name, but could change phone number, email etc."""
@@ -682,7 +726,7 @@ class stock_picking(models.Model):
         if self.sender_contact_id:
             contact_data['contact'] = self.sender_contact_id.name
         return contact_data
-    
+
     @api.multi
     def unifaun_receiver_record(self, receiver):
         rec = {
@@ -704,7 +748,7 @@ class stock_picking(models.Model):
         elif name_method == 'commercial':
             rec['name'] = receiver.commercial_partner_id.name
         return rec
-    
+
     # ~ @api.multi
     # ~ def order_stored_shipment(self):
         # ~ """Create a stored shipment."""
@@ -717,16 +761,17 @@ class stock_picking(models.Model):
         # ~ if res.get('value'):
             # ~ order.write(res['value'])
         # ~ return order
-        
+
         # ~ order = None
         # ~ orders = []
         # ~ ordernummer = ''
         # ~ orderdatum = ''
-    
+
             # ~ lines = content.splitlines()
     @api.multi
     def order_stored_shipment(self):
         """Create a stored shipment."""
+        _logger.warning("MyTag: Got to: order_stored_shipment")
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
         if self.unifaun_shipmentid:
@@ -755,7 +800,7 @@ class stock_picking(models.Model):
         receiver_contact_info = self.partner_id
         sender_contact_info = self.picking_type_id.warehouse_id.sender_contact_id
         rec = {
-            
+
             'sender': sender_record,
             'contact': sender_contact_info and sender_contact_info.id or None,
             'senderPartners': [{
@@ -779,14 +824,17 @@ class stock_picking(models.Model):
                 #~ "from": "info@unifaun.com"
             #~ }],
         }
-        
+
+        _logger.warning("MyTag: Adding separate parameters")
+        if self.carrier_id.unifaun_param_ids:
+            self.carrier_id.unifaun_param_ids.add_to_record(rec) # TODO: Refactor to unify behavior of stock.picking.unifaun.param and delivery.carrier.unifaun.param
         if self.unifaun_param_ids:
             self.unifaun_param_ids.add_to_record(rec)
         # ~ if self.package_ids:
             # ~ res = super(stock_picking,self).order_create()
             # ~ for package in self.package_ids:
                 # ~ return res
-                
+
 
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         if type(response) == type({}):
@@ -904,7 +952,7 @@ class stock_picking(models.Model):
                     'attachment_id': attachment.id,
                     'picking_id': self.id,
                 })
-            
+
             self.env['mail.message'].create({
                 'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (rec, response)),
                 'subject': "Shipment(s) Created",
@@ -952,7 +1000,7 @@ class stock_picking(models.Model):
             'target': 'new',
             'context': ctx,
         }
-        
+
     @api.one
     def unifaun_send_track_mail_silent(self):
         if self.env.context.get('unifaun_track_force_send') or self.env['ir.config_parameter'].get_param('unifaun.sendemail', '1') == '1':
