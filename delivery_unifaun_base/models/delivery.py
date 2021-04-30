@@ -305,7 +305,7 @@ class DeliveryCarrierUnifaunParam(models.Model):
             write_param(node[name], value, parameter)
 
         for param in self:
-            _logger.warning("MyTag: Adding param: {} with value {}".format(param.name,  param.default_value))
+            #_logger.warning("MyTag: Adding param: {} on path {} with value {}".format(param.name, param.parameter,  param.default_value))
             write_param(rec, param.default_value, param.parameter) # Ignoring calculated value for now. This module is already in dire need for refactoring.
 
 class StockPickingUnifaunParam(models.Model):
@@ -771,7 +771,6 @@ class stock_picking(models.Model):
     @api.multi
     def order_stored_shipment(self):
         """Create a stored shipment."""
-        _logger.warning("MyTag: Got to: order_stored_shipment")
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
         if self.unifaun_shipmentid:
@@ -825,7 +824,7 @@ class stock_picking(models.Model):
             #~ }],
         }
 
-        _logger.warning("MyTag: Adding separate parameters")
+        #_logger.warning("MyTag: Adding separate parameters")
         if self.carrier_id.unifaun_param_ids:
             self.carrier_id.unifaun_param_ids.add_to_record(rec) # TODO: Refactor to unify behavior of stock.picking.unifaun.param and delivery.carrier.unifaun.param
         if self.unifaun_param_ids:
