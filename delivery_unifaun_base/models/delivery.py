@@ -235,6 +235,21 @@ class DeliveryCarrierUnifaunParam(models.Model):
     default_value = fields.Char(string='Default Value')
     default_compute = fields.Char(string='Default Compute', help="Expression to compute default value for this parameter. variable param = the parameter object. Example: 'param.picking_id.sale_id.name'")
 
+    @api.onchange("parameter","default_value","default_compute")
+    def _strip_parameters(self):
+        '''
+        Strip trailing whitespaces for the parameter and values.It is reasonable
+        to assume no unifaun parameters start or end with whitespaces.
+        '''
+        # self.parameter and the other might evaulate to false during create(..)
+        if not isinstance(self.parameter, bool):
+            _logger.warning("MyTag: onchange triggered")
+            self.parameter = self.parameter.strip()
+        if not isinstance(self.default_value, bool):
+            self.default_value = self.default_value.strip()
+        if not isinstance(self.default_compute, bool):
+            self.default_compute = self.default_compute.strip()
+
     @api.multi
     def get_default_value(self):
         try:
