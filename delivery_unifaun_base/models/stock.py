@@ -66,7 +66,7 @@ class StockPicking(models.Model):
             pickings = self
         pickings.unifaun_check_if_ready()
         order = self.env['unifaun.order'].create_from_pickings(pickings)
-        action = self.env['ir.actions.act_window'].for_xml_id('delivery_unifaun_improved', 'action_unifaun_order')
+        action = self.env['ir.actions.act_window']._for_xml_id('delivery_unifaun_base.action_unifaun_order')
         action['domain'] = [('id', '=', order.id)]
         return action
     
@@ -78,9 +78,8 @@ class StockPicking(models.Model):
             if not picking.is_unifaun:
                 raise Warning("Carrier is not a Unifaun partner.")
 
-class StockPackOperation(models.Model):
-    # _inherit = 'stock.pack.operation'
-    _inherit = 'stock.move'
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
 
     def unifaun_package_line_values(self):
         """Return a value dict for a unifaun.package.line"""
@@ -97,11 +96,12 @@ class StockQuantPackage(models.Model):
 
     def unifaun_package_values(self):
         """Return a value dict for a unifaun.package"""
+        _logger.warning(f"set weight_spec to quant.package wieght: {self.shipping_weight or self.weight}")
         return {
             'name': self.name,
+            'quant_package_id': self.id,
             #'contents': '',
             'weight_spec': self.shipping_weight or self.weight, # Fix weight to package weight
-            'ul_id': self.ul_id and self.ul_id.id or None,
             'packaging_id': self.packaging_id and self.packaging_id.id or None,
             'line_ids': [],
             # TODO: Add volume, length, width, height

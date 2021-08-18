@@ -170,7 +170,7 @@ class UnifaunPackage(models.Model):
 
     state = fields.Selection(related='unifaun_id.state')
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade', states=READ_ONLY_STATES)
-    ul_id = fields.Many2one(comodel_name='product.packaging', string='Logistical Unit', states=READ_ONLY_STATES)
+    quant_package_id = fields.Many2one(comodel_name='stock.quant.package', string='Package', states=READ_ONLY_STATES)
     packaging_id = fields.Many2one(comodel_name='product.packaging', string='Packaging', help="This field should be completed only if everything inside the package share the same product, otherwise it doesn't really make sense.", states=READ_ONLY_STATES)
     shipper_package_code = fields.Char(string='Package Code', help="The shipping company's code for this packaging type.", states=READ_ONLY_STATES)
     line_ids = fields.One2many(comodel_name='unifaun.package.line', inverse_name='package_id', string='Products')
@@ -185,8 +185,11 @@ class UnifaunPackage(models.Model):
                  'line_ids.qty', 'weight_spec')
     def _calculate_weight(self):
         """Calculate the weight of the packages. Includes boxes/pallets etc."""
+
+        _logger.warning("_calculate_weight")
         uom_obj = self.env['uom.uom']
         for package in self:
+            _logger.warning(f"quant_package_id: {package.quant_package_id}, weight: {package.quant_package_id.weight}")
             # TODO: Does this check work or will it be set to 0 if state != draft?
             _logger.warn(self.unifaun_id.state)
             if package.unifaun_id.state == 'draft':
@@ -194,35 +197,45 @@ class UnifaunPackage(models.Model):
                 for line in package.line_ids:
                     weight += line.product_qty * line.product_id.weight
                 # Box / Pallet
-                if package.ul_id:
-                    weight += package.ul_id.max_weight
-                # Product distribution packages, e.g. boxes stapled on a pallet.
-                if package.packaging_id:
-                    weight += math.ceil(package.product_qty / package.packaging_id.qty) * package.packaging_id.ul.weight
+                if package.quant_package_id:
+                    weight += package.quant_package_id.weight
                 package.weight_calc = weight
                 if package.weight_spec:
+                    _logger.warning("beep boop weight override")
+                    _logger.warning(f"weight_spec: {package.weight_spec}")
                     package.weight = package.weight_spec
                 else:
                     package.weight = weight
+        _logger.warning(f"calculated weight: {weight}")
+       
 
     def get_parcel_values(self):
         """Return a dict of parcel data to be used in a Unifaun shipment record."""
-        vals = {
-            'copies': self.copies,
-            'weight': self.weight,
-            'contents': self.contents,
-            'valuePerParcel': False,
-        }
-        if self.name:
-            vals['reference'] = self.name # ??? Not saved in shipment
-        if self.ul_id:
-            # package_code = self.ul_id.get_unifaun_package_code(self.carrier_id)
-            package_code = self.ul_id.shipper_package_code
-            if package_code:
-                vals['packageCode'] = package_code
-            #TODO: Add default package_code
-        # TODO: Add volume, length, width, height
-        return vals
+        vals_list = []
+        for parcel in self:
+            vals = {
+                'copies': parcel.copies,
+                'weight': parcel.weight,
+                'contents': parcel.contents,
+                'valuePerParcel': False,
+                'volume': parcel.packaging_id.width * parcel.packaging_id.packaging_length * parcel.packaging_id.height,
+                'width': parcel.packaging_id.width,
+                'height': parcel.packaging_id.height,
+                'length': parcel.packaging_id.packaging_length
+                
+            }
+            if parcel.name:
+                vals['reference'] = parcel.name # ??? Not saved in shipment
+            #TODO: implement the get_unifaun_package_code function to set the carriers package code
+            if False: # self.package_id:
+                # package_code = self.ul_id.get_unifaun_package_code(self.carrier_id)
+                package_code = parcel.shipper_package_code
+                if package_code:
+                    vals['packageCode'] = package_code
+                #TODO: Add default package_code
+            # TODO: Add volume, length, width, height
+            vals_list.append(vals)
+        return vals_list
 
 
 class stock_picking_unifaun_status(models.Model):
@@ -464,13 +477,13 @@ class StockQuantPackage(models.Model):
     
     @api.depends('quant_ids.quantity', 'quant_ids.product_id.weight')
     def _compute_weight(self):
-        weight = self.ul_id and self.ul_id.max_weight or 0.0
-        for quant in self.quant_ids:
-            weight += quant.qty * quant.product_id.weight
-        for pack in self.quant_ids:
-            weight += pack.product_id.weight
-        self.weight = weight
-    
+        super()._compute_weight()
+        # Add weight of empty packaging to total weight.
+        for package in self:
+            weight = package.packaging_id and package.packaging_id.weight or 0.0
+            package.weight += weight
+
+
     @api.onchange('weight')
     def onchange_weight(self):
         self.shipping_weight = self.weight
@@ -493,18 +506,22 @@ class StockQuantPackage(models.Model):
 class ProductPackaging(models.Model):
     _inherit = 'product.packaging'
     
+    
+    height = fields.Float('Height')
+    width = fields.Float('Width')
+    packaging_length = fields.Float('Length')
     # TODO: This is the wrong packaging for this. It should be on the product.ul model.
     shipper_package_code = fields.Char(string='Shipper Packaging Ref')
+    weight = fields.Float(string='Weight', help='The weight of the empty packaging')
 
 
-class StockPackOperation(models.Model):
-    _inherit = 'stock.move'
-    
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
+
+
     result_package_working_weight = fields.Float(string='Working Weight', compute='_compute_working_weight', help="Calculated weight before package is finalized.")
-    # result_package_weight = fields.Float(related='result_package_id.weight')
-    result_package_weight = fields.Float(string="Package Weight")
-    # result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
-    result_package_shipping_weight = fields.Float(string="Shipping Weight")
+    result_package_weight = fields.Float(related='result_package_id.weight', string="Package Weight")
+    result_package_shipping_weight = fields.Float(related='result_package_id.shipping_weight')
 
     def _compute_working_weight(self):
         # TODO: Add support for packages in packages.
@@ -512,7 +529,7 @@ class StockPackOperation(models.Model):
             # Packaging is not finalized. Calculate from packop lines.
             weight = 0.0
             if self.result_package_id:
-                weight = self.result_package_id.ul_id and self.result_package_id.ul_id.max_weight or 0.0
+                weight = self.result_package_id and self.result_package_id.weight or 0.0
                 for op in self.picking_id.move_lines.filtered(lambda o: o.result_package_id == self.result_package_id):
                     qty = op.product_uom_id._compute_quantity(op.product_uom_id, op.product_qty, op.product_id.uom_id)
                     weight += qty * op.product_id.weight
@@ -716,6 +733,8 @@ class stock_picking(models.Model):
                     package_min_weight *= package['copies']
                 if package['weight'] < package_min_weight:
                     package['weight'] = package_min_weight
+        _logger.warning("whäää"*99)
+        _logger.warning(packages)
         return packages
     
     def unifaun_sender_record(self, sender):
@@ -781,6 +800,7 @@ class stock_picking(models.Model):
         return rec
     
     def order_stored_shipment(self):
+        _logger.warning("order_stored_shipment_2"*99)
         """Create a stored shipment."""
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
@@ -1261,7 +1281,7 @@ class UnifaunOrder(models.Model):
             # Package weight and count has been specified on pickings
             lines = []
             # Handle lines on pickings not specified
-            for op in (pickings - pickings_spec).mapped('pack_operation_ids'):
+            for op in (pickings - pickings_spec).mapped('move_line_ids'):
                 values = op.unifaun_package_line_values()
                 if values:
                     lines.append((0, 0, values))
@@ -1270,6 +1290,7 @@ class UnifaunOrder(models.Model):
                     values = op.unifaun_package_line_values()
                     if values:
                         lines.append((0, 0, values))
+                _logger.warning(f"set weight_spec to unifaun_parcel_weight: {picking.unifaun_parcel_weight}")
                 packages.append((0, 0, {
                     'name': 'Package %s' % picking.name,
                     'copies': picking.unifaun_parcel_count,
@@ -1282,7 +1303,7 @@ class UnifaunOrder(models.Model):
         ### Handle packages from the pickings ###
         for package in pickings.mapped('package_ids'):
             values = package.unifaun_package_values()
-            for op in pickings.mapped('pack_operation_ids').filtered(lambda op: op.package_id == package.id):
+            for op in pickings.mapped('move_line_ids').filtered(lambda op: op.package_id == package.id):
                 values['line_ids'].append((0, 0, op.unifaun_package_line_values()))
             packages.append((0, 0, values))
         ### Check for packops not in packages ###
@@ -1295,7 +1316,7 @@ class UnifaunOrder(models.Model):
         # Handle pickings that are in the same package
         ops = pickings.filtered(
             lambda p: not p.unifaun_own_package).mapped(
-            'pack_operation_ids').filtered(lambda o: not o.result_package_id)
+            'move_line_ids').filtered(lambda o: not o.result_package_id)
         if ops:
             pack_ops.append(ops)
         # Create packages from the non-packaged packops
@@ -1309,6 +1330,7 @@ class UnifaunOrder(models.Model):
             if lines:
                 weight = package_ops.mapped('picking_id').mapped('unifaun_parcel_weight')
                 weight = weight and max(weight) or 0
+                _logger.warning(f"set weight_spec to weight: {weight}")
                 packages.append((0, 0, {
                     # ~ 'ul_id': None,
                     # ~ 'packaging_id': None,
@@ -1456,6 +1478,7 @@ class UnifaunOrder(models.Model):
         return rec
 
     def order_stored_shipment(self):
+        _logger.warning("order_stored_shipment_1"*99)
         """Create a stored shipment."""
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
@@ -1506,7 +1529,7 @@ class UnifaunOrder(models.Model):
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
                 'model': self._name,
-                'type': 'notification',
+                'message_type': 'notification',
             })
             self.set_unifaun_status(response.get('statuses') or [])
             if response.get('status') == 'READY':
@@ -1614,7 +1637,7 @@ class UnifaunOrder(models.Model):
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
                 'model': self._name,
-                'type': 'notification',
+                'message_type': 'notification',
             })
             self.unifaun_send_track_mail_silent()
         else:
@@ -1624,7 +1647,7 @@ class UnifaunOrder(models.Model):
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
                 'model': self._name,
-                'type': 'notification',
+                'message_type': 'notification',
             })
         _logger.info('Unifaun Order Transport: rec %s response %s' % (rec, response))
 
@@ -1670,6 +1693,6 @@ class UnifaunOrder(models.Model):
                     'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                     'res_id': self.id,
                     'model': self._name,
-                    'type': 'notification',
+                    'message_type': 'notification',
                 })
 
