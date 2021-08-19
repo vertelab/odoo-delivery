@@ -97,6 +97,7 @@ class StockQuantPackage(models.Model):
     def unifaun_package_values(self):
         """Return a value dict for a unifaun.package"""
         _logger.warning(f"set weight_spec to quant.package wieght: {self.shipping_weight or self.weight}")
+        _logger.warning(f"shipping weight: {self.shipping_weight}, weight: {self.weight}")
         return {
             'name': self.name,
             'quant_package_id': self.id,

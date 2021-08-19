@@ -31,6 +31,7 @@ import urllib3
 from werkzeug import urls
 import math
 import pprint
+from odoo.tools.float_utils import float_compare
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -217,7 +218,7 @@ class UnifaunPackage(models.Model):
                 'copies': parcel.copies,
                 'weight': parcel.weight,
                 'contents': parcel.contents,
-                'valuePerParcel': False,
+                'valuePerParcel': True,
                 'volume': parcel.packaging_id.width * parcel.packaging_id.packaging_length * parcel.packaging_id.height,
                 'width': parcel.packaging_id.width,
                 'height': parcel.packaging_id.height,
@@ -467,7 +468,16 @@ class StockPickingUnifaunPdf(models.Model):
     unifaunid = fields.Char(string='Unifaun ID')
     attachment_id = fields.Many2one(string='PDF', comodel_name='ir.attachment', required=True)
     picking_id = fields.Many2one(string='Picking', comodel_name='stock.picking', required=True, ondelete='cascade')
-    
+
+
+class ChooseDeliveryPackage(models.TransientModel):
+    _inherit = 'choose.delivery.package'
+
+    @api.onchange('delivery_packaging_id')
+    def _add_package_weight(self):
+        self.shipping_weight += self.delivery_packaging_id and self.delivery_packaging_id.weight or 0.0
+
+
 class StockQuantPackage(models.Model):
     _inherit = "stock.quant.package"
     
@@ -480,6 +490,7 @@ class StockQuantPackage(models.Model):
         super()._compute_weight()
         # Add weight of empty packaging to total weight.
         for package in self:
+            _logger.warning(f"quant package weight: {package.packaging_id and package.packaging_id.weight or 0.0}")
             weight = package.packaging_id and package.packaging_id.weight or 0.0
             package.weight += weight
 
@@ -490,6 +501,7 @@ class StockQuantPackage(models.Model):
 
     def unifaun_get_parcel_values(self):
         """Return a dict of parcel data to be used in a Unifaun shipment record."""
+        _logger.warning("kallas jag1?"*999)
         vals = {
             'reference': self.name, # ??? Not saved in shipment
             'copies': 1,
