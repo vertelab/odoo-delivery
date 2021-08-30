@@ -19,7 +19,12 @@
                             <field name="unifaun_print_settings_id" />
                             <field name="unifaun_min_weight" />
                             <field name="unifaun_param_ids" widget="many2many_tags"/>
-
+                            <field name="unifaun_code_id" widget="many2many">
+                                <tree>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
                             <!--
                                  <field name="unifaun_environment" attrs="{'invisible': [('is_unifaun', '!=', True)]}" />
                             -->
@@ -53,6 +58,14 @@
                 <field name="arch" type="xml">
                     <xpath expr="//label[@for='max_weight']" position="before">
                         <field name="weight"/>
+                    </xpath>
+                    <xpath expr="//group/field[@name='shipper_package_code']" position="after">
+                        <field name="unifaun_code_id" widget="many2many">
+                            <tree>
+                                <field name="code"/>
+                                <field name="name"/>
+                            </tree>
+                        </field>
                     </xpath>
                 </field>
             </record>

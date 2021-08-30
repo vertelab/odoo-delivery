@@ -38,6 +38,16 @@ _logger = logging.getLogger(__name__)
 
 READ_ONLY_STATES = {'done': [('readonly', True)], 'sent': [('readonly', True)], 'cancel': [('readonly', True)]}
 
+class ResUnifaunCode(models.Model): 
+    _name = 'res.unifaun.code'
+    _description = 'Unifaun Code'
+
+    active = fields.Boolean(string='Active')
+    name = fields.Char(string='Description', required=True)
+    code = fields.Char(string='Code', required=True)
+    carrier_id = fields.Many2one(string='Carrier', comodel_name='delivery.carrier', required=True)
+    packaging_id = fields.Many2many(string='Package', comodel_name='product.packaging')
+
 
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
@@ -52,6 +62,7 @@ class delivery_carrier(models.Model):
     unifaun_param_ids = fields.One2many(comodel_name='delivery.carrier.unifaun.param', inverse_name='carrier_id', string='Parameters')
     unifaun_print_settings_id = fields.Many2one(comodel_name='delivery.carrier.unifaun.print_settings', string='Unifaun Print Settings')
     unifaun_min_weight = fields.Float(string='Minimum weight per package', help="The minimum weight per package allowed. Lower weights will be set to the minimum value.", default=0.00)
+    unifaun_code_id = fields.One2many(comodel_name='res.unifaun.code', inverse_name='carrier_id', string='Package Codes', help="The package codes for this carrier")
 
     #~ unifaun_environment = fields.Selection(string='Environment', selection=[('test', 'Test'), ('prod', 'Production')], default='test')
 
@@ -223,17 +234,13 @@ class UnifaunPackage(models.Model):
                 'width': parcel.packaging_id.width,
                 'height': parcel.packaging_id.height,
                 'length': parcel.packaging_id.packaging_length
-                
             }
-            if parcel.name:
-                vals['reference'] = parcel.name # ??? Not saved in shipment
-            #TODO: implement the get_unifaun_package_code function to set the carriers package code
-            if False: # self.package_id:
-                # package_code = self.ul_id.get_unifaun_package_code(self.carrier_id)
-                package_code = parcel.shipper_package_code
-                if package_code:
-                    vals['packageCode'] = package_code
-                #TODO: Add default package_code
+            _logger.warning("package_code"*99)
+            package_code = self.env['res.unifaun.code'].search([('packaging_id', '=', parcel.packaging_id.id), ('carrier_id', '=', parcel.unifaun_id.carrier_id.id)])
+            _logger.warning(package_code)
+            if package_code:
+                vals['packageCode'] = package_code.code
+            #TODO: Add default package_code
             # TODO: Add volume, length, width, height
             vals_list.append(vals)
         return vals_list
@@ -525,6 +532,7 @@ class ProductPackaging(models.Model):
     # TODO: This is the wrong packaging for this. It should be on the product.ul model.
     shipper_package_code = fields.Char(string='Shipper Packaging Ref')
     weight = fields.Float(string='Weight', help='The weight of the empty packaging')
+    unifaun_code_id = fields.Many2many(comodel_name='res.unifaun.code', string='Unifaun Code')
 
 
 class StockMoveLine(models.Model):
