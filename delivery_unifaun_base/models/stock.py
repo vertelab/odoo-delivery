@@ -57,9 +57,11 @@ class StockPicking(models.Model):
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', copy=False)
     unifaun_state = fields.Selection(related='unifaun_id.state')
-    unifaun_own_package = fields.Boolean(string='Own Package', help="Unifauns hould treat any non-packaged lines in this picking as belonging to their own unique package")
+    unifaun_own_package = fields.Boolean(string='Own Package', help="Unifaun should treat any non-packaged lines in this picking as belonging to their own unique package")
 
     def create_unifaun_order(self):
+        _logger.warning(f'VICTOR CREATE_UNIFAUN_ORDER QUANT PACKAGES: {self.package_ids=}')
+        _logger.warning(f'VICTOR CREATE_UNIFAUN_ORDER QUANT BARCODE PACKAGES: {self.barcode_package_ids=}')
         if self.unifaun_id:
             pickings = self.unifaun_id.picking_ids
         else:
@@ -107,5 +109,3 @@ class StockQuantPackage(models.Model):
             'line_ids': [],
             # TODO: Add volume, length, width, height
         }
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
