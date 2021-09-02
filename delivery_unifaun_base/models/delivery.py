@@ -98,7 +98,7 @@ class delivery_carrier(models.Model):
             verify=False,
             **req_params)
         if response.status_code < 200 or response.status_code >= 300:
-            _logger.error("unifaun_delete (%s) ERROR %s: %s" % (url_delete, response.status_code, response.text))
+            _logger.error(f"unifaun_delete {url_delete} ERROR {response.status_code}: {response.text}")
             return False, response
         return True, response
 
@@ -200,20 +200,21 @@ class UnifaunPackage(models.Model):
         for package in self:
             # TODO: Does this check work or will it be set to 0 if state != draft?
             if package.unifaun_id.state == 'draft':
-                if package.quant_package_id and not package.packaging_id:
-                    package.weight = package.quant_package_id.shipping_weight
-                elif self.packaging_id:
-                    weight = 0.00
-                    for line in package.line_ids:
-                        weight += line.product_qty * line.product_id.weight
-                    # Box / Pallet
-                    if package.quant_package_id:
-                        weight += package.quant_package_id.weight
-                    package.weight_calc = weight
-                    if package.weight_spec:
-                        package.weight = package.weight_spec
-                    else:
-                        package.weight = weight
+                if package.weight_spec:
+                    package.weight = package.weight_spec
+                else:
+                    if package.quant_package_id and not package.packaging_id:
+                        package.weight = package.quant_package_id.shipping_weight
+                    elif self.packaging_id:
+                        weight = 0.00
+                        for line in package.line_ids:
+                            weight += line.product_qty * line.product_id.weight
+                        # Box / Pallet
+                        if package.quant_package_id:
+                            weight += package.quant_package_id.weight
+                        package.weight_calc = weight
+                        else:
+                            package.weight = weight
        
 
     def get_parcel_values(self):
@@ -875,7 +876,7 @@ class stock_picking(models.Model):
                 'model': self._name,
                 'message_type': 'notification',
             })
-        _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
+        _logger.info(f'Unifaun Order Transport: rec {rec} response {response}')
 
     def delete_stored_shipment(self):
         if not self.unifaun_stored_shipmentid:
@@ -984,7 +985,7 @@ class stock_picking(models.Model):
                 'model': self._name,
                 'type': 'notification',
             })
-        _logger.info('Unifaun Order Transport: rec %s response %s' % (rec,response))
+        _logger.info(f'Unifaun Order Transport: rec {rec} response {response}')
 
     def unifaun_send_track_mail(self):
         self.ensure_one()
@@ -1247,6 +1248,7 @@ class UnifaunOrder(models.Model):
             'company_id': picking.company_id.id,
             'date': max([p.date_done for p in pickings]),
             'package_ids': self.get_package_values_from_pickings(pickings),
+            # ~ barcode_package_ids might be needed after cleaning old code out:
             #'barcode_package_ids': picking.barcode_package_ids
         }
         return values
@@ -1460,7 +1462,7 @@ class UnifaunOrder(models.Model):
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         # printer = PrettyPrinter()
         if type(response) == dict:
-            _logger.info('\n%s\n' % response)
+            _logger.info(f'\n{response}\n')
             self.stored_shipmentid = response.get('id', '')
 
             self.env['mail.message'].create({
@@ -1489,7 +1491,7 @@ class UnifaunOrder(models.Model):
                 'model': self._name,
                 'type': 'notification',
             })
-        _logger.info('Unifaun Order Transport: rec %s response %s' % (rec, response))
+        _logger.info(f'Unifaun Order Transport: rec {rec} response {response}')
 
     def delete_stored_shipment(self):
         if not self.stored_shipmentid:
@@ -1541,7 +1543,7 @@ class UnifaunOrder(models.Model):
         # printer = PrettyPrinter()
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.stored_shipmentid, None, rec)
         if type(response) == list:
-            _logger.info('\n%s\n' % response)
+            _logger.info(f'\n{response}\n')
             unifaun_shipmentid = []
             carrier_tracking_ref = []
             unifaun_pdfs = []
@@ -1590,7 +1592,7 @@ class UnifaunOrder(models.Model):
                 'model': self._name,
                 'message_type': 'notification',
             })
-        _logger.info('Unifaun Order Transport: rec %s response %s' % (rec, response))
+        _logger.info(f'Unifaun Order Transport: rec {rec} response {response}')
 
     def unifaun_send_track_mail(self):
         self.ensure_one()
