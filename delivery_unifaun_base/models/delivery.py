@@ -97,7 +97,6 @@ class delivery_carrier(models.Model):
         response = requests.delete(url + url_delete,
             verify=False,
             **req_params)
-        _logger.warn(response)
         if response.status_code < 200 or response.status_code >= 300:
             _logger.error("unifaun_delete (%s) ERROR %s: %s" % (url_delete, response.status_code, response.text))
             return False, response
@@ -197,12 +196,9 @@ class UnifaunPackage(models.Model):
     def _calculate_weight(self):
         """Calculate the weight of the packages. Includes boxes/pallets etc."""
 
-        _logger.warning("_calculate_weight")
         uom_obj = self.env['uom.uom']
         for package in self:
-            _logger.warning(f"quant_package_id: {package.quant_package_id}, weight: {package.quant_package_id.shipping_weight}")
             # TODO: Does this check work or will it be set to 0 if state != draft?
-            _logger.warn(self.unifaun_id.state)
             if package.unifaun_id.state == 'draft':
                 if package.quant_package_id and not package.packaging_id:
                     package.weight = package.quant_package_id.shipping_weight
@@ -215,12 +211,9 @@ class UnifaunPackage(models.Model):
                         weight += package.quant_package_id.weight
                     package.weight_calc = weight
                     if package.weight_spec:
-                        _logger.warning("beep boop weight override")
-                        _logger.warning(f"weight_spec: {package.weight_spec}")
                         package.weight = package.weight_spec
                     else:
                         package.weight = weight
-            _logger.warning(f"calculated weight: {package.weight}")
        
 
     def get_parcel_values(self):
@@ -237,9 +230,7 @@ class UnifaunPackage(models.Model):
                 'height': parcel.packaging_id and parcel.packaging_id.height or None,
                 'length': parcel.packaging_id and parcel.packaging_id.packaging_length or None
             }
-            _logger.warning("package_code"*99)
             package_code = self.env['res.unifaun.code'].search([('packaging_id', '=', parcel.packaging_id.id), ('carrier_id', '=', parcel.unifaun_id.carrier_id.id)])
-            _logger.warning(package_code)
             if package_code:
                 vals['packageCode'] = package_code.code
             #TODO: Add default package_code
@@ -500,7 +491,6 @@ class StockQuantPackage(models.Model):
         super()._compute_weight()
         # Add weight of empty packaging to total weight.
         for package in self:
-            _logger.warning(f"quant package weight: {package.packaging_id and package.packaging_id.weight or 0.0}")
             weight = package.packaging_id and package.packaging_id.weight or 0.0
             package.weight += weight
 
@@ -508,22 +498,6 @@ class StockQuantPackage(models.Model):
     @api.onchange('weight')
     def onchange_weight(self):
         self.shipping_weight = self.weight
-
-    def unifaun_get_parcel_values(self):
-        """Return a dict of parcel data to be used in a Unifaun shipment record."""
-        _logger.warning("kallas jag1?"*999)
-        vals = {
-            'reference': self.name, # ??? Not saved in shipment
-            'copies': 1,
-            'weight': self.shipping_weight or self.weight or 0,
-            'contents': _(self.env['ir.config_parameter'].get_param('unifaun.parcel_description', 'Goods')),
-            'valuePerParcel': True,
-        }
-        if self.packaging_id:
-            if self.packaging_id.shipper_package_code:
-                vals['packageCode'] = self.packaging_id.shipper_package_code
-            # TODO: Add volume, length, width, height
-        return vals
 
 class ProductPackaging(models.Model):
     _inherit = 'product.packaging'
@@ -757,8 +731,6 @@ class stock_picking(models.Model):
                     package_min_weight *= package['copies']
                 if package['weight'] < package_min_weight:
                     package['weight'] = package_min_weight
-        _logger.warning("whäää"*99)
-        _logger.warning(packages)
         return packages
     
     def unifaun_sender_record(self, sender):
@@ -824,7 +796,6 @@ class stock_picking(models.Model):
         return rec
     
     def order_stored_shipment(self):
-        _logger.warning("order_stored_shipment_2"*99)
         """Create a stored shipment."""
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
@@ -884,7 +855,6 @@ class stock_picking(models.Model):
 
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         if type(response) == type({}):
-            _logger.warn('\n%s\n' % response)
             self.unifaun_stored_shipmentid = response.get('id', '')
 
             self.env['mail.message'].create({
@@ -955,7 +925,6 @@ class stock_picking(models.Model):
                 })
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.unifaun_stored_shipmentid, None, rec)
         if type(response) == list:
-            _logger.warn('\n%s\n' % response)
             unifaun_shipmentid = ''
             carrier_tracking_ref = ''
             unifaun_pdfs = []
@@ -1210,7 +1179,6 @@ class UnifaunOrder(models.Model):
         if order and order.state not in ('group', 'draft'):
             raise Warning(_("Found a Unifaun orders already on the pickings. State is not Draft!"))
         values = self.get_order_vals_from_pickings(pickings)
-        _logger.warn(values)
         if order:
             order.write(values)
         else:
@@ -1316,7 +1284,6 @@ class UnifaunOrder(models.Model):
                     values = op.unifaun_package_line_values()
                     if values:
                         lines.append((0, 0, values))
-                _logger.warning(f"set weight_spec to unifaun_parcel_weight: {picking.unifaun_parcel_weight}")
                 packages.append((0, 0, {
                     'name': 'Package %s' % picking.name,
                     'copies': picking.unifaun_parcel_count,
@@ -1352,7 +1319,6 @@ class UnifaunOrder(models.Model):
             pack_ops.append(ops)
         # Create packages from the non-packaged packops
         p_count = 1
-        _logger.warning(f"VICTOR2 get_package_values_from_pickings: {packages=}")
         return packages
 
     def get_unifaun_sender_reference(self):
@@ -1392,44 +1358,8 @@ class UnifaunOrder(models.Model):
             res = ''
         return res
 
-    def unifaun_get_parcel_data(self):
-        """Return a list of parcel dicts to send in unifaun shipment records."""
-        # valuePerParcel (boolean)
-        #     true defines information for each parcel individually.
-        #     false defines information for an entire row of parcels.
-        # copies (integer, minimum 1)
-        #     Number of parcels.
-        # marking (string)
-        #     Goods marking.
-        # packageCode (string)
-        #     Package code. Refer to Help -> Code lists in your account for available package types.
-        # packageText (string)
-        #     Package text. Used for certain services.
-        # weight (number, minimum 0)
-        #     Weight.
-        # volume (number, minimum 0)
-        #     Volume.
-        # length (number, minimum 0)
-        #     Length.
-        # width (number, minimum 0)
-        #     Width.
-        # height (number, minimum 0)
-        #     Height.
-        # loadingMeters (number, minimum 0)
-        #     Load meters.
-        # itemNo (string)
-        #     Item number. Used for certain services.
-        # contents (string)
-        #     Contents.
-        # reference (string)
-        #     Parcel reference. Used for certain services.
-        # parcelNos (array of string)
-        #     Parcel numbers. The array should have copies number of parcel numbers. Note: A special license key is required to use this value.
-        # stackable (boolean)
-        #     Parcel can be stacked. Used for certain services.
-        return self.package_ids.get_parcel_values()
-
     def unifaun_sender_record(self, sender):
+        
         sender_contact = None
         if sender.parent_id and sender.type == 'contact':
             sender_contact = sender
@@ -1490,7 +1420,6 @@ class UnifaunOrder(models.Model):
         return rec
 
     def order_stored_shipment(self):
-        _logger.warning("order_stored_shipment_1"*99)
         """Create a stored shipment."""
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
@@ -1531,7 +1460,7 @@ class UnifaunOrder(models.Model):
         response = self.carrier_id.unifaun_send('stored-shipments', None, rec)
         # printer = PrettyPrinter()
         if type(response) == dict:
-            _logger.warn('\n%s\n' % response)
+            _logger.info('\n%s\n' % response)
             self.stored_shipmentid = response.get('id', '')
 
             self.env['mail.message'].create({
@@ -1612,7 +1541,7 @@ class UnifaunOrder(models.Model):
         # printer = PrettyPrinter()
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.stored_shipmentid, None, rec)
         if type(response) == list:
-            _logger.warn('\n%s\n' % response)
+            _logger.info('\n%s\n' % response)
             unifaun_shipmentid = []
             carrier_tracking_ref = []
             unifaun_pdfs = []
@@ -1628,7 +1557,7 @@ class UnifaunOrder(models.Model):
             self.shipmentid = ', '.join(unifaun_shipmentid)
             # create an attachment
             # TODO: several pdfs?
-            _logger.warn(unifaun_pdfs)
+            _logger.info(unifaun_pdfs)
             for pdf in unifaun_pdfs:
                 attachment = self.carrier_id.unifaun_download(pdf)
                 attachment.write({

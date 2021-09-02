@@ -33,21 +33,18 @@ class stock_picking_unifaun_status(models.Model):
     _inherit = 'stock.picking.unifaun.status'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order' required=True, ondelete='cascade')
     picking_id = fields.Many2one(required=False, ondelete=None)
 
 class StockPickingUnifaunParam(models.Model):
     _inherit = 'stock.picking.unifaun.param'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order' required=True, ondelete='cascade')
     picking_id = fields.Many2one(required=False, ondelete=None)
 
 class StockPickingUnifuanPdf(models.Model):
     _inherit = 'stock.picking.unifaun.pdf'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade')
     picking_id = fields.Many2one(required=False, ondelete=None)
 
 class StockPicking(models.Model):
@@ -60,8 +57,6 @@ class StockPicking(models.Model):
     unifaun_own_package = fields.Boolean(string='Own Package', help="Unifaun should treat any non-packaged lines in this picking as belonging to their own unique package")
 
     def create_unifaun_order(self):
-        _logger.warning(f'VICTOR CREATE_UNIFAUN_ORDER QUANT PACKAGES: {self.package_ids=}')
-        _logger.warning(f'VICTOR CREATE_UNIFAUN_ORDER QUANT BARCODE PACKAGES: {self.barcode_package_ids=}')
         if self.unifaun_id:
             pickings = self.unifaun_id.picking_ids
         else:
@@ -98,8 +93,6 @@ class StockQuantPackage(models.Model):
 
     def unifaun_package_values(self):
         """Return a value dict for a unifaun.package"""
-        _logger.warning(f"set weight_spec to quant.package wieght: {self.shipping_weight or self.weight}")
-        _logger.warning(f"shipping weight: {self.shipping_weight}, weight: {self.weight}")
         return {
             'name': self.name,
             'quant_package_id': self.id,
