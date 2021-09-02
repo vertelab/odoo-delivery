@@ -33,21 +33,18 @@ class stock_picking_unifaun_status(models.Model):
     _inherit = 'stock.picking.unifaun.status'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order' required=True, ondelete='cascade')
     picking_id = fields.Many2one(required=False, ondelete=None)
 
 class StockPickingUnifaunParam(models.Model):
     _inherit = 'stock.picking.unifaun.param'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order' required=True, ondelete='cascade')
     picking_id = fields.Many2one(required=False, ondelete=None)
 
 class StockPickingUnifuanPdf(models.Model):
     _inherit = 'stock.picking.unifaun.pdf'
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order')
-    # unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', required=True, ondelete='cascade')
     picking_id = fields.Many2one(required=False, ondelete=None)
 
 class StockPicking(models.Model):
@@ -57,7 +54,7 @@ class StockPicking(models.Model):
 
     unifaun_id = fields.Many2one(comodel_name='unifaun.order', string='Unifaun Order', copy=False)
     unifaun_state = fields.Selection(related='unifaun_id.state')
-    unifaun_own_package = fields.Boolean(string='Own Package', help="Unifauns hould treat any non-packaged lines in this picking as belonging to their own unique package")
+    unifaun_own_package = fields.Boolean(string='Own Package', help="Unifaun should treat any non-packaged lines in this picking as belonging to their own unique package")
 
     def create_unifaun_order(self):
         if self.unifaun_id:
@@ -66,7 +63,7 @@ class StockPicking(models.Model):
             pickings = self
         pickings.unifaun_check_if_ready()
         order = self.env['unifaun.order'].create_from_pickings(pickings)
-        action = self.env['ir.actions.act_window'].for_xml_id('delivery_unifaun_improved', 'action_unifaun_order')
+        action = self.env['ir.actions.act_window']._for_xml_id('delivery_unifaun_base.action_unifaun_order')
         action['domain'] = [('id', '=', order.id)]
         return action
     
@@ -78,9 +75,8 @@ class StockPicking(models.Model):
             if not picking.is_unifaun:
                 raise Warning("Carrier is not a Unifaun partner.")
 
-class StockPackOperation(models.Model):
-    # _inherit = 'stock.pack.operation'
-    _inherit = 'stock.move'
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
 
     def unifaun_package_line_values(self):
         """Return a value dict for a unifaun.package.line"""
@@ -99,12 +95,10 @@ class StockQuantPackage(models.Model):
         """Return a value dict for a unifaun.package"""
         return {
             'name': self.name,
+            'quant_package_id': self.id,
             #'contents': '',
             'weight_spec': self.shipping_weight or self.weight, # Fix weight to package weight
-            'ul_id': self.ul_id and self.ul_id.id or None,
             'packaging_id': self.packaging_id and self.packaging_id.id or None,
             'line_ids': [],
             # TODO: Add volume, length, width, height
         }
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
