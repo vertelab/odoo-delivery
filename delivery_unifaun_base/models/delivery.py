@@ -212,7 +212,7 @@ class UnifaunPackage(models.Model):
                         # Box / Pallet
                         if package.quant_package_id:
                             weight += package.quant_package_id.weight
-                        package.weight_calc = weight
+                            package.weight_calc = weight
                         else:
                             package.weight = weight
        
