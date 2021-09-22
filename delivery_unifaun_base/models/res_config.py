@@ -21,13 +21,11 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import Warning
 
-
 import logging
 _logger = logging.getLogger(__name__)
 
 
-class stock_config_settings(models.TransientModel):
-    #_inherit = 'stock.config.settings'
+class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     unifaun_apikey = fields.Char(string="API-key")
@@ -38,21 +36,23 @@ class stock_config_settings(models.TransientModel):
     unifaun_template_id = fields.Char(string='Template id')
     unifaun_send_email = fields.Boolean(string='Automatic order tracking emails')
     
-    @api.multi
-    def set_unifaun(self):
-        icp = self.env['ir.config_parameter']
-        icp.set_param('unifaun.api_key', (self.unifaun_apikey or '').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.passwd', (self.unifaun_password or '').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.url', (self.unifaun_url or '').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.parcel_description', (self.unifaun_package_contents or '').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.receiver_name_method', (self.unifaun_receiver_name_method or 'default').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.templateid', (self.unifaun_template_id or '').strip(), groups=['base.group_system'])
-        icp.set_param('unifaun.sendemail', self.unifaun_send_email and '1' or '0', groups=['base.group_system'])
+    def set_values(self):
+        res = super(ResConfigSettings, self).set_values()
+        icp = self.env['ir.config_parameter'].sudo()
+        icp.set_param('unifaun.api_key', (self.unifaun_apikey or '').strip())
+        icp.set_param('unifaun.passwd', (self.unifaun_password or '').strip())
+        icp.set_param('unifaun.url', (self.unifaun_url or '').strip())
+        icp.set_param('unifaun.parcel_description', (self.unifaun_package_contents or '').strip())
+        icp.set_param('unifaun.receiver_name_method', (self.unifaun_receiver_name_method or 'default').strip())
+        icp.set_param('unifaun.templateid', (self.unifaun_template_id or '').strip())
+        icp.set_param('unifaun.sendemail', self.unifaun_send_email and '1' or '0')
+        return res
 
     @api.model
-    def get_default_unifaun(self, fields=None):
-        icp = self.env['ir.config_parameter']
-        return {
+    def get_values(self):
+        res = super(ResConfigSettings, self).get_values()
+        icp = self.env['ir.config_parameter'].sudo()
+        res.update({
             'unifaun_apikey': icp.get_param('unifaun.api_key', default=''),
             'unifaun_password': icp.get_param('unifaun.passwd', default=''),
             'unifaun_url': icp.get_param('unifaun.url', default='https://api.unifaun.com/rs-extapi/v1'),
@@ -60,7 +60,5 @@ class stock_config_settings(models.TransientModel):
             'unifaun_receiver_name_method': icp.get_param('unifaun.receiver_name_method', default='default'),
             'unifaun_template_id': icp.get_param('unifaun.templateid', default=''),
             'unifaun_send_email': icp.get_param('unifaun.sendemail', default='1') == '1',
-        }
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+        })
+        return res
