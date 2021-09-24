@@ -104,6 +104,7 @@ class delivery_carrier(models.Model):
 
     def unifaun_send(self, method, params=None, payload=None):
         url, req_params = self._unifaun_get_params()
+        _logger.warning(f"victor unifaun_send: {url=}, {req_params=}, {method=}")
         response = requests.post(
             url + '/' + method,
             params=params,
@@ -668,7 +669,7 @@ class stock_picking(models.Model):
                                                                             replace('&amp;', '&'))
         else:
             res = ''
-        
+        _logger.warning(f"victor tracking url: {res}")
         return res
 
 
@@ -1542,8 +1543,9 @@ class UnifaunOrder(models.Model):
                 })
         # printer = PrettyPrinter()
         response = self.carrier_id.unifaun_send('stored-shipments/%s/shipments' % self.stored_shipmentid, None, rec)
+        _logger.warning(f'\n victor response: {response}\n')
         if type(response) == list:
-            _logger.info(f'\n{response}\n')
+            
             unifaun_shipmentid = []
             carrier_tracking_ref = []
             unifaun_pdfs = []
@@ -1559,13 +1561,15 @@ class UnifaunOrder(models.Model):
             self.shipmentid = ', '.join(unifaun_shipmentid)
             # create an attachment
             # TODO: several pdfs?
-            _logger.info(unifaun_pdfs)
+            _logger.warning(f"victor unifaun pdfs: {unifaun_pdfs}")
             for pdf in unifaun_pdfs:
                 attachment = self.carrier_id.unifaun_download(pdf)
+                _logger.warning(f"victor attachment: {attachment}")
                 attachment.write({
                     'res_model': self._name,
                     'res_id': self.id
                 })
+                _logger.warning(f"victor attachment after write: {attachment}")
                 self.env['stock.picking.unifaun.pdf'].create({
                     'name': pdf.get('description'),
                     'href': pdf.get('href'),
@@ -1575,7 +1579,7 @@ class UnifaunOrder(models.Model):
                 })
 
             self.env['mail.message'].create({
-                'body': _(u"Unifaun<br/>rec %s<br/>resp %s" % (pprint.pformat(rec), pprint.pformat(response))),
+                'body': _(u"Unifaun<br/>rec %s<br/><br/><br/>resp %s" % (pprint.pformat(rec), pprint.pformat(response))),
                 'subject': "Shipment(s) Created",
                 'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
                 'res_id': self.id,
