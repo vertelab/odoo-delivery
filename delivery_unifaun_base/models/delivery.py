@@ -1408,6 +1408,7 @@ class UnifaunOrder(models.Model):
             'orderNo': self.name,
             'senderReference': self.get_unifaun_sender_reference(),
             'returnShipment': False,
+            'returnPart': sender_record,
             # ~ "receiverReference": "receiver ref 345",
             # ~ "options": [{
             # ~ "message": "This is order number 123",
