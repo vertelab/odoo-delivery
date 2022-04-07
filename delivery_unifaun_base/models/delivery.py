@@ -252,47 +252,7 @@ class stock_picking_unifaun_status(models.Model):
     message_code = fields.Char(string='messageCode')
     raw_data = fields.Char(string='Raw Data')
     picking_id = fields.Many2one(comodel_name='stock.picking')
-    # ~ trans_id = fields.Many2one(comodel_name='stock.picking.unifaun.status_trans', string='Human Readable Message')
-    # ~ trans_message = fields.Char(string='Message', related='trans_id.name')
-    
-    # ~ def translate_message(self):
-        # ~ self.trans_id = self.env['stock.picking.unifaun.status_trans'].search([
-            # ~ '|',
-                # ~ ('field', '=', self.field),
-                # ~ ('field', '=', '*'),
-            # ~ '|',
-                # ~ ('message', '=', self.name),
-                # ~ ('message', '=', '*'),
-            # ~ '|',
-                # ~ ('type', '=', self.type),
-                # ~ ('type', '=', '*'),
-            # ~ '|',
-                # ~ ('location', '=', self.location),
-                # ~ ('location', '=', '*'),
-            # ~ '|',
-                # ~ ('message_code', '=', self.message_code),
-                # ~ ('message_code', '=', '*'),
-        # ~ ], limit=1)
-    
-    # ~ @api.model
-    # ~ @api.returns('self', lambda value: value.id)
-    # ~ def create(self, vals):
-        # ~ res = super(stock_picking_unifaun_status, self).create(vals)
-        # ~ res.translate_message()
-        # ~ return res
 
-# ~ #access_stock_stock_picking_unifaun_status_trans_user,access_stock_stock_picking_unifaun_status_trans_user,model_stock_picking_unifaun_status_trans,stock.group_stock_user,1,1,1,1
-# ~ class stock_picking_unifaun_status_trans(models.Model):
-    # ~ _name = 'stock.picking.unifaun.status_trans'
-    # ~ _order = 'sequence'
-
-    # ~ name = fields.Char(string='Message', required=True, translate=True)
-    # ~ sequence = fields.Integer(string='Sequence', default=100)
-    # ~ field = fields.Char(string='field')
-    # ~ message = fields.Char(string='message')
-    # ~ type = fields.Char(string='type')
-    # ~ location = fields.Char(string='location')
-    # ~ message_code = fields.Char(string='messageCode')
 
 # Definition of format selection fields for DeliveryCarrierUnifaunPrintSettings
 print_format_selection = [
@@ -1477,6 +1437,8 @@ class UnifaunOrder(models.Model):
             })
             self.set_unifaun_status(response.get('statuses') or [])
             if response.get('status') == 'READY':
+                self.state = 'sent'
+            elif response.get('status') == 'WARNED':
                 self.state = 'sent'
             # ~ elif response.get('status') == 'INVALID':
             else:
