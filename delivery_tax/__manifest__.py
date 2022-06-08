@@ -19,18 +19,22 @@
 ################################################################################
 
 {
-    'name': 'Delivery Tax',
+    'name': 'Delivery: Delivery Tax',
     'version': '14.0.0.0.1',
-    'category': '',
-    'summary': 'Adds the current taxes to the shipment-cost',
+    # Version ledger: 14.0 = Odoo version. 1 = Major. Non regressionable code. 2 = Minor. New features that are regressionable. 3 = Bug fixes
+    'summary': 'Adds the current taxes to the shipment-cost.',
+    'category': 'Inventory',
     'description': """
         Supersedes rate_shipment in the DeliveryCarrier class and adds a new
         'price_tax' key that contains the shipment price with included tax.
-""",
-    'author': "Vertel AB",
-    'license': "AGPL-3",
-    'website': 'https://www.vertel.se',
-    'depends': ['delivery'],
-    'data': [],
+    """,
+    #'sequence': '1',
+    'author': 'Vertel AB',
+    'license': 'AGPL-3',
+    'website': 'https://vertel.se/apps/odoo-delivery/delivery-tax',
+    'images': ['/static/description/banner.png'], # 560x280 px.
+    'contributor': '',
+    'maintainer': 'Vertel AB',
+    'repository': 'https://github.com/vertelab/odoo-delivery',
     'installable': True,
 }
