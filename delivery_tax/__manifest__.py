@@ -31,10 +31,11 @@
     #'sequence': '1',
     'author': 'Vertel AB',
     'license': 'AGPL-3',
-    'website': 'https://vertel.se/apps/odoo-delivery/delivery-tax',
-    'images': ['/static/description/banner.png'], # 560x280 px.
+    'website': 'https://vertel.se/apps/odoo-delivery/delivery_tax',
+    'images': ['static/description/banner.png'], # 560x280 px.
     'contributor': '',
     'maintainer': 'Vertel AB',
     'repository': 'https://github.com/vertelab/odoo-delivery',
     'installable': True,
 }
+# vim:expandtab:smartindent:tabstop=4s:softtabstop=4:shiftwidth=4:
