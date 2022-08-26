@@ -1,5 +1,5 @@
-odoo-record_keeping / record_keeping
-2022-05-18
+odoo-delivery / delivery-tax
+2022-06-08
 
 Be aware of these!
 [project]/[module]/static/description/banner.png
