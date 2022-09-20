@@ -1,15 +1,20 @@
-odoo-delivery / delivery-tax
-2022-06-08
+odoo-delivery / delivery_tax -- icons
+2022-08-24
+
 
 Be aware of these!
 [project]/[module]/static/description/banner.png
 [project]/[module]/static/description/icon.png
 
-Icon: User
+Icon:
 Icons may be found at: https://fontawesome.com/v5/cheatsheet
+
+
+Icon, Planning = "calendar-check" (See link for img!)
 
 Odoo banner: 560 x 280
 Odoo icon: 140 x 140
+
 
 HEX
 #930a57
@@ -27,6 +32,7 @@ Guide:
 5. In Inkscape, choose Generate PNG image and "Export as...".
 6. Write a filename of choice and choose "Export".
 
+
 * * * * * *
 
 Vertel Quality Incitament
@@ -41,5 +47,3 @@ To start, do a ”git pull” to ensure your local copy is up to date.
 5. grep -sR "'description':" */*__.py
 
 See details in Project folder.
-[project]/[module]/
-[project]/Vertel_Quality_Incitament.pdf
