@@ -25,7 +25,9 @@
     # Version ledger: 14.0 = Odoo version. 1 = Major. Non regressionable code. 2 = Minor. New features that are regressionable. 3 = Bug fixes
     'summary': 'Integrate Delivery with Unifaun Base-module.',
     'category': 'Inventory',
-    'description': '',
+    'description': """
+    Integrate Delivery with Unifaun Base-module.
+    """,
     #'sequence': '1',
     'author': 'Vertel AB',
     'website': 'https://vertel.se/apps/odoo-delivery/delivery_unifaun_base',
