@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+    <!-- After installation of the module, open the related menu -->
+    <!--
+         <record id="action_client_warehouse_menu" model="ir.actions.client">
+         <field name="name">Open Warehouse Menu</field>
+         <field name="tag">reload</field>
+         <field name="params" eval="{'menu_id': ref('menu_stock_root')}"/>
+         </record>
+         <record id="base.open_menu" model="ir.actions.todo">
+         <field name="action_id" ref="action_client_warehouse_menu"/>
+         <field name="state">open</field>
+         </record>
+         
+    -->
+    <record id="view_stock_config_settings" model="ir.ui.view">
+      <field name="name">stock settings</field>
+      <field name="model">stock.config.settings</field>
+      <field name="inherit_id" ref="stock.view_stock_config_settings" />
+      <field name="arch" type="xml">
+        <form string="Configure Warehouse" position='inside'>
+          <separator string="Fraktjakt" />
+          <group name="fraktjakt">
+            <field name="fraktjakt_environment" />
+            <field name="fraktjakt_tid" attrs="{'invisible':[('fraktjakt_environment','=','production')]}"  />
+            <field name="fraktjakt_tkey" attrs="{'invisible':[('fraktjakt_environment','=','production')]}" />
+            <field name="fraktjakt_turl" attrs="{'invisible':[('fraktjakt_environment','=','production')]}" />
+            <field name="fraktjakt_pid" attrs="{'invisible':[('fraktjakt_environment','=','test')]}"  />
+            <field name="fraktjakt_pkey" attrs="{'invisible':[('fraktjakt_environment','=','test')]}" />
+            <field name="fraktjakt_purl" attrs="{'invisible':[('fraktjakt_environment','=','test')]}" />
+          </group>
+        </form>
+      </field>
+    </record>
+  </data>
+</openerp>
