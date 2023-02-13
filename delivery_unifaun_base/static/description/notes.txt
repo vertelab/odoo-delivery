@@ -26,3 +26,21 @@ Guide:
 4. Save in ordinary / plain svg format.
 5. In Inkscape, choose Generate PNG image and "Export as...".
 6. Write a filename of choice and choose "Export".
+
+
+* * * * * *
+
+Vertel Quality Incitament
+
+These steps will help the developer to ship software people can use.
+To start, do a ”git pull” to ensure your local copy is up to date.
+
+1. grep -sR "'name':" */*__.py
+2. grep -sR "'version':" */*__.py
+3. grep -sR "'category':" */*__.py
+4. grep -sR "'summary':" */*__.py
+5. grep -sR "'description':" */*__.py
+
+See details in Project folder.
+[project]/[module]/
+[project]/Vertel_Quality_Incitament.pdf
