@@ -616,7 +616,7 @@ class stock_picking(models.Model):
         """Return an URL for Unifaun Track & Trace."""
         # https://www.unifaunonline.se/ufoweb-prod-201812111106/public/SUP/UO/UO-101-TrackandTrace-en.pdf
         # TODO: Add support for regions (what does regions even do?)
-        if self.is_unifaun and self.unifaun_shipmentid:
+        if self.is_unifaun and self.unifaun_id.shipmentid:
             parameters = {
                 'apiKey': self.env['ir.config_parameter'].get_param('unifaun.api_key'),
                 'reference': self.get_unifaun_sender_reference(),
@@ -1551,6 +1551,7 @@ class UnifaunOrder(models.Model):
                 'message_type': 'notification',
             })
             self.unifaun_send_track_mail_silent()
+            # self.unifaun_send_track_mail()
         else:
             self.env['mail.message'].create({
                 'body': _("Unifaun error!<br/>rec %s<br/>resp %s" % (pprint.pformat(rec), pprint.pformat(response))),
@@ -1593,7 +1594,7 @@ class UnifaunOrder(models.Model):
     def unifaun_send_track_mail_silent(self):
         if self.env.context.get('unifaun_track_force_send') or self.env['ir.config_parameter'].get_param(
                 'unifaun.sendemail', '1') == '1':
-            template = self.env.ref('delivery_unifaun_base.unifaun_email_template')
+            template = self.env.ref('delivery_unifaun_base.unifaun_order_email_template')
             try:
                 template.send_mail(self.id)
             except:
