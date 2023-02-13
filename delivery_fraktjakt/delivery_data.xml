@@ -5,8 +5,12 @@
         <record id="fraktjakt_partner" model="res.partner">
             <field name="name">Fraktjakt</field>
             <field name="company_id" ref="base.main_company"/>
+<!--
             <field name="customer" eval="False"/>
+-->
+<!--
             <field name="supplier" eval="True"/>
+-->
             <field name="is_company" eval="True"/>
             <field name="email">info@fraktjakt.se</field>
             <field name="street">Gjuterigatan 9</field>
@@ -27,7 +31,9 @@
 
         <record id="fraktjakt" model="delivery.carrier">
             <field name="name">Fraktjakt</field>
+<!--
             <field name="partner_id" ref="fraktjakt_partner"/>
+-->
             <field name="product_id" ref="fraktjakt_product"/>
             <field name="active" eval="True"/>
             <field name="is_fraktjakt" eval="True"/>

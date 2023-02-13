@@ -28,8 +28,9 @@ _logger = logging.getLogger(__name__)
 
 
 class stock_config_settings(models.TransientModel):
-    _name = 'stock.config.settings'
-    _inherit = 'stock.config.settings'
+   # _name = 'stock.config.settings'
+   # _inherit = 'stock.config.settings'
+    _inherit = 'res.config.settings'
     fraktjakt_tid = fields.Char(string="Consignor id (test)",help="This is your id you got from the Fraktjakt test system, id/key and address are differenet from the production system.")
     fraktjakt_tkey = fields.Char(string='Consignor key (test)',help="This is your key you got from the Fraktjakt test system, id/key and address are differenet from the production system.")
     fraktjakt_turl = fields.Char(string='Url (test)',help="The test server usually https://api2.fraktjakt.se, id/key and address are different from the production system.")
@@ -39,7 +40,7 @@ class stock_config_settings(models.TransientModel):
 
     fraktjakt_environment = fields.Selection([('production','Production'),('test','Test')],string='Environment',help='Test or Production, these are different system with uniqe id/key and address')
 
-    @api.one
+
     def set_fraktjakt(self):
         self.env['ir.config_parameter'].set_param('fraktjakt.tid', (self.fraktjakt_tid or '').strip(), groups=['base.group_system'])
         self.env['ir.config_parameter'].set_param('fraktjakt.tkey', (self.fraktjakt_tkey or '').strip(), groups=['base.group_system'])
@@ -50,7 +51,7 @@ class stock_config_settings(models.TransientModel):
         self.env['ir.config_parameter'].set_param('fraktjakt.environment', (self.fraktjakt_environment or '').strip(), groups=['base.group_system'])
         
 
-    @api.multi
+
     def get_default_all(self):
         return {
             'fraktjakt_tid': self.env['ir.config_parameter'].get_param('fraktjakt.tid',default=''),
