@@ -30,8 +30,9 @@
 'website': 'http://www.vertel.se',
 'depends': ['delivery'],
 'data': [
-    'delivery_view.xml',
-    'delivery_data.xml',
+    'views/delivery_view.xml',
+    'views/res_config_view.xml',
+    'data/delivery_data.xml',
     # ~ 'res_config_view.xml',
     ],
     'application': True,
