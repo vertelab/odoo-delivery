@@ -25,18 +25,25 @@ from odoo.http import request
 import odoo.addons.website_sale.controllers.main
 
 import logging
+
 _logger = logging.getLogger(__name__)
+
 
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
 
-    pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the Carrier Type is a pickup location for deliveries.")
+    pickup_location = fields.Boolean(string="Pickup Location",
+                                     help="Check this field if the Carrier Type is a pickup location for deliveries.")
+
     def _carrier_data(self):
-        _logger.warn('sandra')
-        for pickup in self: 
+        for pickup in self:
             if pickup.pickup_location:
-                pickup.carrier_data = _('<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \
-                                  '\n'.join(['<option value="%s">%s</option>' % (p.id,p.name) for p in pickup.env['res.partner'].search([('pickup_location','=',True)])])
+                pickup.carrier_data = _(
+                    '<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
+                    'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') \
+                                      % \
+                                      '\n'.join(['<option value="%s">%s</option>' % (p.id, p.name) for p in
+                                                 pickup.env['res.partner'].search([('pickup_location', '=', True)])])
             else:
                 super(delivery_carrier, pickup)._carrier_data()
 
@@ -51,11 +58,13 @@ class delivery_carrier(models.Model):
         else:
             super(delivery_carrier, self).lookup_carrier(carrier_id, carrier_data, order)
 
+
 class ResPartner(models.Model):
     """Add some fields related to pickup locations"""
     _inherit = "res.partner"
 
-    pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the partner is a pickup location for deliveries.")
+    pickup_location = fields.Boolean(string="Pickup Location",
+                                     help="Check this field if the partner is a pickup location for deliveries.")
 
     @api.onchange('pickup_location')
     def onchange_pickup_location(self):
