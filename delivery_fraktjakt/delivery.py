@@ -101,8 +101,21 @@ class delivery_carrier(models.Model):
         return '%s/%s?consigner_id=%s&consigner_key=%s' % (url,method,id,key)
 
 
-
-
+class stock_picking(models.Model):
+    _inherit="stock.picking"
+    
+    is_fraktjakt = fields.Boolean(related='carrier_id.is_fraktjakt')
+    fraktjakt_shipmentid = fields.Char(string='Fraktjakt Shipment ID', copy=False)
+    fraktjakt_orderid = fields.Char(string='Fraktjakt Order ID', copy=False)
+    
+    fraktjakt_arrival_time = fields.Char(string='Arrival Time')
+    fraktjakt_price = fields.Float(string='Price')
+    #~ fraktjakt_tax = fields.Many2one(comodel_name='account.tax')
+    fraktjakt_agent_info = fields.Char(string='Agent info')
+    fraktjakt_agent_link = fields.Char(string='Agent Link')
+            
+    def fraktjakt_query(self):
+        pass
 
 class res_partner(models.Model):
     _inherit = "res.partner"
@@ -124,7 +137,6 @@ class stock_picking(models.Model):
     fraktjakt_agent_info = fields.Char(string='Agent info')
     fraktjakt_agent_link = fields.Char(string='Agent Link')
             
-    @api.multi
     def fraktjakt_query(self):
         """Create a stored shipment."""
        
@@ -143,7 +155,8 @@ class stock_picking(models.Model):
             'picking_id': self.id,
             'sender_id': self.picking_type_id.warehouse_id.partner_id.id,
             'reciever_id': self.partner_id.id,
-            'pickup_date': self.min_date,
+            #'pickup_date': self.min_date, #MiC error date_deadline
+            'pickup_date': self.date_deadline,
 
             #~ 'move_line': None,
         })
@@ -189,7 +202,6 @@ class stock_picking(models.Model):
 class stock_quant_package(models.Model):
     _inherit = 'stock.quant.package'
     
-    @api.one
     def _weight(self):
         self.weight = self.ul_id.weight + sum([l.qty * l.product_id.weight for l in self.quant_ids])
     weight = fields.Float(compute='_weight')
@@ -198,9 +210,9 @@ class fj_query(models.TransientModel):
     _name = 'fj_query'
 
     picking_id = fields.Many2one(comodel_name='stock.picking',string='Picking',)
-    line_ids = fields.One2many(string='Shipping products', comodel_name='fj_query.line', inverse_name='wizard_id')
-    pack_ids = fields.One2many(string='Packages', comodel_name='fj_query.package', inverse_name='wizard_id')
-    move_lines = fields.One2many(string='Products',comodel_name='fj_query.commodity',inverse_name='wizard_id')
+    # ~ line_ids = fields.One2many(string='Shipping products', comodel_name='fj_query.line', inverse_name='wizard_id')  #mic
+    # ~ pack_ids = fields.One2many(string='Packages', comodel_name='fj_query.package', inverse_name='wizard_id')  #mic
+    # ~ move_lines = fields.One2many(string='Products',comodel_name='fj_query.commodity',inverse_name='wizard_id')  #mic
     sender_id = fields.Many2one(comodel_name='res.partner',string='Sender',)
     reciever_id = fields.Many2one(comodel_name='res.partner',string='Reciever',)
     cold = fields.Boolean(string='Cold',help="Cargo contains packeges that should be cold")
@@ -216,7 +228,6 @@ class fj_query(models.TransientModel):
     user_notes = fields.Text(string='Notes',)
     message = fields.Text()
     
-    @api.multi
     def fraktjakt_query(self):
         """Create a stored shipment."""
         
@@ -321,8 +332,8 @@ class fj_query_line(models.TransientModel):
 
     wizard_id = fields.Many2one(comodel_name='fj_query')
     carrier_id = fields.Many2one(comodel_name='delivery.carrier')
-    partner_id = fields.Many2one(related='carrier_id.partner_id')
-    image = fields.Binary(related='carrier_id.partner_id.image')
+    # ~ partner_id = fields.Many2one(related='carrier_id.partner_id')   #mic
+    # ~ image = fields.Binary(related='carrier_id.partner_id.image')    #mic
     name = fields.Char(string="name")
     desc = fields.Char(string="Description")
     
@@ -336,7 +347,6 @@ class fj_query_line(models.TransientModel):
     #~ shipper_name = shipper.find('name').text
     #~ shipper_logo = shipper.find('logo_url').text
     
-    @api.multi
     def choose_product(self):
         self.wizard_id.fraktjakt_arrival_time = self.arrival_time
         self.wizard_id.fraktjakt_price = self.price
@@ -378,7 +388,7 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(booking,'user_notes',self.wizard_id.user_notes or '')
         # Address 
         carrier.add_address(order,'address_to',self.wizard_id.reciever_id)
-        #~ carrier.add_address_from(order,self.wizard_id.sender_id)
+        # ~ #~ carrier.add_address_from(order,self.wizard_id.sender_id)
         
         _logger.warn(etree.tostring(order, pretty_print=True))
         response,code,self.message = carrier.fraktjakt_send('orders/order_xml',urllib.quote_plus(etree.tostring(order)))
@@ -441,10 +451,10 @@ class fj_query_package(models.TransientModel):
     wizard_id = fields.Many2one(comodel_name='fj_query')
     pack_id = fields.Many2one(string='Package', comodel_name='stock.quant.package')
     weight = fields.Float()
-    height = fields.Float(related='pack_id.ul_id.height')
-    width = fields.Float(related='pack_id.ul_id.width')
-    length = fields.Float(related='pack_id.ul_id.length')
-    @api.one
+    # ~ height = fields.Float(related='pack_id.ul_id.height')   #mic
+    # ~ width = fields.Float(related='pack_id.ul_id.width')   #mic
+    # ~ length = fields.Float(related='pack_id.ul_id.length')   #mic
+
     def _volume(self):
         self.volume = self.height * self.width * self.length / 1000.0
     volume = fields.Float(compute='_volume')
@@ -459,4 +469,4 @@ class fj_query_commodity(models.TransientModel):
     description = fields.Char()
     price = fields.Float()
                 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+# ~ # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
