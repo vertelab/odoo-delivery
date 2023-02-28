@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 # OpenERP, Open Source Management Solution, third party addon
@@ -33,7 +32,6 @@ class delivery_carrier(models.Model):
 
     pickup_location = fields.Boolean(string="Pickup Location",help="Check this field if the Carrier Type is a pickup location for deliveries.")
     def _carrier_data(self):
-        _logger.warn('sandra')
         for pickup in self: 
             if pickup.pickup_location:
                 pickup.carrier_data = _('<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') % \

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <data>
  
@@ -7,19 +8,19 @@
                 <span><t t-raw="delivery.carrier_data"/></span>
               </t>           
         </xpath>
-    </template> 
+    </template>
 
     <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Carrier Data Assets">
       <xpath expr="." position="inside">
-
-           <script type="text/javascript">
+	<script type="text/javascript">
             odoo.define(function (require){
               var ajax = require('web.ajax');
               ajax.loadJS("/delivery_carrier_data/static/src/js/main.js");
             });
-          </script> 
-
-
+        </script>
+	<!--        
+	<script type="text/javascript" src="/delivery_carrier_data/static/src/js/main.js"></script>
+	-->
       </xpath>
     </template>
 
