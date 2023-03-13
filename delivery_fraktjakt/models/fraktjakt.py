@@ -72,13 +72,22 @@ class fj_query(models.TransientModel):
         carrier.add_subelement(shipment,'value',str(sum(self.move_lines.mapped('price'))))
         carrier.add_subelement(shipment,'shipper_info','1')
         carrier.add_consignor(shipment)
+        cm_uom = self.env["uom.uom"].search([('name','=',"cm")])
+
+        default_uom = self.env['product.template']._get_length_uom_id_from_ir_config_parameter()
+        
+
         parcels = carrier.init_subelement(shipment,'parcels')
         for package in self.pack_ids:
+            package_uom = package.pack_id.packaging_id.product_uom_id
+            if not package_uom:
+                _logger.warning(f"{cm_uom=} {package_uom=} {default_uom=}")
+                package_uom = default_uom
             parcel = carrier.init_subelement(parcels,'parcel')
             carrier.add_subelement(parcel,'weight',str(package.weight))
-            carrier.add_subelement(parcel,'height',str(package.height))
-            carrier.add_subelement(parcel,'width',str(package.width))
-            carrier.add_subelement(parcel,'length',str(package.length))
+            carrier.add_subelement(parcel,'height',str(package_uom._compute_quantity(package.height,cm_uom)))
+            carrier.add_subelement(parcel,'width',str(package_uom._compute_quantity(package.width,cm_uom)))
+            carrier.add_subelement(parcel,'length',str(package_uom._compute_quantity(package.length,cm_uom)))
         
         carrier.add_address(shipment,'address_to',self.reciever_id)
         carrier.add_address(shipment, 'address_from', self.sender_id)
@@ -203,10 +212,21 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(order,'shipping_product_id',self.carrier_id.fraktjakt_id)
         carrier.add_subelement(order,'reference', self.wizard_id.picking_id.name.replace('/', ' '))
 
+
+        cm_uom = self.env["uom.uom"].search([('name','=',"cm")])
+
+        default_uom = self.env['product.template']._get_length_uom_id_from_ir_config_parameter()
         # Commodoties
         if self.wizard_id.pack_ids:
             commodities = carrier.init_subelement(order, 'commodities')
             for move in self.wizard_id.pack_ids:
+                package_uom = move.pack_id.packaging_id.product_uom_id
+            if not package_uom:
+                _logger.warning(f"{cm_uom=} {package_uom=} {default_uom=}")
+                package_uom = default_uom
+
+
+
                 commodity = carrier.init_subelement(commodities, 'commodity')
                 carrier.add_subelement(commodity, 'name', self.wizard_id.picking_id.name)
                 carrier.add_subelement(commodity,'quantity', 1)
@@ -216,9 +236,9 @@ class fj_query_line(models.TransientModel):
                 carrier.add_subelement(commodity, 'shipped', '1')
                 carrier.add_subelement(commodity,'unit_price', str(sum(move.pack_id.quant_ids.product_id.mapped('lst_price'))))
                 carrier.add_subelement(commodity,'weight', str(move.weight))
-                carrier.add_subelement(commodity,'length', str(move.length))
-                carrier.add_subelement(commodity,'width', str(move.width))
-                carrier.add_subelement(commodity,'height', str(move.height))
+                carrier.add_subelement(commodity,'length', str(package_uom._compute_quantity(move.length,cm_uom)))
+                carrier.add_subelement(commodity,'width', str(package_uom._compute_quantity(move.width,cm_uom)))
+                carrier.add_subelement(commodity,'height', str(package_uom._compute_quantity(move.height,cm_uom)))
     
         # Parcels
         else:
