@@ -1,4 +1,4 @@
-odoo-delivery / delivery_tax -- icons
+odoo-delivery / delivery_tax
 2022-08-24
 
 
