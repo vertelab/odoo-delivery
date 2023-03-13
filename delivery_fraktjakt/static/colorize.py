@@ -128,7 +128,7 @@ for child in tree.iter('shipment'):
 #Print function for Alternatives
 def alternatives():
   	for r in results[1:]:
-			print('\n'.join(r) + " SEK" + "\n\r")
+		print('\n'.join(r) + " SEK" + "\n\r")
 
 def warnings():
 	for w in warning_error:

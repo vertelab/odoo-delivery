@@ -21,17 +21,18 @@
 #
 ##############################################################################
 
+from io import BytesIO
 from odoo import models, fields, api, _
 from odoo.exceptions import Warning
+from odoo.service import common
 
 import requests
 from lxml import etree
-import urllib
 
 import logging
 _logger = logging.getLogger(__name__)
 
-FRAKTJAKT_API_VERSION = '2.91'
+FRAKTJAKT_API_VERSION = '4.4'
 
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
@@ -39,6 +40,7 @@ class delivery_carrier(models.Model):
     is_fraktjakt = fields.Boolean('Is Fraktjakt')
     fraktjakt_id = fields.Char(string='Fraktjakt ID')
     fraktjakt_desc = fields.Char(string='Fraktjakt Description')
+    partner_id = fields.Many2one(comodel_name='res.partner')
         
     def fraktjakt_send(self, method, payload=None):
         
@@ -64,25 +66,30 @@ class delivery_carrier(models.Model):
         return (response,'0',warning or 'OK')
 
     def init_element(self,tag):
-        return etree.Element(tag)
+        tree = etree.Element(tag)
+        et = etree.ElementTree(tree)
+        f = BytesIO()
+        et.write(f, encoding='utf-8', xml_declaration=True) 
+        return tree
 
     def init_subelement(self,element,tag):
         return etree.SubElement(element,tag)
 
     def add_subelement(self,element,tag,value):
         sub = etree.SubElement(element,tag)
-        sub.text = value
+        sub.text = str(value)
     
     def add_consignor(self,shipment):
         consignor = etree.SubElement(shipment,'consignor')
         self.add_subelement(consignor,'id',self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pid'))
         self.add_subelement(consignor,'key',self.env['ir.config_parameter'].get_param('fraktjakt.tkey' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pkey'))
+        self.add_subelement(consignor, 'currency', 'SEK')
         self.add_subelement(consignor,'language','sv')
-        self.add_subelement(consignor,'encoding','UTF-8')
+        self.add_subelement(consignor,'encoding','utf-8')
         self.add_subelement(consignor,'system_name','Odoo')
-        self.add_subelement(consignor,'system_version',openerp.service.common.exp_version()['server_serie'])
-        self.add_subelement(consignor,'module_version',self.env['ir.model.data'].xmlid_to_object('base.module_delivery_fraktjakt').installed_version)
-        self.add_subelement(consignor,'api_version',FRAKTJAKT_API_VERSION)
+        self.add_subelement(consignor, 'system_version', common.exp_version()['server_serie'])
+        self.add_subelement(consignor,'module_version', self.env['ir.model.data'].xmlid_to_object('base.module_delivery_fraktjakt').installed_version)
+        self.add_subelement(consignor,'api_version', FRAKTJAKT_API_VERSION)
         
     def add_address(self,element,tag,partner):
         adress = self.init_subelement(element,tag)
@@ -90,15 +97,13 @@ class delivery_carrier(models.Model):
         self.add_subelement(adress,'street_address_2',partner.street2 or '')
         self.add_subelement(adress,'postal_code',partner.zip or '') 
         self.add_subelement(adress,'city_name',partner.city or '')
-        self.add_subelement(adress,'residential','0')
+        self.add_subelement(adress,'residential','1')
         self.add_subelement(adress,'country_code',partner.country_id.code or 'SE')
         
     def get_url(self,method):
         id = self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pid')
         key = self.env['ir.config_parameter'].get_param('fraktjakt.tkey' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.pkey')
         url = self.env['ir.config_parameter'].get_param('fraktjakt.turl' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.purl')
-        return '%s/%s?consigner_id=%s&consigner_key=%s' % (url,method,id,key)
+        return '%s/%s?consignor_id=%s&consignor_key=%s' % (url,method,id,key)
 
-
-          
 # ~ # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

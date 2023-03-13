@@ -28,11 +28,12 @@
 'author': 'Vertel AB',
     #'license': 'AGPL-3',
 'website': 'http://www.vertel.se',
-'depends': ['delivery'],
+'depends': ['delivery','delivery_unifaun_base','base'],
 'data': [
     'views/delivery_view.xml',
     'views/res_config_view.xml',
     'data/delivery_data.xml',
+    'security/ir.model.access.csv'
     # ~ 'res_config_view.xml',
     ],
     'application': True,

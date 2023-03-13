@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fj_query,fj_query,model_fj_query,base.group_user,1,1,0,0
+
+access_fj_query_line,access_fj_query_line,model_fj_query_line,base.group_user,1,1,1,1
+
+access_fj_query_commodity,access_fj_query_commodity,model_fj_query_commodity,base.group_user,1,1,1,1
+
+access_fj_query_package,access_fj_query_package,model_fj_query_package,base.group_user,1,1,1,1

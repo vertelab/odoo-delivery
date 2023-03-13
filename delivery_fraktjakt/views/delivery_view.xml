@@ -1,4 +1,5 @@
-<openerp>
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
   <data>
     <!-- Delivery Carriers -->
     <record id="view_delivery_carrier_form" model="ir.ui.view">
@@ -19,9 +20,12 @@
       <field name="arch" type="xml">
         <div name="tracking" position="inside">
           <button name="fraktjakt_query" string="Fraktjakt Shipment Query" type='object' attrs="{'invisible': [('is_fraktjakt', '==', False)]}" />
-          <!--
-               <button name="confirm_stored_shipment" string="Confirm Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
-          -->
+          
+               <button name="fj_confirm_shipment" string="Confirm Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
+               <button name="fj_cancel_shipment" string="Cancel Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
+               <field name="cancel_url" />
+               <field name="confirm_url" />
+            
           <field name="fraktjakt_shipmentid" />
           <field name="fraktjakt_orderid" />
           <field name="is_fraktjakt" invisible="1" />
@@ -32,11 +36,11 @@
         </div>
       </field>
     </record>
-<!--
+
     <record id="fj_query_form_view" model="ir.ui.view">
       <field name="name">Shipment Query</field>
       <field name="model">fj_query</field>
-      <field name="view_type">form</field>
+      <field name="type">form</field>
       <field name="arch" type="xml">
         <form string="Shipment Import">
           <group>
@@ -61,11 +65,11 @@
               <field name="line_ids" readonly="1">
                 <tree string="Shipment products">
                   <field name="image" widget="image" class="oe_left oe_avatar" string='' nolabel="1" />
-                  <field name="partner_id" />
+                  <field name="partner_id" string="Transport company" />
                   <field name="carrier_id" string="Transport product" />
                   <field name="arrival_time" />
                   <field name="price" />
-                  <button name="choose_product" string="Choose" type="object" icon="terp-product" />
+                  <button name="choose_product" string="Choose" type="object" icon="fa-archive" />
                 </tree>
               </field>
             </page>
@@ -95,8 +99,9 @@
               </group>
               <separator string="Driving instructions" />
               <field name="driving_instructions" nolabel="1" />
-              <separator string="Notes" />
-              <field name="user_notes" nolabel="1" />
+              <!-- USER NOTES NOT SUPPORTED ANYMORE -->
+              <!-- <separator string="Notes" /> -->
+              <!-- <field name="user_notes" nolabel="1" /> -->
             </page>
           </notebook>
           <field name="message" nolabel="1" readonly='1' />
@@ -112,12 +117,10 @@
       <field name="name">Fraktjakt Shipment Query</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">fj_query</field>
-      <field name="view_type">form</field>
       <field name="view_mode">form</field>
       <field name="view_id" ref="fj_query_form_view" />
       <field name="target">new</field>
-      <field name="multi">True</field>
     </record>
--->
+
   </data>
-</openerp>
+</odoo>

@@ -25,6 +25,8 @@ from odoo import models, fields, api, _
 from odoo.exceptions import Warning
 
 import logging
+
+import requests
 _logger = logging.getLogger(__name__)
 
 
@@ -35,16 +37,20 @@ class stock_picking(models.Model):
     fraktjakt_shipmentid = fields.Char(string='Fraktjakt Shipment ID', copy=False)
     fraktjakt_orderid = fields.Char(string='Fraktjakt Order ID', copy=False)
     
-    fraktjakt_arrival_time = fields.Char(string='Arrival Time')
-    fraktjakt_price = fields.Float(string='Price')
+    fraktjakt_arrival_time = fields.Char(string = 'Arrival Time')
+    fraktjakt_price = fields.Float(string ='Price')
     #~ fraktjakt_tax = fields.Many2one(comodel_name='account.tax')
-    fraktjakt_agent_info = fields.Char(string='Agent info')
-    fraktjakt_agent_link = fields.Char(string='Agent Link')
+    fraktjakt_agent_info = fields.Char(string = 'Agent info')
+    fraktjakt_agent_link = fields.Char(string = 'Agent Link')
+
+    confirm_url = fields.Char()
+    cancel_url = fields.Char()
+
             
     def fraktjakt_query(self):
         """Create a stored shipment."""
        
-        if not self.env['ir.config_parameter'].get_param('fraktjakt.environment',None):
+        if not self.env['ir.config_parameter'].get_param('fraktjakt.environment', None):
             raise Warning(_('Fraktjakt are not configureds'))        
         if self.carrier_tracking_ref:
             raise Warning(_('Transport already ordered (there is a Tracking ref)'))
@@ -81,9 +87,9 @@ class stock_picking(models.Model):
                 'move_id': move.id,
                 'wizard_id': query.id,
                 'name': move.product_id.display_name,
-                'quantity': move.product_uos_qty,
+                'quantity': move.product_qty,
                 'description': move.product_id.description_sale,
-                'price': move.price_unit * move.product_uos_qty,
+                'price': move.price_unit * move.product_qty,
                 })
 
 
@@ -98,6 +104,49 @@ class stock_picking(models.Model):
             'view_mode': 'form',
             'target': 'new',
         }
+    
+    def fj_confirm_shipment(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'target': 'new',
+            'url': self.confirm_url,
+        }
+    
+    # def fj_cancel_shipment(self):
+    #     return {
+    #         'type': 'ir.actions.act_url',
+    #         'target': 'new',
+    #         'url': self.cancel_url,
+    #     }
+
+    def fj_cancel_shipment(self):
+        response = requests.get(self.cancel_url, params={'param1': 'value1', 'param2': 'value2'})
+        if response.text == 'ok0':
+            # Show an alert in Odoo
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'dialog',
+                'params': {
+                    'title': 'Success',
+                    'text': 'The shipment has been canceled.',
+                    'buttons': [{'text': 'Ok', 'close': True}],
+                    'size': 'medium'
+                },
+            }
+        else:
+            # Handle the error
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'dialog',
+                'params': {
+                    'title': 'Error',
+                    'text': 'Failed to cancel the shipment.',
+                    'buttons': [{'text': 'Ok', 'close': True}],
+                    'size': 'medium'
+                },
+            }
+
+        
         
 class stock_quant_package(models.Model):
     _inherit = 'stock.quant.package'
