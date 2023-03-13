@@ -41,7 +41,7 @@
     'repository': 'https://github.com/vertelab/odoo-delivery',
     # Any module necessary for this one to work correctly
 
-    'depends': ['delivery'],
+    'depends': ['delivery', 'delivery_unifaun_base','base'],
     'data': [
         'views/delivery_view.xml',
         'views/res_config_view.xml',
