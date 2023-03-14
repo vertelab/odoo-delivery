@@ -69,7 +69,7 @@ class fj_query(models.TransientModel):
         
         carrier = self.picking_id.carrier_id
         shipment = carrier.init_element('shipment')
-        carrier.add_subelement(shipment,'value',str(sum(self.move_lines.mapped('price'))))
+        carrier.add_subelement(shipment,'value',str(sum(self.pack_ids.pack_id.quant_ids.product_id.mapped('lst_price'))))
         carrier.add_subelement(shipment,'shipper_info','1')
         carrier.add_consignor(shipment)
         cm_uom = self.env["uom.uom"].search([('name','=',"cm")])
@@ -89,8 +89,13 @@ class fj_query(models.TransientModel):
             carrier.add_subelement(parcel,'width',str(package_uom._compute_quantity(package.width,cm_uom)))
             carrier.add_subelement(parcel,'length',str(package_uom._compute_quantity(package.length,cm_uom)))
         
-        carrier.add_address(shipment,'address_to',self.reciever_id)
-        carrier.add_address(shipment, 'address_from', self.sender_id)
+        if self.reciever_id.company_type == 'company':
+            carrier.add_subelement(shipment, 'company_to', self.reciever_id.name)
+            carrier.add_address(shipment,'address_to',self.reciever_id, 0)
+        else:
+            carrier.add_address(shipment,'address_to',self.reciever_id)
+
+        carrier.add_address(shipment, 'address_from', self.sender_id, 0)
         if self.cold:
             carrier.add_subelement(shipment,'cold','1')
         if self.freeze:
@@ -138,8 +143,6 @@ class fj_query(models.TransientModel):
                         })
                         partner_id = partner.id
                     partner = self.env['res.partner'].search([('fraktjakt_id','=',shipper.find('id').text)])
-
-                        
                     carrier = self.env['delivery.carrier'].create({
                         'fraktjakt_id': shipping_product.find('id').text,
                         'fraktjakt_desc': shipping_product.find('description').text,
@@ -225,8 +228,6 @@ class fj_query_line(models.TransientModel):
                 _logger.warning(f"{cm_uom=} {package_uom=} {default_uom=}")
                 package_uom = default_uom
 
-
-
                 commodity = carrier.init_subelement(commodities, 'commodity')
                 carrier.add_subelement(commodity, 'name', self.wizard_id.picking_id.name)
                 carrier.add_subelement(commodity,'quantity', 1)
@@ -256,6 +257,9 @@ class fj_query_line(models.TransientModel):
         
         # Recipient
         recipient = carrier.init_subelement(order,'recipient')
+
+        if self.wizard_id.picking_id.partner_id.company_type == 'company':
+            carrier.add_subelement(recipient, 'company_to', self.wizard_id.picking_id.partner_id.name)
         #carrier.add_subelement(recipient,'company_to',self.wizard_id.picking_id.partner_id.)
         carrier.add_subelement(recipient,'name_to', self.wizard_id.picking_id.partner_id.name or '')
         carrier.add_subelement(recipient,'telephone_to', self.wizard_id.picking_id.partner_id.phone or '')
@@ -267,9 +271,12 @@ class fj_query_line(models.TransientModel):
         carrier.add_subelement(booking,'pickup_date', str(self.wizard_id.pickup_date) or '')
         carrier.add_subelement(booking,'driving_instructions', str(self.wizard_id.driving_instructions) or '')
         # NOT SUPPORTED ANYMORE # carrier.add_subelement(booking,'user_notes', str(self.wizard_id.user_notes) or '')
-        # Address 
-        carrier.add_address(order,'address_to', self.wizard_id.reciever_id)
-        carrier.add_address(order, 'address_from', self.wizard_id.sender_id)
+        # Address
+        if self.wizard_id.picking_id.partner_id.company_type == 'company':
+            carrier.add_address(order,'address_to', self.wizard_id.reciever_id, 0)
+        else:
+            carrier.add_address(order,'address_to', self.wizard_id.reciever_id)
+        carrier.add_address(order, 'address_from', self.wizard_id.sender_id, 0)
         _logger.warning(etree.tostring(order, pretty_print=True, encoding='UTF-8'))
 
         ### HÄR ÄR FELET, VI GÖR EN QUERY IGEN NÄR VI KLICKAR PÅ CHOOSE PRODUCT, INTE EN POST TILL ORDER_API

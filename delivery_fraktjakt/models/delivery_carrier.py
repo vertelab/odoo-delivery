@@ -91,13 +91,14 @@ class delivery_carrier(models.Model):
         self.add_subelement(consignor,'module_version', self.env['ir.model.data'].xmlid_to_object('base.module_delivery_fraktjakt').installed_version)
         self.add_subelement(consignor,'api_version', FRAKTJAKT_API_VERSION)
         
-    def add_address(self,element,tag,partner):
+    def add_address(self,element,tag,partner,residential = 1):
         adress = self.init_subelement(element,tag)
+
         self.add_subelement(adress,'street_address_1',partner.street or '')
         self.add_subelement(adress,'street_address_2',partner.street2 or '')
         self.add_subelement(adress,'postal_code',partner.zip or '') 
         self.add_subelement(adress,'city_name',partner.city or '')
-        self.add_subelement(adress,'residential','1')
+        self.add_subelement(adress,'residential', residential)
         self.add_subelement(adress,'country_code',partner.country_id.code or 'SE')
         
     def get_url(self,method):
