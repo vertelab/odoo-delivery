@@ -29,5 +29,3 @@ class res_partner(models.Model):
     _inherit = "res.partner"
     
     fraktjakt_id = fields.Char(string='Fraktjakt ID')
-
-        

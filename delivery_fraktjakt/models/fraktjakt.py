@@ -209,19 +209,19 @@ class fj_query_line(models.TransientModel):
         order = carrier.init_element('OrderSpecification')
         carrier.add_consignor(order)
         # Callback URL - specify the server to get an automatic response from the Fraktjakt Webhook to keep track of the order when it changes.
-        #carrier.add_subelement(order, 'callback_url', "https://eo1do4xioxxz5w8.m.pipedream.net")
         callback_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') + '/webhook'
         carrier.add_subelement(order, 'callback_url', callback_url)
         carrier.add_subelement(order,'shipping_product_id',self.carrier_id.fraktjakt_id)
         carrier.add_subelement(order,'reference', self.wizard_id.picking_id.name.replace('/', ' '))
 
-
         cm_uom = self.env["uom.uom"].search([('name','=',"cm")])
 
         default_uom = self.env['product.template']._get_length_uom_id_from_ir_config_parameter()
+
         # Commodoties
         if self.wizard_id.pack_ids:
             commodities = carrier.init_subelement(order, 'commodities')
+
             for move in self.wizard_id.pack_ids:
                 package_uom = move.pack_id.packaging_id.product_uom_id
             if not package_uom:
@@ -278,14 +278,9 @@ class fj_query_line(models.TransientModel):
             carrier.add_address(order,'address_to', self.wizard_id.reciever_id)
         carrier.add_address(order, 'address_from', self.wizard_id.sender_id, 0)
         _logger.warning(etree.tostring(order, pretty_print=True, encoding='UTF-8'))
-
-        ### HÄR ÄR FELET, VI GÖR EN QUERY IGEN NÄR VI KLICKAR PÅ CHOOSE PRODUCT, INTE EN POST TILL ORDER_API
-        # response, code, self.message = carrier.fraktjakt_send('orders/order_xml', urllib.parse.quote_plus(etree.tostring(order, encoding='UTF-8')))
-
-        # Needs to make a post request to the Order_API to actually create one delivery order. New code provided below.
-
         
-        url = "https://api.fraktjakt.se/orders/order_xml"
+        # Choose the carrier and create the shipment
+        url = self.env['ir.config_parameter'].sudo().get_param('fraktjakt_order_xml_url')
         xml = etree.tostring(order, encoding='UTF-8')
         data = {'xml': xml}
         response = requests.post(url, data=data)
