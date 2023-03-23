@@ -45,12 +45,12 @@ class delivery_carrier(models.Model):
     def fraktjakt_send(self, method, payload=None):
         
         url = self.env['ir.config_parameter'].get_param('fraktjakt.turl' if self.env['ir.config_parameter'].get_param('fraktjakt.environment') == 'test' else 'fraktjakt.purl')
-        _logger.error('get %s %s %s' % (url,method,payload))
+        # _logger.error('get %s %s %s' % (url,method,payload))
         response = requests.get(url + '/' + method,params='xml=%s' % payload)
-        _logger.error('get response %s %s %s' % (response.status_code,response.ok,response.content))
+        # _logger.error('get response %s %s %s' % (response.status_code,response.ok,response.content))
 
         if response.status_code < 200 or response.status_code >= 300:
-            _logger.error("ERROR " + str(response.status_code) + ": " + response.text)
+            # _logger.error("ERROR " + str(response.status_code) + ": " + response.text)
             return (response,response.status_code,response.text)
            
         record = etree.XML(response.content)
