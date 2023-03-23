@@ -23,6 +23,9 @@
 
 from odoo import models, fields, api, _
 from odoo.exceptions import Warning
+from lxml import etree
+from odoo.exceptions import UserError
+from odoo.http import request
 
 import logging
 
@@ -105,6 +108,7 @@ class stock_picking(models.Model):
             'target': 'new',
         }
     
+    # Redirect the user to Fraktjakt to confirm the shipment.
     def fj_confirm_shipment(self):
         return {
             'type': 'ir.actions.act_url',
@@ -118,34 +122,41 @@ class stock_picking(models.Model):
     #         'target': 'new',
     #         'url': self.cancel_url,
     #     }
-
+    
     def fj_cancel_shipment(self):
         response = requests.get(self.cancel_url, params={'param1': 'value1', 'param2': 'value2'})
-        if response.text == 'ok0':
-            # Show an alert in Odoo
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'dialog',
-                'params': {
-                    'title': 'Success',
-                    'text': 'The shipment has been canceled.',
-                    'buttons': [{'text': 'Ok', 'close': True}],
-                    'size': 'medium'
-                },
-            }
-        else:
-            # Handle the error
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'dialog',
-                'params': {
-                    'title': 'Error',
-                    'text': 'Failed to cancel the shipment.',
-                    'buttons': [{'text': 'Ok', 'close': True}],
-                    'size': 'medium'
-                },
-            }
+        record = etree.XML(response.content)
+        code = record.find('code').text
 
+        if len(record) and record.tag == 'result':
+            if code == '0':
+                # raise UserError('The shipment has been canceled.')
+                self.write({'state': 'cancel'})
+                message = {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Cancel Shipment'),
+                        'message': 'The shipment has been cancelled.',
+                        'sticky': False,
+                        'type': 'success',
+                    }
+                }
+                return message
+            else:
+                # Handle the error
+                #raise UserError('The shipment has already been canceled.')
+                message = {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': _('Cancel Shipment'),
+                        'message': 'The shipment has already been cancelled.',
+                        'sticky': False,
+                        'type': 'danger',
+                    }
+                }
+                return message
         
         
 class stock_quant_package(models.Model):

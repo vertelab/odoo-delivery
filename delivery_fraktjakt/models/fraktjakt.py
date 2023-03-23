@@ -32,7 +32,6 @@ import logging
 _logger = logging.getLogger(__name__)
 
 FRAKTJAKT_API_VERSION = '4.4'
-# Former API_VERSION: 2.91
     
 class fj_query(models.TransientModel):
     _name = 'fj_query'
@@ -81,7 +80,6 @@ class fj_query(models.TransientModel):
         for package in self.pack_ids:
             package_uom = package.pack_id.packaging_id.product_uom_id
             if not package_uom:
-                # _logger.warning(f"{cm_uom=} {package_uom=} {default_uom=}")
                 package_uom = default_uom
             parcel = carrier.init_subelement(parcels,'parcel')
             carrier.add_subelement(parcel,'weight',str(package.weight))
@@ -112,7 +110,6 @@ class fj_query(models.TransientModel):
             carrier.add_subelement(shipment,'quality','1')
         if self.time_guarantee:
             carrier.add_subelement(shipment,'time_guarantee','1')
-        # _logger.warning(etree.tostring(shipment, pretty_print=True, encoding='UTF-8'))
         response,code,self.message = carrier.fraktjakt_send('fraktjakt/query_xml', urllib.parse.quote_plus(etree.tostring(shipment, encoding='UTF-8')))
         if code in ['0','1']:
             fj = etree.XML(response.content)
@@ -124,7 +121,6 @@ class fj_query(models.TransientModel):
                     res_model, product_id = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt','fraktjakt_product')
                     partner_id = False
                     shipper = shipping_product.find('shipper')
-                    # _logger.warning(shipper.find('id').text)
                     partner = self.env['res.partner'].search([('fraktjakt_id','=',shipper.find('id').text)])
                     if partner:
                         partner_id = partner.id
@@ -164,7 +160,6 @@ class fj_query(models.TransientModel):
                     'agent_link': shipping_product.find('agent_link').text,
                     'shipper': carrier.partner_id.id,
                 })
-                # _logger.error('NOTE: ' + str(carrier.name))
         return {
             'name': 'Fraktjakt Shipment Query',
             'type': 'ir.actions.act_window',
@@ -228,7 +223,6 @@ class fj_query_line(models.TransientModel):
             for move in self.wizard_id.pack_ids:
                 package_uom = move.pack_id.packaging_id.product_uom_id
             if not package_uom:
-                # _logger.warning(f"{cm_uom=} {package_uom=} {default_uom=}")
                 package_uom = default_uom
 
                 commodity = carrier.init_subelement(commodities, 'commodity')
@@ -265,26 +259,23 @@ class fj_query_line(models.TransientModel):
         if self.wizard_id.picking_id.partner_id.company_type == 'company':
             carrier.add_subelement(recipient, 'company_to', self.wizard_id.picking_id.partner_id.name)
 
-        #carrier.add_subelement(recipient,'company_to',self.wizard_id.picking_id.partner_id.)
         carrier.add_subelement(recipient,'name_to', self.wizard_id.picking_id.partner_id.name or '')
         carrier.add_subelement(recipient,'telephone_to', self.wizard_id.picking_id.partner_id.phone or '')
         carrier.add_subelement(recipient,'mobile_to', self.wizard_id.picking_id.partner_id.mobile or '')
         carrier.add_subelement(recipient,'email_to', self.wizard_id.picking_id.partner_id.email or '')
-        # _logger.error(self.wizard_id.picking_id.partner_id.name)
         carrier.add_subelement(recipient, 'tax_id', str(self.wizard_id.picking_id.partner_id.vat))
-        # _logger.error(str(self.wizard_id.picking_id.partner_id.vat))
+
         # Booking
         booking = carrier.init_subelement(order, 'booking')
         carrier.add_subelement(booking,'pickup_date', str(self.wizard_id.pickup_date) or '')
         carrier.add_subelement(booking,'driving_instructions', str(self.wizard_id.driving_instructions) or '')
-        # NOT SUPPORTED ANYMORE # carrier.add_subelement(booking,'user_notes', str(self.wizard_id.user_notes) or '')
+        
         # Address
         if self.wizard_id.picking_id.partner_id.company_type == 'company':
             carrier.add_address(order,'address_to', self.wizard_id.reciever_id, 0)
         else:
             carrier.add_address(order,'address_to', self.wizard_id.reciever_id)
         carrier.add_address(order, 'address_from', self.wizard_id.sender_id, 0)
-        # _logger.warning(etree.tostring(order, pretty_print=True, encoding='UTF-8'))
         
         # Choose the carrier and create the shipment
         url = self.env['ir.config_parameter'].sudo().get_param('fraktjakt_order_xml_url')
@@ -294,13 +285,9 @@ class fj_query_line(models.TransientModel):
         code = response.status_code
         
         record = etree.XML(response.content)
-        # _logger.warning(etree.tostring(record, pretty_print=True, encoding='UTF-8'))
         self.wizard_id.message = response.content
-
-        # _logger.error(len(record))
         
         if len(record) and record.tag == 'result':
-            #_logger.error('IS RESULT!!!!!!!!!!!!!!!!!')
             code = record.find('code').text
             warning = record.find('warning_message').text
             error = record.find('error_message').text
@@ -315,7 +302,6 @@ class fj_query_line(models.TransientModel):
             picking.confirm_url = record.find('access_link').text
             picking.cancel_url = record.find('cancel_link').text
                         
-            # _logger.warning('Order response %s %s %s' % (code,warning,error))
             if code in ['2']:
                 return {
                 'name': 'Fraktjakt Shipment Query',
@@ -332,13 +318,13 @@ class fj_query_line(models.TransientModel):
                payment_link = "<href='%s'>Payment</a>" % (record.find('payment_link').text) if record.find('payment_link') else '' 
                order_confirmation_link = "<href='%s'>Order confirmation</a>" % (record.find('sender_email_link').text) if record.find('sender_email_link') else ''
 
-               self.env['mail.message'].create({
-                    'body': _("Fraktjakt %s %s %s %s\nCode %s\n%s\n" % (shipping_id,order_id,payment_link,order_confirmation_link,code,warning or error or '')),
-                    'subject': "Fraktjakt",
-                    'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
-                    'res_id': picking.id,
-                    'model': picking._name,
-                    'message_type': 'notification',})
+            #    self.env['mail.message'].create({
+            #         'body': _("Fraktjakt %s %s %s %s\nCode %s\n%s\n" % (shipping_id,order_id,payment_link,order_confirmation_link,code,warning or error or '')),
+            #         'subject': "Fraktjakt",
+            #         'author_id': self.env['res.users'].browse(self.env.uid).partner_id.id,
+            #         'res_id': picking.id,
+            #         'model': picking._name,
+            #         'message_type': 'notification',})
         else:        
             form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
