@@ -26,6 +26,7 @@ from odoo.http import request
 import logging
 _logger = logging.getLogger(__name__)
 
+
 class delivery_carrier(models.Model):
     _inherit = "delivery.carrier"
 
@@ -45,9 +46,9 @@ class delivery_carrier(models.Model):
 class website_carrier_data(http.Controller):
 
     @http.route(['/shop/delivery/carrier_data'], type='json', auth="public", website=True)
-    def lookup_carrier(self, carrier_id, carrier_data,**post):
+    def lookup_carrier(self, carrier_id, carrier_data, **post):
         order = request.website.sale_get_order()
-        _logger.warn('delivery-data %s %s %s' % (carrier_id, carrier_data, order))
+        _logger.warning('delivery-data %s %s %s' % (carrier_id, carrier_data, order))
         return request.env['delivery.carrier'].lookup_carrier(carrier_id, carrier_data, order)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
