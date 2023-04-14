@@ -22,5 +22,11 @@
                   </t>
             </xpath>
         </template>
+
+        <template id="payment" name="Hide Billing Details" inherit_id="website_sale.payment">
+            <xpath expr="//div[@id='wrap']/div[hasclass('oe_website_sale')]/div[hasclass('row')]/div[hasclass('oe_cart')]/div[hasclass('card')]" position="attributes">
+                  <attribute name="style">display:none !important</attribute>
+            </xpath>
+        </template>
     </data>
 </odoo>
