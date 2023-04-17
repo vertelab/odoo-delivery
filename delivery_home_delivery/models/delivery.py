@@ -25,7 +25,9 @@ class DeliveryCarrier(models.Model):
                     'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') \
                                       % \
                                       '\n'.join(['<option value="%s" selected="%s">%s</option>' % (
-                                          p.id, partner_id.last_website_so_id.partner_shipping_id.id == p.id, p.name) for p in
+                                          p.id,
+                                          partner_id.last_website_so_id.delivery_partner_shipping_id.id == p.id,
+                                          p.name) for p in
                                                  pickup.env['res.partner'].search([('pickup_location', '=', True)])])
             if pickup.home_delivery:
                 user_partner_address = partner_id.child_ids.filtered(
@@ -33,7 +35,7 @@ class DeliveryCarrier(models.Model):
 
                 if not self.env.user.id == self.env.ref('base.public_user').id:
                     user_partner_address += partner_id
-                last_order_address = partner_id.last_website_so_id.partner_shipping_id.id
+                last_order_address = partner_id.last_website_so_id.delivery_partner_shipping_id.id
                 pickup.carrier_data = _(
                     '<div><select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
                     'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>'
@@ -47,10 +49,11 @@ class DeliveryCarrier(models.Model):
         carrier = self.env['delivery.carrier'].sudo().browse(int(carrier_id))
         if carrier and (carrier.pickup_location or carrier.home_delivery):
             if carrier_data == '1':
-                order.partner_shipping_id = False
+                order.delivery_partner_shipping_id = False
             else:
                 location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
                 # assert location.pickup_location or location.home_delivery
                 order.partner_shipping_id = location.id
+                order.delivery_partner_shipping_id = location.id
         else:
             super(DeliveryCarrier, self).lookup_carrier(carrier_id, carrier_data, order)

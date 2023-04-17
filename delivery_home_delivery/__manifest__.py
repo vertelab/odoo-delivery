@@ -27,9 +27,10 @@
     'author': 'Vertel AB',
     'license': 'AGPL-3',
     'website': 'http://www.vertel.se',
-    'depends': ['delivery_carrier_data', 'delivery_pickup'],
+    'depends': ['delivery_carrier_data', 'delivery_pickup', 'website_sale'],
     'data': [
-        'views/delivery_view.xml'
+        'views/delivery_view.xml',
+        'views/sale_order_view.xml',
     ],
     'installable': True,
 }
