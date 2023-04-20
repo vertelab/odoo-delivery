@@ -24,11 +24,9 @@ class DeliveryCarrier(models.Model):
                     '<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
                     'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') \
                                       % \
-                                      '\n'.join(['<option value="%s" selected="%s">%s</option>' % (
-                                          p.id,
-                                          partner_id.last_website_so_id.delivery_partner_shipping_id.id == p.id,
-                                          p.name) for p in
-                                                 pickup.env['res.partner'].search([('pickup_location', '=', True)])])
+                                      '\n'.join(['<option value="%s">%s</option>' % (
+                                          p.id, p.name) for p in pickup.env['res.partner'].search([
+                                          ('pickup_location', '=', True)])])
             if pickup.home_delivery:
                 user_partner_address = partner_id.child_ids.filtered(
                     lambda child_partner: child_partner.type == 'delivery')
@@ -40,8 +38,8 @@ class DeliveryCarrier(models.Model):
                     '<div><select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
                     'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>'
                     '<strong>Note: You need to login to select available home delivery options</strong></div>') \
-                                      % '\n'.join(['<option value="%s" selected="%s">%s</option>' % (
-                    p.id, last_order_address == p.id, p.street) for p in user_partner_address])
+                    % '\n'.join(['<option value="%s">%s</option>' % (p.id, p.street)
+                                 for p in user_partner_address])
             return res
 
     @api.model
