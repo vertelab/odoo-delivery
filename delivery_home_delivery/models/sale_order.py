@@ -18,6 +18,5 @@ class SaleOrder(models.Model):
 
     def _create_payment_transaction(self, vals):
         if any([not so.delivery_partner_shipping_id for so in self]):
-            print("delivery option")
             raise ValidationError(_('You need to select a delivery option.'))
         return super()._create_payment_transaction(vals)
