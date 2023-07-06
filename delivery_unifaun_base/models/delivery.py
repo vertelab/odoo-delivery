@@ -26,7 +26,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 import base64
-from urllib import urlencode
+from urllib.parse import urlencode
 import traceback
 
 import logging
@@ -235,7 +235,6 @@ class DeliveryCarrierUnifaunParam(models.Model):
     default_value = fields.Char(string='Default Value')
     default_compute = fields.Char(string='Default Compute', help="Expression to compute default value for this parameter. variable param = the parameter object. Example: 'param.picking_id.sale_id.name'")
 
-    @api.multi
     def get_default_value(self):
         try:
             if self.type == 'string':
@@ -249,7 +248,6 @@ class DeliveryCarrierUnifaunParam(models.Model):
         except:
             raise Warning(_("Could not convert the default value (%s) to type %s") % (self.default_value, self.type))
 
-    @api.multi
     def get_picking_param_values(self):
         values = []
         for param in self:
@@ -264,6 +262,7 @@ class DeliveryCarrierUnifaunParam(models.Model):
             values.append(vals)
         return values
 
+
 class StockPickingUnifaunParam(models.Model):
     _name = 'stock.picking.unifaun.param'
     _description = 'Unifaun Picking Parameter'
@@ -277,7 +276,7 @@ class StockPickingUnifaunParam(models.Model):
     # ~ value_char = fields.Char(string='Value')
     # ~ value_int = fields.Integer(string='Value')
     # ~ value_float = fields.Float(string='Value')
-    param_id =  fields.Many2one(comodel_name='delivery.carrier.unifaun.param', string='Carrier Parameter', ondelete='set null')
+    param_id = fields.Many2one(comodel_name='delivery.carrier.unifaun.param', string='Carrier Parameter', ondelete='set null')
 
     @api.one
     @api.onchange('value')
