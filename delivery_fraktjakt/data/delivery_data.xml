@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="fraktjakt_order_xml_url" model="ir.config_parameter">
+            <field name="key">fraktjakt_order_xml_url</field>
+            <field name="value">https://api.fraktjakt.se/orders/order_xml</field>
+        </record>
+
+        <record id="fraktjakt_partner" model="res.partner">
+            <field name="name">Fraktjakt</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="is_company" eval="True"/>
+            <field name="email">info@fraktjakt.se</field>
+            <field name="street">Gjuterigatan 9</field>
+            <field name="city">Jönköping</field>
+            <field name="zip">55318</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+
+        <record id="fraktjakt_product" model="product.product">
+            <field name="name">Delivery Product</field>
+            <field name="standard_price">0.0</field>
+            <field name="list_price">0.0</field>
+            <field name="type">service</field>
+        </record>
+
+        <record id="fraktjakt" model="delivery.carrier">
+            <field name="name">Fraktjakt</field>
+            <field name="product_id" ref="fraktjakt_product"/>
+            <field name="active" eval="True"/>
+            <field name="is_fraktjakt" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>

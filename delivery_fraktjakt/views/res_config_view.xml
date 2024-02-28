@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <!-- After installation of the module, open the related menu -->
+    <!--
+         <record id="action_client_warehouse_menu" model="ir.actions.client">
+         <field name="name">Open Warehouse Menu</field>
+         <field name="tag">reload</field>
+         <field name="params" eval="{'menu_id': ref('menu_stock_root')}"/>
+         </record>
+         <record id="base.open_menu" model="ir.actions.todo">
+         <field name="action_id" ref="action_client_warehouse_menu"/>
+         <field name="state">open</field>
+         </record>
+         
+    -->
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+      <field name="name">res.config.settings.view.form.inherit.delivery_fraktjakt</field>
+      <field name="model">res.config.settings</field>
+      <field name="priority" eval="30" />
+      <field name="inherit_id" ref="base.res_config_settings_view_form" />
+      <field name="arch" type="xml">
+        <div name="operations_setting_container" position="after">
+          <h2>Fraktjakt</h2>
+          <div class="row mt16 o_settings_container" name="fraktjakt_setting_container">
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_enivoronment" title="Activate Fraktjakt for production">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_environment" />
+                <a href="https://www.fraktjakt.se/webshops/change?locale=en#Integrations" title="Documentation" class="o_doc_link" target="_blank" />
+                <div class="text-muted">Your fraktjakt mode</div>
+                <field name="fraktjakt_environment" required="1" default="test" />
+              </div>
+            </div>
+            <!-- Consignor Id -->
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_pid" attrs="{'invisible':[('fraktjakt_environment','in',['test',False])]}">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_pid" />
+                <div class="text-muted">Fraktjakt id for production</div>
+                <field name="fraktjakt_pid" attrs="{'invisible':[('fraktjakt_environment','in',['test',''])]}" />
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_tid" attrs="{'invisible':[('fraktjakt_environment','=','production')]}">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_tid" />
+                <div class="text-muted">Fraktjakt id for test</div>
+                <field name="fraktjakt_tid" attrs="{'invisible':[('fraktjakt_environment','=','production')]}" />
+              </div>
+            </div>
+            <!-- Key -->
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_pkey" attrs="{'invisible':[('fraktjakt_environment','in',['test',False])]}">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_pkey" />
+                <div class="text-muted">Fraktjakt key for production</div>
+                <field name="fraktjakt_pkey" attrs="{'invisible':[('fraktjakt_environment','in',['test',''])]}" />
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_tkey" attrs="{'invisible':[('fraktjakt_environment','=','production')]}">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_tkey" />
+                <div class="text-muted">Fraktjakt key for test</div>
+                <field name="fraktjakt_tkey" attrs="{'invisible':[('fraktjakt_environment','=','production')]}" />
+              </div>
+            </div>
+            <!-- URL -->
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_purl" attrs="{'invisible':[('fraktjakt_environment','in',['test',False])]}">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_purl" />
+                <div class="text-muted">Fraktjakt url for production</div>
+                <field name="fraktjakt_purl" attrs="{'invisible':[('fraktjakt_environment','in',['test',''])]}" />
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 o_setting_box" id="fraktjakt_turl" attrs="{'invisible':[('fraktjakt_environment','=','production')]}">
+              <div class="o_setting_left_pane" />
+              <div class="o_setting_right_pane">
+                <label for="fraktjakt_turl" />
+                <div class="text-muted">Fraktjakt url for test</div>
+                <field name="fraktjakt_turl" attrs="{'invisible':[('fraktjakt_environment','=','production')]}" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </field>
+    </record>
+  </data>
+</odoo>
