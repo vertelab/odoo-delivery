@@ -22,10 +22,9 @@
 ##############################################################################
 
 from odoo import models, fields, api, _
-from odoo.exceptions import Warning
 
 
-class res_partner(models.Model):
+class Partner(models.Model):
     _inherit = "res.partner"
     
     fraktjakt_id = fields.Char(string='Fraktjakt ID')

@@ -22,20 +22,35 @@
 from odoo import api, fields, models, SUPERUSER_ID, _
 from odoo.exceptions import UserError
 
-
 import logging
+
 _logger = logging.getLogger(__name__)
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    fraktjakt_tid = fields.Char(string="Consignor id (test)", config_parameter='fraktjakt.tid', help="This is your id you got from the Fraktjakt test system, id/key and address are differenet from the production system.")
-    fraktjakt_tkey = fields.Char(string='Consignor key (test)',  config_parameter='fraktjakt.tkey', help="This is your key you got from the Fraktjakt test system, id/key and address are differenet from the production system.")
-    fraktjakt_turl = fields.Char(string='Url (test)',config_parameter='fraktjakt.turl',help="The test server usually https://api2.fraktjakt.se, id/key and address are different from the production system.")
-    fraktjakt_pid = fields.Char(string="Consignor id",config_parameter='fraktjakt.pid', help="This is your id you got from the Fraktjakt production system, id/key and address are different from the test system.")
-    fraktjakt_pkey = fields.Char(string='Consignor key',config_parameter='fraktjakt.pkey',help="This is your key you got from the Fraktjakt production system, id/key and address are different from the test system.")
-    fraktjakt_purl = fields.Char(string='Url',config_parameter='fraktjakt.purl',help="The production server usually https://api1.fraktjakt.se, id/key and address are different from the test system.")
+    fraktjakt_tid = fields.Char(string="Consignor id (test)", config_parameter='fraktjakt.tid',
+                                help="This is your id you got from the Fraktjakt test system, id/key and address are "
+                                     "different from the production system.")
+    fraktjakt_tkey = fields.Char(string='Consignor key (test)', config_parameter='fraktjakt.tkey',
+                                 help="This is your key you got from the Fraktjakt test system, id/key and address "
+                                      "are different from the production system.")
+    fraktjakt_turl = fields.Char(string='Url (test)', config_parameter='fraktjakt.turl',
+                                 help="The test server usually https://api2.fraktjakt.se, id/key and address are "
+                                      "different from the production system.")
+    fraktjakt_pid = fields.Char(string="Consignor id", config_parameter='fraktjakt.pid',
+                                help="This is your id you got from the Fraktjakt production system, id/key and "
+                                     "address are different from the test system.")
+    fraktjakt_pkey = fields.Char(string='Consignor key', config_parameter='fraktjakt.pkey',
+                                 help="This is your key you got from the Fraktjakt production system, id/key and "
+                                      "address are different from the test system.")
+    fraktjakt_purl = fields.Char(string='Url', config_parameter='fraktjakt.purl',
+                                 help="The production server usually https://api1.fraktjakt.se, id/key and address "
+                                      "are different from the test system.")
 
-    fraktjakt_environment = fields.Selection([('production','Production'),('test','Test')],string='Environment',config_parameter='fraktjakt.environment',default="test",help='Test or Production, these are different system with uniqe id/key and address')
+    fraktjakt_environment = fields.Selection([('production', 'Production'), ('test', 'Test')], string='Environment',
+                                             config_parameter='fraktjakt.environment', default="test",
+                                             help='Test or Production, these are different system with unique id/key '
+                                                  'and address')
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
