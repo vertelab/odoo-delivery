@@ -46,7 +46,19 @@ class StockPicking(models.Model):
     fraktjakt_agent_link = fields.Char(string='Agent Link')
 
     confirm_url = fields.Char()
+    fraktjakt_tracking_url = fields.Char()
     cancel_url = fields.Char()
+
+    def open_website_url(self):
+        if self.fraktjakt_tracking_url:
+            return {
+                'type': 'ir.actions.act_url',
+                'name': "Shipment Tracking Page",
+                'target': 'new',
+                'url': self.fraktjakt_tracking_url,
+            }
+        else:
+            return super().open_website_url()
 
     def fraktjakt_query(self):
         """Create a stored shipment."""
@@ -120,13 +132,13 @@ class StockPicking(models.Model):
         if len(record) and record.tag == 'result':
             if code == '0':
                 # raise UserError('The shipment has been canceled.')
-                self.write({'state': 'cancel'})
+                #self.write({'state': 'cancel'})
                 message = {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
                         'title': _('Cancel Shipment'),
-                        'message': 'The shipment has been cancelled.',
+                        'message': f'The fraktjakt shipment has been cancelled.',
                         'sticky': False,
                         'type': 'success',
                     }

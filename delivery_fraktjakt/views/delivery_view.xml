@@ -24,6 +24,8 @@
                         <field name="is_fraktjakt" invisible="1" />
                         <field name="fraktjakt_shipmentid" readonly="1" string="Shipment ID"/>
                         <field name="fraktjakt_orderid" invisible="1"/>
+                        <field name="confirm_url" readonly="1" groups="base.group_no_one"/>
+                        <field name="cancel_url" readonly="1" groups="base.group_no_one"/>
                         <field name="fraktjakt_arrival_time" invisible="fraktjakt_shipmentid == False" readonly="1"/>
                         <field name="fraktjakt_price" invisible="fraktjakt_shipmentid == False" readonly="1"/>
 <!--                        <field name="fraktjakt_agent_info" invisible="fraktjakt_shipmentid == False" />-->
@@ -33,7 +35,7 @@
                                 <button name="fraktjakt_query" string="Fraktjakt Shipment Query" class="btn btn-primary" type='object' invisible="is_fraktjakt == False or fraktjakt_shipmentid != False " />
                             </div>
                             <div class="col-6">
-                                <button name="fj_confirm_shipment" string="Confirm Transport" class="btn btn-primary" type='object' invisible="fraktjakt_shipmentid == False" />
+                                <button name="fj_confirm_shipment" string="Go to Transport" class="btn btn-primary" type='object' invisible="fraktjakt_shipmentid == False" />
                             </div>
                             <div class="col-6 float-end">
                                 <button name="fj_cancel_shipment" string="Cancel Transport" class="btn btn-danger" type='object' invisible="fraktjakt_shipmentid == False" />

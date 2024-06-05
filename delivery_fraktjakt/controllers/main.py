@@ -15,7 +15,9 @@ class FraktjaktStatus(http.Controller):
     @http.route('/webhook', type="json", auth="none", methods=['POST'])
     def get_order_status(self, **post):
         # Extract the payload from the POST request
-        payload = request.jsonrequest
+        payload = request.get_json_data()
+
+        _logger.warning('Webhook payload: %s', payload)
 
         # Extract the order_id and status from the payload
         shipment_id = payload.get('shipment_id')
@@ -52,8 +54,6 @@ class FraktjaktStatus(http.Controller):
                     attachment_ids.append(attachment.id)
                 except Exception as e:
                     _logger.error('Error while creating attachment: %s', e)
-
-        # LOG THE PAYLOAD
-        _logger.warning('Webhook payload: %s', payload)
         # Return a response to the webhook
-        return 'OK'
+        return request.make_json_response('[accepted]')
+        # return 'OK'

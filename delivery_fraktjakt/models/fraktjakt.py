@@ -319,6 +319,9 @@ class FjQueryLine(models.TransientModel):
             picking.carrier_id = self.carrier_id
             picking.confirm_url = record.find('access_link').text
             picking.cancel_url = record.find('cancel_link').text
+            picking.carrier_tracking_ref = record.find('tracking_code').text
+            # picking.carrier_tracking_url = record.find('tracking_link').text
+            picking.fraktjakt_tracking_url = record.find('tracking_link').text
 
             if code in ['2']:
                 return {
