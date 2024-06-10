@@ -22,8 +22,9 @@
 ##############################################################################
 
 from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 from lxml import etree
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 import logging
@@ -46,7 +47,6 @@ class StockPicking(models.Model):
     fraktjakt_agent_link = fields.Char(string='Agent Link')
 
     confirm_url = fields.Char()
-    fraktjakt_tracking_url = fields.Char()
     cancel_url = fields.Char()
 
     def open_website_url(self):
@@ -64,11 +64,11 @@ class StockPicking(models.Model):
         """Create a stored shipment."""
 
         if not self.env['ir.config_parameter'].get_param('fraktjakt.environment', None):
-            raise UserError(_('Fraktjakt are not configureds'))
+            raise ValidationError(_('Fraktjakt are not configured'))
         if self.carrier_tracking_ref:
-            raise UserError(_('Transport already ordered (there is a Tracking ref)'))
+            raise ValidationError(_('Transport already ordered (there is a Tracking ref)'))
         if self.fraktjakt_shipmentid:
-            raise UserError(_('A stored shipment already exists for this order.'))
+            raise ValidationError(_('A stored shipment already exists for this order.'))
 
         query = self.env['fj_query'].sudo().create({
             'picking_id': self.id,
@@ -87,11 +87,11 @@ class StockPicking(models.Model):
         self.weight = sum(self.package_ids.mapped('weight'))
 
         if len(query.pack_ids) == 0:
-            raise UserError(_('There is no packages to ship.'))
+            raise ValidationError(_('There is no packages to ship.'))
         if self.weight == 0:
-            raise UserError(_('There is no weight to ship.'))
+            raise ValidationError(_('There is no weight to ship.'))
         if sum(query.pack_ids.mapped('volume')) == 0:
-            raise UserError(_('There is no dimensions on packages.'))
+            raise ValidationError(_('There is no dimensions on packages.'))
 
         for move in self.move_line_ids:
             self.env['fj_query.commodity'].sudo().create({
@@ -103,8 +103,7 @@ class StockPicking(models.Model):
                 'price': move.move_id.price_unit * move.move_id.product_qty,
             })
 
-        # form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
-        form_tuple = self.env['ir.model.data']._xmlid_lookup('delivery_fraktjakt.fj_query_form_view')[1]
+        form_tuple = self.env['ir.model.data']._xmlid_lookup('delivery_fraktjakt.fj_query_form_view')[2]
 
         return {
             'name': 'Fraktjakt Shipment Query',
@@ -124,6 +123,13 @@ class StockPicking(models.Model):
             'url': self.confirm_url,
         }
 
+    # def fj_cancel_shipment(self):
+    #     return {
+    #         'type': 'ir.actions.act_url',
+    #         'target': 'new',
+    #         'url': self.cancel_url,
+    #     }
+
     def fj_cancel_shipment(self):
         response = requests.get(self.cancel_url, params={'param1': 'value1', 'param2': 'value2'})
         record = etree.XML(response.content)
@@ -132,13 +138,13 @@ class StockPicking(models.Model):
         if len(record) and record.tag == 'result':
             if code == '0':
                 # raise UserError('The shipment has been canceled.')
-                #self.write({'state': 'cancel'})
+                self.write({'state': 'cancel'})
                 message = {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
                         'title': _('Cancel Shipment'),
-                        'message': f'The fraktjakt shipment has been cancelled.',
+                        'message': 'The shipment has been cancelled.',
                         'sticky': False,
                         'type': 'success',
                     }
@@ -161,5 +167,3 @@ class StockPicking(models.Model):
 
 class StockQuantPackage(models.Model):
     _inherit = 'stock.quant.package'
-
-

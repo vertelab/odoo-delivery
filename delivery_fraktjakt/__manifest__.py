@@ -21,7 +21,7 @@
 
 {
     'name': 'Delivery: Fraktjakt',
-    'version': '17.0.0.0.0',
+    'version': '16.0.0.0.0',
     # Version ledger: 14.0 = Odoo version. 1 = Major. Non regressionable code. 2 = Minor. New features that are regressionable. 3 = Bug fixes
     'summary': 'Integrate Delivery with Fraktjakt',
     # Categories can be used to filter modules in modules listing
@@ -41,7 +41,7 @@
     'repository': 'https://github.com/vertelab/odoo-delivery',
     # Any module necessary for this one to work correctly
 
-    'depends': ['delivery','base', 'stock', 'stock_delivery'],
+    'depends': ['delivery', 'base'],
     'data': [
         'views/delivery_view.xml',
         'views/res_config_view.xml',

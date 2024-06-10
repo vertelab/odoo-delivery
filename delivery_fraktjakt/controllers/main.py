@@ -1,10 +1,13 @@
 # # -*- coding: utf-8 -*-
 # # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+
 import base64
 import requests
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import Warning
+
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -17,7 +20,7 @@ class FraktjaktStatus(http.Controller):
         # Extract the payload from the POST request
         payload = request.get_json_data()
 
-        _logger.warning('Webhook payload: %s', payload)
+        _logger.info('Webhook payload: %s', payload)
 
         # Extract the order_id and status from the payload
         shipment_id = payload.get('shipment_id')
@@ -54,6 +57,5 @@ class FraktjaktStatus(http.Controller):
                     attachment_ids.append(attachment.id)
                 except Exception as e:
                     _logger.error('Error while creating attachment: %s', e)
-        # Return a response to the webhook
+
         return request.make_json_response('[accepted]')
-        # return 'OK'

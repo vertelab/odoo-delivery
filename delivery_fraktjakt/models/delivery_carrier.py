@@ -23,6 +23,7 @@
 
 from io import BytesIO
 from odoo import models, fields, api, _
+from odoo.exceptions import Warning
 from odoo.service import common
 
 import requests
@@ -61,6 +62,7 @@ class DeliveryCarrier(models.Model):
         elif code == '2':
             _logger.error("Fraktjakt Error %s" % error)
             return response, '2', error
+
         return response, '0', warning or 'OK'
 
     def init_element(self, tag):
@@ -90,8 +92,8 @@ class DeliveryCarrier(models.Model):
         self.add_subelement(consignor, 'encoding', 'utf-8')
         self.add_subelement(consignor, 'system_name', 'Odoo')
         self.add_subelement(consignor, 'system_version', common.exp_version()['server_serie'])
-        module_version = self.env.ref('base.module_delivery_fraktjakt')
-        self.add_subelement(consignor, 'module_version', module_version.installed_version)
+        self.add_subelement(consignor, 'module_version',
+                            self.env.ref('base.module_delivery_fraktjakt').installed_version)
         self.add_subelement(consignor, 'api_version', FRAKTJAKT_API_VERSION)
 
     def add_address(self, element, tag, partner, residential=1):
@@ -105,11 +107,11 @@ class DeliveryCarrier(models.Model):
         self.add_subelement(adress, 'country_code', partner.country_id.code or 'SE')
 
     def get_url(self, method):
-        id = self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param(
+        pid = self.env['ir.config_parameter'].get_param('fraktjakt.tid' if self.env['ir.config_parameter'].get_param(
             'fraktjakt.environment') == 'test' else 'fraktjakt.pid')
         key = self.env['ir.config_parameter'].get_param('fraktjakt.tkey' if self.env['ir.config_parameter'].get_param(
             'fraktjakt.environment') == 'test' else 'fraktjakt.pkey')
         url = self.env['ir.config_parameter'].get_param('fraktjakt.turl' if self.env['ir.config_parameter'].get_param(
             'fraktjakt.environment') == 'test' else 'fraktjakt.purl')
-        return '%s/%s?consignor_id=%s&consignor_key=%s' % (url, method, id, key)
+        return '%s/%s?consignor_id=%s&consignor_key=%s' % (url, method, pid, key)
 

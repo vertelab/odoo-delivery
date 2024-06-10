@@ -83,12 +83,11 @@ class FjQuery(models.TransientModel):
             package_uom = False
             if not package_uom:
                 package_uom = default_uom
-
             parcel = carrier.init_subelement(parcels, 'parcel')
             carrier.add_subelement(parcel, 'weight', str(package.weight))
-            carrier.add_subelement(parcel, 'height', str(default_uom._compute_quantity(package.height, cm_uom)))
-            carrier.add_subelement(parcel, 'width', str(default_uom._compute_quantity(package.width, cm_uom)))
-            carrier.add_subelement(parcel, 'length', str(default_uom._compute_quantity(package.length, cm_uom)))
+            carrier.add_subelement(parcel, 'height', str(package_uom._compute_quantity(package.height, cm_uom)))
+            carrier.add_subelement(parcel, 'width', str(package_uom._compute_quantity(package.width, cm_uom)))
+            carrier.add_subelement(parcel, 'length', str(package_uom._compute_quantity(package.length, cm_uom)))
 
         if self.reciever_id.company_type == 'company':
             carrier.add_subelement(shipment, 'company_to', self.reciever_id.name)
@@ -119,42 +118,33 @@ class FjQuery(models.TransientModel):
             fj = etree.XML(response.content)
             shipping_products = fj.find('shipping_products')
             for shipping_product in fj.find('shipping_products').findall('shipping_product'):
-                id = shipping_product.find('id').text
                 carrier = self.env['delivery.carrier'].search([('fraktjakt_id', '=', shipping_product.find('id').text)])
                 if not carrier:
-                    # res_model, product_id = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt',
-                    #                                                                        'fraktjakt_product')
-
-                    res_model, product_id = self.env['ir.model.data']._xmlid_lookup(
+                    product_id = self.env['ir.model.data']._xmlid_lookup(
                         'delivery_fraktjakt.fraktjakt_product'
-                    )
-
+                    )[2]
                     partner_id = False
                     shipper = shipping_product.find('shipper')
                     partner = self.env['res.partner'].search([('fraktjakt_id', '=', shipper.find('id').text)])
                     if partner:
                         partner_id = partner.id
                     if not partner_id:
-                        image = None
+                        encoded_image = False
                         if shipper.find('logo_url').text:
                             image = requests.get(shipper.find('logo_url').text).content
                             encoded_image = base64.b64encode(image).decode('utf-8')
-                        partner = self.env['res.partner'].create({
+                        self.env['res.partner'].create({
                             'fraktjakt_id': shipper.find('id').text,
-                            # 'customer': False,
-                            # 'supplier': True,
                             'is_company': True,
                             'name': shipper.find('name').text,
                             'image_1920': encoded_image,
                         })
-                        partner_id = partner.id
-                    partner = self.env['res.partner'].search([('fraktjakt_id', '=', shipper.find('id').text)])
+                    # partner = self.env['res.partner'].search([('fraktjakt_id', '=', shipper.find('id').text)])
                     carrier = self.env['delivery.carrier'].create({
                         'fraktjakt_id': shipping_product.find('id').text,
                         'fraktjakt_desc': shipping_product.find('description').text,
                         'is_fraktjakt': True,
                         'partner_id': partner.id,
-                        # 'normal_price': shipping_product.find('price').text,
                         'product_id': product_id,
                         'name': shipping_product.find('name').text,
                     })
@@ -175,7 +165,7 @@ class FjQuery(models.TransientModel):
             'type': 'ir.actions.act_window',
             'res_model': 'fj_query',
             'res_id': self.id,
-            'view_id': self.env['ir.model.data']._xmlid_lookup('delivery_fraktjakt.fj_query_form_view')[1],  # self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')[1],
+            'view_id': self.env['ir.model.data']._xmlid_lookup('delivery_fraktjakt.fj_query_form_view')[2],
             'view_mode': 'form',
             'target': 'new',
         }
@@ -217,10 +207,9 @@ class FjQueryLine(models.TransientModel):
 
         carrier = self.wizard_id.picking_id.carrier_id
         order = carrier.init_element('OrderSpecification')
-
         carrier.add_consignor(order)
-        # Callback URL - specify the server to get an automatic response from the Fraktjakt Webhook to keep track of
-        # the order when it changes.
+        # Callback URL - specify the server to get an automatic response from the Fraktjakt
+        # Webhook to keep track of the order when it changes.
         callback_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') + '/webhook'
         carrier.add_subelement(order, 'callback_url', callback_url)
         carrier.add_subelement(order, 'shipping_product_id', self.carrier_id.fraktjakt_id)
@@ -298,7 +287,6 @@ class FjQueryLine(models.TransientModel):
         url = self.env['ir.config_parameter'].sudo().get_param('fraktjakt_order_xml_url')
         xml = etree.tostring(order, encoding='UTF-8')
         data = {'xml': xml}
-
         response = requests.post(url, data=data)
         code = response.status_code
 
@@ -319,9 +307,6 @@ class FjQueryLine(models.TransientModel):
             picking.carrier_id = self.carrier_id
             picking.confirm_url = record.find('access_link').text
             picking.cancel_url = record.find('cancel_link').text
-            picking.carrier_tracking_ref = record.find('tracking_code').text
-            # picking.carrier_tracking_url = record.find('tracking_link').text
-            picking.fraktjakt_tracking_url = record.find('tracking_link').text
 
             if code in ['2']:
                 return {
@@ -330,8 +315,7 @@ class FjQueryLine(models.TransientModel):
                     'res_model': 'fj_query',
                     'res_id': self.wizard_id.id,
                     'view_id':
-                        # self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')[1],
-                        self.env['ir.model.data']._xmlid_lookup('delivery_fraktjakt.fj_query_form_view')[1],
+                        self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')[1],
                     'view_mode': 'form',
                     'target': 'new',
                 }
@@ -353,8 +337,7 @@ class FjQueryLine(models.TransientModel):
             #         'model': picking._name,
             #         'message_type': 'notification',})
         else:
-            # form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
-            form_tuple = self.env['ir.model.data']._xmlid_lookup('delivery_fraktjakt.fj_query_form_view')[1]
+            form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
                 'name': 'Fraktjakt Shipment Query',
                 'type': 'ir.actions.act_window',
@@ -373,9 +356,9 @@ class FjQueryPackage(models.TransientModel):
     wizard_id = fields.Many2one(comodel_name='fj_query')
     pack_id = fields.Many2one(string='Package', comodel_name='stock.quant.package')
     weight = fields.Float()
-    height = fields.Float(related='pack_id.package_type_id.height')
-    width = fields.Float(related='pack_id.package_type_id.width')
-    length = fields.Float(related='pack_id.package_type_id.packaging_length')
+    height = fields.Integer(related='pack_id.package_type_id.height')
+    width = fields.Integer(related='pack_id.package_type_id.width')
+    length = fields.Integer(related='pack_id.package_type_id.packaging_length')
 
     def _volume(self):
         for record in self:
@@ -400,3 +383,4 @@ class FjQueryCommodity(models.TransientModel):
     width = fields.Float()
     length = fields.Float()
 
+# ~ # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

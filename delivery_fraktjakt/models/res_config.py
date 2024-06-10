@@ -20,7 +20,6 @@
 ##############################################################################
 
 from odoo import api, fields, models, SUPERUSER_ID, _
-from odoo.exceptions import UserError
 
 import logging
 
@@ -31,11 +30,11 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     fraktjakt_tid = fields.Char(string="Consignor id (test)", config_parameter='fraktjakt.tid',
-                                help="This is your id you got from the Fraktjakt test system, id/key and address are "
-                                     "different from the production system.")
+                                help="This is your id you got from the Fraktjakt test system, "
+                                     "id/key and address are different from the production system.")
     fraktjakt_tkey = fields.Char(string='Consignor key (test)', config_parameter='fraktjakt.tkey',
-                                 help="This is your key you got from the Fraktjakt test system, id/key and address "
-                                      "are different from the production system.")
+                                 help="This is your key you got from the Fraktjakt test system, "
+                                      "id/key and address are different from the production system.")
     fraktjakt_turl = fields.Char(string='Url (test)', config_parameter='fraktjakt.turl',
                                  help="The test server usually https://api2.fraktjakt.se, id/key and address are "
                                       "different from the production system.")

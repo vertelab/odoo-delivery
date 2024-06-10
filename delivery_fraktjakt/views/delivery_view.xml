@@ -16,33 +16,50 @@
         <record id="view_stock_picking_form" model="ir.ui.view">
             <field name="name">stock.picking.form.fraktjakt</field>
             <field name="model">stock.picking</field>
-            <field name="inherit_id" ref="stock_delivery.view_picking_withcarrier_out_form" />
+            <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='carrier_data']" position="after">
-                    <group string="Fraktjakt" invisible="is_fraktjakt == False">
+                    <group string="Fraktjakt" attrs="{'invisible': [('is_fraktjakt', '==', False)]}">
                         <field name="is_fraktjakt" invisible="1" />
                         <field name="fraktjakt_shipmentid" readonly="1" string="Shipment ID"/>
                         <field name="fraktjakt_orderid" invisible="1"/>
                         <field name="confirm_url" readonly="1" groups="base.group_no_one"/>
                         <field name="cancel_url" readonly="1" groups="base.group_no_one"/>
-                        <field name="fraktjakt_arrival_time" invisible="fraktjakt_shipmentid == False" readonly="1"/>
-                        <field name="fraktjakt_price" invisible="fraktjakt_shipmentid == False" readonly="1"/>
+                        <field name="fraktjakt_arrival_time" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" readonly="1"/>
+                        <field name="fraktjakt_price" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" readonly="1"/>
 <!--                        <field name="fraktjakt_agent_info" invisible="fraktjakt_shipmentid == False" />-->
 <!--                        <field name="fraktjakt_agent_link" invisible="fraktjakt_shipmentid == False" />-->
                         <div class="row col-12" style="width: max-content !important;">
-                            <div class="col-12" invisible="fraktjakt_shipmentid != False ">
-                                <button name="fraktjakt_query" string="Fraktjakt Shipment Query" class="btn btn-primary" type='object' invisible="is_fraktjakt == False or fraktjakt_shipmentid != False " />
+                            <div class="col-12" attrs="{'invisible': ['|', ('fraktjakt_shipmentid', '!=', False), ('is_fraktjakt', '=', False)]}">
+                                <button name="fraktjakt_query" string="Fraktjakt Shipment Query" class="btn btn-primary" type='object'/>
                             </div>
                             <div class="col-6">
-                                <button name="fj_confirm_shipment" string="Go to Transport" class="btn btn-primary" type='object' invisible="fraktjakt_shipmentid == False" />
+                                <button name="fj_confirm_shipment" string="Go to Transport" class="btn btn-primary" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}"/>
                             </div>
                             <div class="col-6 float-end">
-                                <button name="fj_cancel_shipment" string="Cancel Transport" class="btn btn-danger" type='object' invisible="fraktjakt_shipmentid == False" />
+                                <button name="fj_cancel_shipment" string="Cancel Transport" class="btn btn-danger" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
                             </div>
                         </div>
                     </group>
                 </xpath>
+
+<!--                <div name="tracking" position="inside">-->
+<!--                    <button name="fraktjakt_query" string="Fraktjakt Shipment Query" type='object' attrs="{'invisible': [('is_fraktjakt', '==', False)]}" />-->
+
+<!--                    <button name="fj_confirm_shipment" string="Confirm Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />-->
+<!--                    <button name="fj_cancel_shipment" string="Cancel Transport" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />-->
+<!--                    <field name="cancel_url" />-->
+<!--                    <field name="confirm_url" />-->
+
+<!--                    <field name="fraktjakt_shipmentid" />-->
+<!--                    <field name="fraktjakt_orderid" />-->
+<!--                    <field name="is_fraktjakt" invisible="1" />-->
+<!--                    <field name="fraktjakt_arrival_time" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />-->
+<!--                    <field name="fraktjakt_price" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />-->
+<!--                    <field name="fraktjakt_agent_info" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />-->
+<!--                    <field name="fraktjakt_agent_link" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />-->
+<!--                </div>-->
             </field>
         </record>
 
@@ -73,7 +90,7 @@
                         <page string="Shipment products">
                             <field name="line_ids" readonly="1">
                                 <tree string="Shipment products">
-                                    <field name="image" widget="image" class="oe_avatar float-start" options="{'size': [50, 50]}" string='' nolabel="1" />
+                                    <field name="image" widget="image" class="oe_left oe_avatar" string='' nolabel="1" />
                                     <field name="partner_id" string="Transport company" />
                                     <field name="carrier_id" string="Transport product" />
                                     <field name="arrival_time" />
@@ -108,6 +125,9 @@
                             </group>
                             <separator string="Driving instructions" />
                             <field name="driving_instructions" nolabel="1" />
+                            <!-- USER NOTES NOT SUPPORTED ANYMORE -->
+                            <!-- <separator string="Notes" /> -->
+                            <!-- <field name="user_notes" nolabel="1" /> -->
                         </page>
                     </notebook>
                     <field name="message" nolabel="1" readonly='1' />
@@ -119,7 +139,6 @@
                 </form>
             </field>
         </record>
-
         <record id="action_fj_query" model="ir.actions.act_window">
             <field name="name">Fraktjakt Shipment Query</field>
             <field name="type">ir.actions.act_window</field>
