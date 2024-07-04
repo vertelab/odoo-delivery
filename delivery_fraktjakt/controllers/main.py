@@ -4,9 +4,9 @@
 
 import base64
 import requests
-from odoo import http
+from odoo import http, _
 from odoo.http import request
-from odoo.exceptions import Warning
+from odoo.exceptions import ValidationError
 
 import logging
 
@@ -28,8 +28,19 @@ class FraktjaktStatus(http.Controller):
         shipping_labels = payload.get('shipping_documents')
         attachment_ids = []
 
+        links = payload.get('links')
+        track_result = payload.get('track_result')
+
         if order_status == 'ready_to_ship':
             paid_order = request.env['stock.picking'].sudo().search([("fraktjakt_shipmentid", "=", shipment_id)])
+
+            if not paid_order:
+                raise ValidationError(_(f"No order with this {shipment_id} shipment id"))
+
+            paid_order.write({
+                'fraktjakt_tracking_url': links.get('tracking_link'),
+                'carrier_tracking_ref': track_result.get('trace_number'),
+            })
 
             for url in shipping_labels:
                 try:

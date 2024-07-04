@@ -1,0 +1,67 @@
+<odoo>
+    <data>
+        <record id="view_stock_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking.form.fraktjakt</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='carrier_data']" position="after">
+                    <group string="Fraktjakt" attrs="{'invisible': [('is_fraktjakt', '==', False)]}">
+                        <field name="is_fraktjakt" invisible="1" />
+                        <field name="fraktjakt_shipmentid" readonly="1" string="Shipment ID"/>
+                        <field name="fraktjakt_orderid" invisible="1"/>
+                        <field name="confirm_url" readonly="1" groups="base.group_no_one"/>
+                        <field name="cancel_url" readonly="1" groups="base.group_no_one"/>
+                        <field name="fraktjakt_arrival_time" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" readonly="1"/>
+                        <field name="fraktjakt_price" attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" readonly="1"/>
+                        <div class="row col-12" style="width: max-content !important;">
+                            <div class="col-12" attrs="{'invisible': ['|', ('fraktjakt_shipmentid', '!=', False), ('is_fraktjakt', '=', False)]}">
+                                <button name="fraktjakt_query" string="Fraktjakt Shipment Query" class="btn btn-primary" type='object'/>
+                            </div>
+                            <div class="col-6">
+                                <button name="fj_confirm_shipment" string="Go to Transport" class="btn btn-primary" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}"/>
+                            </div>
+                            <div class="col-6 float-end">
+                                <button name="fj_cancel_shipment" string="Cancel Transport" class="btn btn-danger" type='object' attrs="{'invisible': [('fraktjakt_shipmentid', '==', False)]}" />
+                            </div>
+                        </div>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+
+        <record id="stock_package_type_form" model="ir.ui.view">
+            <field name="name">stock.package.type.fraktjakt</field>
+            <field name="model">stock.package.type</field>
+            <field name="inherit_id" ref="stock.stock_package_type_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='delivery']//label[@for='length_uom_name']" position="before">
+                    <field name="fraktjakt_package_type"/>
+                </xpath>
+
+                <field name="packaging_length" position="attributes">
+                    <attribute name="attrs">{'readonly': [('fraktjakt_package_type', '!=', 'others')]}</attribute>
+                </field>
+
+                <field name="width" position="attributes">
+                    <attribute name="attrs">{'readonly': [('fraktjakt_package_type', '!=', 'others')]}</attribute>
+                </field>
+            </field>
+        </record>
+
+        <record id="stock_quant_package_type_form" model="ir.ui.view">
+            <field name="name">stock.quant.package.fraktjakt</field>
+            <field name="model">stock.quant.package</field>
+            <field name="inherit_id" ref="stock.view_quant_package_form" />
+            <field name="arch" type="xml">
+                <field name="package_type_id" position="after">
+                    <field name="height"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>

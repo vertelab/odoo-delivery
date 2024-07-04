@@ -115,3 +115,24 @@ class DeliveryCarrier(models.Model):
             'fraktjakt.environment') == 'test' else 'fraktjakt.purl')
         return '%s/%s?consignor_id=%s&consignor_key=%s' % (url, method, pid, key)
 
+
+class DeliveryPackage(models.TransientModel):
+    _inherit = "choose.delivery.package"
+
+    fraktjakt_package_type = fields.Selection([
+        ('pallet', 'Pallet'), ('half_pallet', 'Half Pallet'), ('others', 'Others')
+    ], string="Package Type", default='pallet', required=True,
+        related='delivery_package_type_id.fraktjakt_package_type')
+
+    height = fields.Integer('Height', help="Packaging Height")
+
+    def action_put_in_pack(self):
+        move_line_ids = self.picking_id._package_move_lines(batch_pack=self.env.context.get("batch_pack"))
+        delivery_package = self.picking_id._put_in_pack(move_line_ids)
+        # write shipping weight and package type on 'stock_quant_package' if needed
+        if self.delivery_package_type_id:
+            delivery_package.package_type_id = self.delivery_package_type_id
+        if self.shipping_weight:
+            delivery_package.shipping_weight = self.shipping_weight
+        if self.height:
+            delivery_package.height = self.height

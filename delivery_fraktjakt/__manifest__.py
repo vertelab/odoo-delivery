@@ -44,6 +44,8 @@
     'depends': ['delivery', 'base'],
     'data': [
         'views/delivery_view.xml',
+        'views/fj_query_view.xml',
+        'views/stock_view.xml',
         'views/res_config_view.xml',
         'data/delivery_data.xml',
         'security/ir.model.access.csv'

@@ -1,0 +1,89 @@
+<odoo>
+    <data>
+        <record id="fj_query_form_view" model="ir.ui.view">
+            <field name="name">Shipment Query</field>
+            <field name="model">fj_query</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Shipment Import">
+                    <group>
+                        <group cols="2">
+                            <field name="picking_id" invisible="1" />
+                            <field name="sender_id" invisible='1' />
+                            <field name="reciever_id" invisible='1' />
+                            <field name="dropoff" />
+                            <field name="pickup" />
+                            <field name="cold" />
+                            <field name="freeze" />
+                        </group>
+                        <group cols="2">
+                            <field name="quality" />
+                            <field name="time_guarantee" />
+                            <field name="express" />
+                            <field name="green" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Shipment products">
+                            <field name="line_ids" readonly="1">
+                                <tree string="Shipment products">
+                                    <field name="image" widget="image" class="oe_left oe_avatar" string='' nolabel="1" />
+                                    <field name="partner_id" string="Transport company" />
+                                    <field name="carrier_id" string="Transport product" />
+                                    <field name="arrival_time" />
+                                    <field name="price" />
+                                    <button name="choose_product" string="Choose" type="object" icon="fa-archive" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Packages">
+                            <field name="pack_ids" readonly="0">
+                                <tree string="Packages" editable="bottom">
+                                    <field name="pack_id" count="Number of packages" />
+                                    <field name="weight" sum="Total Weight" avg="Average Weight" />
+                                    <field name="height" readonly="1" />
+                                    <field name="width" readonly="1" />
+                                    <field name="length" readonly="1" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Products">
+                            <field name="move_lines" readonly="1">
+                                <tree string="Comodities">
+                                    <field name="move_id" />
+                                    <field name="name" />
+                                    <field name="description" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Booking">
+                            <group>
+                                <field name="pickup_date" />
+                            </group>
+                            <separator string="Driving instructions" />
+                            <field name="driving_instructions" nolabel="1" />
+                            <!-- USER NOTES NOT SUPPORTED ANYMORE -->
+                            <!-- <separator string="Notes" /> -->
+                            <!-- <field name="user_notes" nolabel="1" /> -->
+                        </page>
+                    </notebook>
+                    <field name="message" nolabel="1" readonly='1' />
+                    <footer>
+                        <button name="fraktjakt_query" type="object" string="Query" class="oe_highlight" />
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel" />
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <record id="action_fj_query" model="ir.actions.act_window">
+            <field name="name">Fraktjakt Shipment Query</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">fj_query</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="fj_query_form_view" />
+            <field name="target">new</field>
+        </record>
+
+    </data>
+</odoo>

@@ -355,8 +355,8 @@ class FjQueryPackage(models.TransientModel):
 
     wizard_id = fields.Many2one(comodel_name='fj_query')
     pack_id = fields.Many2one(string='Package', comodel_name='stock.quant.package')
-    weight = fields.Float()
-    height = fields.Integer(related='pack_id.package_type_id.height')
+    weight = fields.Float(related='pack_id.weight')
+    height = fields.Integer(related='pack_id.height')
     width = fields.Integer(related='pack_id.package_type_id.width')
     length = fields.Integer(related='pack_id.package_type_id.packaging_length')
 

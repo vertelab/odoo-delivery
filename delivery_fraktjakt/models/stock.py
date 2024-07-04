@@ -48,6 +48,7 @@ class StockPicking(models.Model):
 
     confirm_url = fields.Char()
     cancel_url = fields.Char()
+    fraktjakt_tracking_url = fields.Char()
 
     def open_website_url(self):
         if self.fraktjakt_tracking_url:
@@ -167,3 +168,25 @@ class StockPicking(models.Model):
 
 class StockQuantPackage(models.Model):
     _inherit = 'stock.quant.package'
+
+    height = fields.Integer('Height', help="Packaging Height")
+
+
+class StockQuantType(models.Model):
+    _inherit = 'stock.package.type'
+
+    fraktjakt_package_type = fields.Selection([
+        ('pallet', 'Pallet'), ('half_pallet', 'Half Pallet'), ('others', 'Others')
+    ], string="Package Type", default='pallet', required=True)
+
+    @api.onchange('fraktjakt_package_type')
+    def change_fraktjakt_package_type(self):
+        if self.fraktjakt_package_type == 'pallet':
+            self.packaging_length = 1200
+            self.width = 800
+        elif self.fraktjakt_package_type == 'half_pallet':
+            self.packaging_length = 800
+            self.width = 600
+
+
+
