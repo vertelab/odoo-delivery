@@ -96,7 +96,7 @@ class StockPicking(models.Model):
 
         for move in self.move_line_ids:
             self.env['fj_query.commodity'].sudo().create({
-                'move_id': move.id,
+                'move_id': move.move_id.id,
                 'wizard_id': query.id,
                 'name': move.product_id.display_name,
                 'quantity': move.move_id.product_qty,
