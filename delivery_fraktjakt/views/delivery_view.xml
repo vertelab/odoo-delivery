@@ -20,7 +20,7 @@
             <field name="arch" type="xml">
                 <field name="delivery_package_type_id" position="after">
                     <field name="fraktjakt_package_type" invisible="1"/>
-                    <field name="height" attrs="{'invisible': [('fraktjakt_package_type', '!=', 'others')]}"/>
+                    <field name="height" attrs="{'invisible': [('fraktjakt_package_type', '==', 'others')]}"/>
                 </field>
             </field>
         </record>

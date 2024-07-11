@@ -187,6 +187,28 @@ class StockQuantType(models.Model):
         elif self.fraktjakt_package_type == 'half_pallet':
             self.packaging_length = 800
             self.width = 600
+            
+    def write(self, vals):
+        res = super(StockQuantType, self).write(vals)
+        if "fraktjakt_package_type" in vals:
+            self.change_fraktjakt_package_type()
+        return self
+        
+    @api.model_create_multi
+    def create(self, vals_list):
+        res = super().create(vals_list)
+        for record in res:
+            record.change_fraktjakt_package_type()
+        return res
+
+            
+    # ~ def change_fraktjakt_package_type_depends(self):
+        # ~ if self.fraktjakt_package_type == 'pallet':
+            # ~ self.packaging_length = 1200
+            # ~ self.width = 800
+        # ~ elif self.fraktjakt_package_type == 'half_pallet':
+            # ~ self.packaging_length = 800
+            # ~ self.width = 600
 
 
 
