@@ -177,7 +177,7 @@ class StockQuantType(models.Model):
 
     fraktjakt_package_type = fields.Selection([
         ('pallet', 'Pallet'), ('half_pallet', 'Half Pallet'), ('others', 'Others')
-    ], string="Package Type", default='pallet', required=True)
+    ], string="Package Type", default='others', required=True)
 
     @api.onchange('fraktjakt_package_type')
     def change_fraktjakt_package_type(self):
