@@ -189,4 +189,13 @@ class StockQuantType(models.Model):
             self.width = 600
 
 
+class ChooseDeliveryPackage(models.TransientModel):
+    _inherit = 'choose.delivery.package'
+
+    @api.onchange('delivery_package_type_id')
+    def change_delivery_package_type(self):
+        if self.delivery_package_type_id.fraktjakt_package_type == 'others':
+            self.height = 0
+
+
 
