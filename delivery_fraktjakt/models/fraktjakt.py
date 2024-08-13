@@ -23,7 +23,7 @@
 import base64
 import requests
 from odoo import models, fields, api, _
-
+from odoo.exceptions import UserError
 from lxml import etree
 import urllib.parse
 
@@ -60,6 +60,7 @@ class FjQuery(models.TransientModel):
     # user_notes = fields.Text(string='Notes',)
     message = fields.Text()
     fraktjakt_arrival_time = fields.Char(related="picking_id.fraktjakt_arrival_time", string='Arrival Time')
+    processing = fields.Boolean(string="Processing")
 
     def fraktjakt_query(self):
         """Create a stored shipment."""
@@ -197,6 +198,12 @@ class FjQueryLine(models.TransientModel):
 
     # Choose Carrier
     def choose_product(self):
+        if not self.wizard_id.processing:
+            self.wizard_id.processing = True
+            self.env.cr.commit()
+        else:
+            raise UserError("It seems you are already processing a shipment")
+
         self.wizard_id.fraktjakt_arrival_time = self.arrival_time
         self.wizard_id.fraktjakt_price = self.price
         self.wizard_id.fraktjakt_agent_info = self.agent_info
@@ -220,39 +227,42 @@ class FjQueryLine(models.TransientModel):
         default_uom = self.env['product.template']._get_length_uom_id_from_ir_config_parameter()
 
         # Commodities
+        if len(self.wizard_id.pack_ids) > 1:
+            raise UserError("Using several packages is not implemented.")
+
         if self.wizard_id.pack_ids:
             commodities = carrier.init_subelement(order, 'commodities')
+            parcels = carrier.init_subelement(order, 'parcels')
 
-            for move in self.wizard_id.pack_ids:
-                # package_uom = move.pack_id.packaging_id.product_uom_id
+            for package_id in self.wizard_id.pack_ids:
+                stock_move_lines_grouped = self.env['stock.move.line'].read_group(
+                    [('result_package_id', '=', package_id.pack_id.id)],  # domain to filter the records
+                    ['product_id', 'move_id', 'qty_done:sum'],  # fields to include in the result
+                    ['product_id']  # field(s) to group by
+                )
+
                 package_uom = False
-
                 if not package_uom:
                     package_uom = default_uom
 
-                commodity = carrier.init_subelement(commodities, 'commodity')
-                carrier.add_subelement(commodity, 'name', self.wizard_id.picking_id.name)
-                carrier.add_subelement(commodity, 'quantity', 1)
-                carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
-                carrier.add_subelement(commodity, 'article_number', move.pack_id.name)
-                carrier.add_subelement(commodity, 'in_own_parcel', '1')
-                carrier.add_subelement(commodity, 'shipped', '1')
-                carrier.add_subelement(commodity, 'unit_price',
-                                       str(sum(move.pack_id.quant_ids.product_id.mapped('lst_price'))))
-                carrier.add_subelement(commodity, 'weight', str(move.weight))
-                carrier.add_subelement(commodity, 'length', str(package_uom._compute_quantity(move.length, cm_uom)))
-                carrier.add_subelement(commodity, 'width', str(package_uom._compute_quantity(move.width, cm_uom)))
-                carrier.add_subelement(commodity, 'height', str(package_uom._compute_quantity(move.height, cm_uom)))
+                for stock_move_line in stock_move_lines_grouped:
+                    product = self.env['product.product'].browse(stock_move_line['product_id'][0])
 
-        # Parcels
-        else:
-            parcels = carrier.init_subelement(order, 'parcels')
-            for package in self.wizard_id.pack_ids:
+                    commodity = carrier.init_subelement(commodities, 'commodity')
+                    carrier.add_subelement(commodity, 'name', product.name)
+                    carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
+                    carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
+                    carrier.add_subelement(commodity, 'article_number', product.default_code)
+                    carrier.add_subelement(commodity, 'in_own_parcel', '0')
+                    carrier.add_subelement(commodity, 'shipped', '1')
+                    carrier.add_subelement(commodity, 'unit_price', product.lst_price)
+                    carrier.add_subelement(commodity, 'weight', str(product.weight))
+
                 parcel = carrier.init_subelement(parcels, 'parcel')
-                carrier.add_subelement(parcel, 'weight', str(package.weight))
-                carrier.add_subelement(parcel, 'length', str(package.length))
-                carrier.add_subelement(parcel, 'width', str(package.width))
-                carrier.add_subelement(parcel, 'height', str(package.height))
+                carrier.add_subelement(parcel, 'weight', str(package_id.weight))
+                carrier.add_subelement(parcel, 'length', str(package_uom._compute_quantity(package_id.length, cm_uom)))
+                carrier.add_subelement(parcel, 'width', str(package_uom._compute_quantity(package_id.width, cm_uom)))
+                carrier.add_subelement(parcel, 'height', str(package_uom._compute_quantity(package_id.height, cm_uom)))
 
         # Sender
         sender = carrier.init_subelement(order, 'sender')
@@ -321,9 +331,9 @@ class FjQueryLine(models.TransientModel):
                 }
             else:
                 shipping_id = "Shipping ID <a href='%s'>%s</a>" % (
-                carrier.get_url('shipments/show/%s' % picking.fraktjakt_shipmentid), picking.fraktjakt_shipmentid)
+                    carrier.get_url('shipments/show/%s' % picking.fraktjakt_shipmentid), picking.fraktjakt_shipmentid)
                 order_id = "Order <a href='%s'>%s</a>" % (
-                carrier.get_url('orders/show/%s' % picking.fraktjakt_orderid), picking.fraktjakt_orderid)
+                    carrier.get_url('orders/show/%s' % picking.fraktjakt_orderid), picking.fraktjakt_orderid)
                 payment_link = "<href='%s'>Payment</a>" % (record.find('payment_link').text) if record.find(
                     'payment_link') else ''
                 order_confirmation_link = "<href='%s'>Order confirmation</a>" % (
@@ -355,7 +365,7 @@ class FjQueryPackage(models.TransientModel):
 
     wizard_id = fields.Many2one(comodel_name='fj_query')
     pack_id = fields.Many2one(string='Package', comodel_name='stock.quant.package')
-    weight = fields.Float(related='pack_id.weight')
+    weight = fields.Float()
     height = fields.Integer(related='pack_id.height')
     width = fields.Integer(related='pack_id.package_type_id.width')
     length = fields.Integer(related='pack_id.package_type_id.packaging_length')

@@ -62,6 +62,8 @@ class StockPicking(models.Model):
             return super().open_website_url()
 
     def fraktjakt_query(self):
+        if self.state != "done":
+            raise UserError("Please validate the order before contacting fraktjakt.")
         """Create a stored shipment."""
 
         if not self.env['ir.config_parameter'].get_param('fraktjakt.environment', None):
@@ -79,13 +81,22 @@ class StockPicking(models.Model):
         })
 
         for pack in self.package_ids:
+            stock_move_lines_grouped = self.env['stock.move.line'].read_group(
+                [('result_package_id', '=', pack.id)],  # domain to filter the records
+                ['product_id', 'qty_done:sum'],  # fields to include in the result
+                ['product_id']  # field(s) to group by
+            )
+
+            weight_of_products = 0
+            for move_line in stock_move_lines_grouped:
+                product = self.env['product.product'].browse(move_line['product_id'][0])
+                weight_of_products = weight_of_products + product.weight * move_line['qty_done']
+
             self.env['fj_query.package'].sudo().create({
                 'pack_id': pack.id,
-                'weight': pack.weight,
+                'weight': pack.shipping_weight + weight_of_products,
                 'wizard_id': query.id,
             })
-
-        self.weight = sum(self.package_ids.mapped('weight'))
 
         if len(query.pack_ids) == 0:
             raise ValidationError(_('There is no packages to ship.'))
@@ -177,7 +188,7 @@ class StockQuantType(models.Model):
 
     fraktjakt_package_type = fields.Selection([
         ('pallet', 'Pallet'), ('half_pallet', 'Half Pallet'), ('others', 'Others')
-    ], string="Package Type", default='pallet', required=True)
+    ], string="Package Type", default='other', required=True)
 
     @api.onchange('fraktjakt_package_type')
     def change_fraktjakt_package_type(self):
@@ -188,14 +199,28 @@ class StockQuantType(models.Model):
             self.packaging_length = 800
             self.width = 600
 
+    def write(self, vals):
+        res = super(StockQuantType, self).write(vals)
+        if "fraktjakt_package_type" in vals:
+            self.change_fraktjakt_package_type()
+        return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        res = super().create(vals_list)
+        for record in res:
+            record.change_fraktjakt_package_type()
+        return res
 
 class ChooseDeliveryPackage(models.TransientModel):
     _inherit = 'choose.delivery.package'
 
     @api.onchange('delivery_package_type_id')
     def change_delivery_package_type(self):
-        if self.delivery_package_type_id.fraktjakt_package_type == 'others':
+        if self.delivery_package_type_id.fraktjakt_package_type != 'others':
             self.height = 0
+        else:
+            self.height = self.delivery_package_type_id.height
 
 
 

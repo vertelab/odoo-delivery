@@ -21,6 +21,7 @@
                             <field name="time_guarantee" />
                             <field name="express" />
                             <field name="green" />
+                            <field name="processing" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
