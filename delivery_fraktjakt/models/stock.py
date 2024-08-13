@@ -188,7 +188,7 @@ class StockQuantType(models.Model):
 
     fraktjakt_package_type = fields.Selection([
         ('pallet', 'Pallet'), ('half_pallet', 'Half Pallet'), ('others', 'Others')
-    ], string="Package Type", default='other', required=True)
+    ], string="Package Type", default='others', required=True)
 
     @api.onchange('fraktjakt_package_type')
     def change_fraktjakt_package_type(self):
@@ -203,7 +203,7 @@ class StockQuantType(models.Model):
         res = super(StockQuantType, self).write(vals)
         if "fraktjakt_package_type" in vals:
             self.change_fraktjakt_package_type()
-        return res
+        return self
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -211,6 +211,15 @@ class StockQuantType(models.Model):
         for record in res:
             record.change_fraktjakt_package_type()
         return res
+
+    # ~ def change_fraktjakt_package_type_depends(self):
+    # ~ if self.fraktjakt_package_type == 'pallet':
+    # ~ self.packaging_length = 1200
+    # ~ self.width = 800
+    # ~ elif self.fraktjakt_package_type == 'half_pallet':
+    # ~ self.packaging_length = 800
+    # ~ self.width = 600
+
 
 class ChooseDeliveryPackage(models.TransientModel):
     _inherit = 'choose.delivery.package'
@@ -221,6 +230,3 @@ class ChooseDeliveryPackage(models.TransientModel):
             self.height = 0
         else:
             self.height = self.delivery_package_type_id.height
-
-
-

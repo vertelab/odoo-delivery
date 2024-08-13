@@ -38,15 +38,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="78"
+     inkscape:cx="68.5"
      inkscape:cy="56"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1697"
      inkscape:window-height="773"
-     inkscape:window-x="2013"
-     inkscape:window-y="141"
+     inkscape:window-x="2024"
+     inkscape:window-y="91"
      inkscape:window-maximized="0"
      inkscape:pagecheckerboard="0">
     <inkscape:grid
@@ -118,14 +118,14 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="413.0531"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:end;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="518.59961"
        y="70.822594"
        id="text2035"><tspan
          sodipodi:role="line"
          x="413.0531"
          y="70.822594"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.6667px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:1px"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.6667px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:end;writing-mode:lr-tb;text-anchor:end;stroke-width:1px"
          id="tspan2047">Delivery Fraktjakt</tspan></text>
     <flowRoot
        xml:space="preserve"
@@ -142,16 +142,16 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:30.4963px;line-height:1.25;font-family:'Futura PT';-inkscape-font-specification:'Futura PT, Medium';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.999998"
        x="297.54626"
-       y="157.85461"
+       y="151.85461"
        id="text893"><tspan
          sodipodi:role="line"
          id="tspan891"
          x="297.54626"
-         y="157.85461"
+         y="151.85461"
          style="stroke-width:0.999998"></tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="342.03513"
        y="154.41"
        id="text2039"><tspan
@@ -159,11 +159,11 @@
          id="tspan2037"
          x="342.03513"
          y="154.41"
-         style="stroke-width:0.99999994px">odoo_delivery</tspan><tspan
+         style="stroke-width:1px">odoo-delivery</tspan><tspan
          sodipodi:role="line"
          x="342.03513"
          y="173.16"
          id="tspan2041"
-         style="stroke-width:0.99999994px" /></text>
+         style="stroke-width:1px" /></text>
   </g>
 </svg>
