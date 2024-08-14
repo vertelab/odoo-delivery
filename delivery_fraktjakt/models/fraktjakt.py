@@ -247,10 +247,11 @@ class FjQueryLine(models.TransientModel):
 
                 for stock_move_line in stock_move_lines_grouped:
                     product = self.env['product.product'].browse(stock_move_line['product_id'][0])
-
+                    country = product.country_of_manufacture.code if product.country_of_manufacture else "SE"
                     commodity = carrier.init_subelement(commodities, 'commodity')
                     carrier.add_subelement(commodity, 'name', product.name)
                     carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
+                    carrier.add_subelement(commodity, 'country_of_manufacture', country)
                     carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
                     carrier.add_subelement(commodity, 'article_number', product.default_code)
                     carrier.add_subelement(commodity, 'in_own_parcel', '0')
