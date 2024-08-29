@@ -1,0 +1,18 @@
+<odoo>
+    <record id="view_company_form_inherit" model="ir.ui.view">
+        <field name="name">res.company.form.inherit</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_info']" position="after">
+                <page name="ongoing_settings" string="Ongoing Settings">
+                    <group>
+                        <field name="ongoing_wsdl"/>
+                        <field name="ongoing_username"/>
+                        <field name="ongoing_password" password="True"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
