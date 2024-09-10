@@ -251,7 +251,8 @@ class FjQueryLine(models.TransientModel):
                     commodity = carrier.init_subelement(commodities, 'commodity')
                     carrier.add_subelement(commodity, 'name', product.name)
                     carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
-                    carrier.add_subelement(commodity, 'country_of_manufacture', country)
+                    if country:
+                       carrier.add_subelement(commodity, 'country_of_manufacture', country)
                     carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
                     carrier.add_subelement(commodity, 'article_number', product.default_code)
                     carrier.add_subelement(commodity, 'in_own_parcel', '0')
