@@ -9,11 +9,12 @@
    id="SVGRoot"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    sodipodi:docname="banner_560x280.svg"
-   inkscape:export-filename="/usr/share/odoo-delivery/delivery_fraktjakt/static/description/banner.png"
+   inkscape:export-filename="/home/jakob/Dokument/Odoo17/odoo-delivery/delivery_fraktjakt/static/description/banner.png"
    inkscape:export-xdpi="92.61972"
    inkscape:export-ydpi="92.61972"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -29,6 +30,23 @@
          offset="0"
          id="stop4209" />
     </linearGradient>
+    <linearGradient
+       id="linearGradient-1"
+       y2="145.47549"
+       x2="79.832403"
+       y1="-2.9184923"
+       x1="66.881189"
+       gradientTransform="scale(1.7597466,0.56826363)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         id="stop833"
+         offset="0%"
+         stop-color="#222357" />
+      <stop
+         id="stop835"
+         offset="100%"
+         stop-color="#254AA5" />
+    </linearGradient>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -38,15 +56,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="78"
-     inkscape:cy="56"
+     inkscape:cx="164"
+     inkscape:cy="105"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1697"
+     inkscape:window-width="1625"
      inkscape:window-height="773"
-     inkscape:window-x="2013"
-     inkscape:window-y="141"
+     inkscape:window-x="295"
+     inkscape:window-y="104"
      inkscape:window-maximized="0"
      inkscape:pagecheckerboard="0">
     <inkscape:grid
@@ -70,15 +88,15 @@
      id="layer1">
     <g
        id="g1954"
-       transform="matrix(0.81401749,0,0,1.2110406,145.18869,13.739548)"
-       style="stroke-width:1.00717">
+       transform="matrix(0.81401749,0,0,1.2110406,87.964326,13.739548)"
+       style="stroke-width:1.00717223">
       <rect
          y="-17.522648"
          x="-133"
          height="241.11497"
          width="717.42932"
          id="rect1936"
-         style="opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:1.00717;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+         style="opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:1.00717223;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
     </g>
     <path
        style="opacity:1;fill:#8105a7;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.54263723;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:2.49826765;stroke-opacity:1;paint-order:fill markers stroke"
@@ -118,52 +136,81 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="413.0531"
-       y="70.822594"
-       id="text2035"><tspan
-         sodipodi:role="line"
-         x="413.0531"
-         y="70.822594"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.6667px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;stroke-width:1px"
-         id="tspan2047">Delivery Fraktjakt</tspan></text>
-    <flowRoot
-       xml:space="preserve"
-       id="flowRoot892"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:53.33333206px;line-height:1.25;font-family:'Futura PT';-inkscape-font-specification:'Futura PT, Medium';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"><flowRegion
-         id="flowRegion894"><rect
-           id="rect896"
-           width="165"
-           height="57"
-           x="276"
-           y="-57" /></flowRegion><flowPara
-         id="flowPara898"></flowPara></flowRoot>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:30.4963px;line-height:1.25;font-family:'Futura PT';-inkscape-font-specification:'Futura PT, Medium';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.999998"
-       x="297.54626"
-       y="157.85461"
-       id="text893"><tspan
-         sodipodi:role="line"
-         id="tspan891"
-         x="297.54626"
-         y="157.85461"
-         style="stroke-width:0.999998"></tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="342.03513"
-       y="154.41"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="319.77063"
+       y="153.03708"
        id="text2039"><tspan
          sodipodi:role="line"
          id="tspan2037"
-         x="342.03513"
-         y="154.41"
-         style="stroke-width:0.99999994px">odoo_delivery</tspan><tspan
+         x="319.77063"
+         y="153.03708"
+         style="stroke-width:1px">odoo-delivery</tspan><tspan
          sodipodi:role="line"
-         x="342.03513"
-         y="173.16"
-         id="tspan2041"
-         style="stroke-width:0.99999994px" /></text>
+         x="319.77063"
+         y="171.78708"
+         id="tspan2041" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:end;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="522.73328"
+       y="77.199997"
+       id="text2035"
+       inkscape:export-xdpi="92"
+       inkscape:export-ydpi="92"><tspan
+         sodipodi:role="line"
+         x="522.73328"
+         y="77.199997"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26.6667px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:end;writing-mode:lr-tb;text-anchor:end;stroke-width:1px"
+         id="tspan847">Delivery Fraktjakt</tspan></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot844"
+       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:53.3333px;line-height:1.25;font-family:'Futura PT';-inkscape-font-specification:'Futura PT, Medium';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"><flowRegion
+         id="flowRegion846"><rect
+           id="rect848"
+           width="100"
+           height="83"
+           x="206"
+           y="-32" /></flowRegion><flowPara
+         id="flowPara850" /></flowRoot>
+    <image
+       width="27.760513"
+       height="24.984461"
+       preserveAspectRatio="none"
+       style="stroke-width:1.80111;image-rendering:optimizeQuality"
+       xlink:href="data:image/png;base64,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
+"
+       id="image39"
+       x="288.2395"
+       y="131.51555" />
   </g>
 </svg>
