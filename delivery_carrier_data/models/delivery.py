@@ -32,7 +32,7 @@ class delivery_carrier(models.Model):
 
     def _carrier_data(self):
         for record in self:
-            record.carrier_data = "Hej!"
+            record.carrier_data = False
         # if self.my_delivery_type:
         #     self._carrier_data = '<input name="carrier_data" .../>
         # else:

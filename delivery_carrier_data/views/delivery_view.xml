@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
- 
+
         <template id="payment_delivery" name="Delivery Carrier Data" inherit_id="website_sale.payment_delivery">
             <xpath expr="//li" position="inside">
-                  <t>
-                      <span><t t-raw="delivery.carrier_data"/></span>
-                  </t>
+                  <div t-on-click="log_stuff" id="payment_delivery_carrier_data_list">
+                      <span  id="payment_delivery_carrier_data"><t t-raw="delivery.carrier_data"/></span>
+                  </div>
             </xpath>
         </template>
 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+<t t-name="delivery_carrier_data.MyComponent">
+  <div t-on-click="log_stuff">
+    <t t-esc="state.value"/>
+  </div>
+</t>
+
+
+
+</templates>

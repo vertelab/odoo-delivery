@@ -36,10 +36,11 @@ Is meant to be inherited and other modules will fill the input field.
         'delivery', 'website', 'sale', 'website_sale', 
     ],
     'data': [
-        'views/delivery_view.xml'
+        'views/delivery_view.xml',
     ],
     'assets': {
         'web.assets_frontend': [
+            #'delivery_carrier_data/static/src/js/my_component.xml',
             'delivery_carrier_data/static/src/js/main.js',
         ],
     },
