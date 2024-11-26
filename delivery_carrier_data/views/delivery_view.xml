@@ -4,11 +4,23 @@
 
         <template id="payment_delivery" name="Delivery Carrier Data" inherit_id="website_sale.payment_delivery">
             <xpath expr="//li" position="inside">
-                  <div t-on-click="log_stuff" id="payment_delivery_carrier_data_list">
-                      <span  id="payment_delivery_carrier_data"><t t-raw="delivery.carrier_data"/></span>
-                  </div>
+                <t t-if="delivery.pickup_location">
+                    <span><t t-out="delivery.carrier_data"/></span>
+                </t>
             </xpath>
         </template>
+
+        <record id="view_delivery_carrier_form" model="ir.ui.view">
+            <field name="name">delivery.carrier</field>
+            <field name="model">delivery.carrier</field>
+            <field name="inherit_id" ref="delivery.view_delivery_carrier_form"/>
+            <field name="arch" type="xml">
+                <field name="carrier_description" position="after">
+                    <label for="carrier_data"/>
+                    <field name="carrier_data"/>
+                </field>
+            </field>
+        </record>
 
 <!--        <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Carrier Data Assets">-->
 <!--            <xpath expr="." position="inside">-->
@@ -21,11 +33,11 @@
 <!--            </xpath>-->
 <!--        </template>-->
 
-<!-- 17 changes        <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Carrier Data Assets">
-            <xpath expr="." position="inside">
-                <script type="text/javascript" src="/delivery_carrier_data/static/src/js/main.js"/>
-            </xpath>
-        </template>
--->
+<!--        <template id="assets_frontend" inherit_id="website.assets_frontend" name="Delivery Carrier Data Assets">-->
+<!--            <xpath expr="." position="inside">-->
+<!--                <script type="text/javascript" src="/delivery_carrier_data/static/src/js/main.js"/>-->
+<!--            </xpath>-->
+<!--        </template>-->
+
     </data>
 </odoo>

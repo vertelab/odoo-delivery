@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    console.log("pickup delivery")
     var $pickup_sel = $("select[name='carrier_data']");
     var $pickup_input = $pickup_sel.closest("label").find("input[name='delivery_type']");
     var $submit_btn = $("div#payment_method").find("form[target='_self']").find("button[type='submit']");

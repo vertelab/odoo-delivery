@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 
+
 class ResPartner(models.Model):
     """Add some fields related to pickup locations"""
     _inherit = "res.partner"

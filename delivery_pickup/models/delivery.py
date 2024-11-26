@@ -29,23 +29,27 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class delivery_carrier(models.Model):
+class DeliveryCarrier(models.Model):
     _inherit = "delivery.carrier"
 
-    pickup_location = fields.Boolean(string="Pickup Location",
-                                     help="Check this field if the Carrier Type is a pickup location for deliveries.")
+    pickup_location = fields.Boolean(
+        string="Pickup Location",
+        help="Check this field if the Carrier Type is a pickup location for deliveries.")
 
+    @api.depends('pickup_location')
     def _carrier_data(self):
         for pickup in self:
-            if pickup.pickup_location:
+            if self.pickup_location:
                 pickup.carrier_data = _(
-                    '<select id="carrier_data_select" name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
+                    '<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
                     'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') \
                                       % \
                                       '\n'.join(['<option value="%s">%s</option>' % (p.id, p.name) for p in
                                                  pickup.env['res.partner'].search([('pickup_location', '=', True)])])
             else:
-                super(delivery_carrier, pickup)._carrier_data()
+                pickup.carrier_data = False
+
+    carrier_data = fields.Text(compute=_carrier_data)
 
     @api.model
     def lookup_carrier(self, carrier_id, carrier_data, order):
@@ -53,9 +57,7 @@ class delivery_carrier(models.Model):
         if carrier and carrier.pickup_location:
             if not carrier_data == '1':
                 location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
-                assert location.pickup_location == True
+                assert location.pickup_location is True
                 order.partner_shipping_id = location.id
         else:
-            super(delivery_carrier, self).lookup_carrier(carrier_id, carrier_data, order)
-
-
+            super(DeliveryCarrier, self).lookup_carrier(carrier_id, carrier_data, order)

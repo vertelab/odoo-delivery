@@ -19,26 +19,18 @@
 #
 ##############################################################################
 {
-    'name': 'Delivery Pickup',
-    'version': '1.0',
-    'summary': 'Delivery to a pickup location',
+    'name': 'Home Delivery Option',
+    'version': '0.1',
+    'summary': "Home Delivery for Cavarosawine Customers",
     'category': 'stock',
-    'description': """
-        Delivery is made to a special pickup location. This pickup location is written to sale order delivery adress.
-    
-        Pickup location is a res partner marked as this.
-    
-    Financed by Cavarosa LTD""",
+    'description': """Home Delivery for Cavarosawine Customers""",
     'author': 'Vertel AB',
-        'license': 'AGPL-3',
+    'license': 'AGPL-3',
     'website': 'http://www.vertel.se',
-    'depends': ['delivery', 'delivery_carrier_data'],
-    'data': ['views/res_partner_inherit_view.xml', 'views/delivery_view.xml'],
-    'assets': {
-        'web.assets_frontend': [
-            'delivery_pickup/static/js/main.js',
-            # 'delivery_pickup/static/css/main.css',
-        ],
-    },
+    'depends': ['delivery_carrier_data', 'delivery_pickup', 'website_sale'],
+    'data': [
+        'views/delivery_view.xml',
+        'views/sale_order_view.xml',
+    ],
     'installable': True,
 }

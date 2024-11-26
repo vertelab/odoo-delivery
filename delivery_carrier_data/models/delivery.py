@@ -24,33 +24,27 @@ from odoo import http
 from odoo.http import request
 
 import logging
+
 _logger = logging.getLogger(__name__)
 
 
-class delivery_carrier(models.Model):
+class DeliveryCarrier(models.Model):
     _inherit = "delivery.carrier"
 
     def _carrier_data(self):
-        for record in self:
-            record.carrier_data = False
-        # if self.my_delivery_type:
-        #     self._carrier_data = '<input name="carrier_data" .../>
-        # else:
-        #     super(delivery_carrier, self)._carrier_data()
-        pass
-    carrier_data = fields.Text(compute="_carrier_data")
+        return False
+
+    carrier_data = fields.Text()
 
     @api.model
     def lookup_carrier(self, carrier_id, carrier_data, order):
         pass
 
 
-class website_carrier_data(http.Controller):
+class WebsiteCarrierData(http.Controller):
 
     @http.route(['/shop/delivery/carrier_data'], type='json', auth="public", website=True)
     def lookup_carrier(self, carrier_id, carrier_data, **post):
         order = request.website.sale_get_order()
         _logger.warning('delivery-data %s %s %s' % (carrier_id, carrier_data, order))
-        return request.env['delivery.carrier'].lookup_carrier(carrier_id, carrier_data, order)
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+        return request.env['delivery.carrier'].sudo().lookup_carrier(carrier_id, carrier_data, order)
