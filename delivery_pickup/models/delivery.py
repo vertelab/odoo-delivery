@@ -42,7 +42,7 @@ class DeliveryCarrier(models.Model):
             if self.pickup_location:
                 pickup.carrier_data = _(
                     '<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
-                    'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') \
+                    'carrier_select" data-style="btn-primary"><option value="">Choose location</option>%s</select>') \
                                       % \
                                       '\n'.join(['<option value="%s">%s</option>' % (p.id, p.name) for p in
                                                  pickup.env['res.partner'].search([('pickup_location', '=', True)])])
