@@ -22,7 +22,7 @@ class DeliveryCarrier(models.Model):
             if pickup.pickup_location:
                 pickup.carrier_data = _(
                     '<select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
-                    'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>') \
+                    'carrier_select" data-style="btn-primary"><option value="">Choose location</option>%s</select>') \
                                       % \
                                       '\n'.join(['<option value="%s">%s</option>' % (
                                           p.id, p.name) for p in pickup.env['res.partner'].search([
@@ -36,7 +36,7 @@ class DeliveryCarrier(models.Model):
                 last_order_address = partner_id.last_website_so_id.delivery_partner_shipping_id.id
                 pickup.carrier_data = _(
                     '<div><select name="carrier_data" t-att-data-test="pickup.name" class="selectpicker form-control '
-                    'carrier_select" data-style="btn-primary"><option value="1">Choose location</option>%s</select>'
+                    'carrier_select" data-style="btn-primary"><option value="">Choose location</option>%s</select>'
                     '<strong>Note: You need to login to select available home delivery options</strong></div>') \
                     % '\n'.join(['<option value="%s">%s</option>' % (p.id, p.street)
                                  for p in user_partner_address])
@@ -49,9 +49,10 @@ class DeliveryCarrier(models.Model):
             if carrier_data == '1':
                 order.delivery_partner_shipping_id = False
             else:
-                location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
-                # assert location.pickup_location or location.home_delivery
-                order.partner_shipping_id = location.id
-                order.delivery_partner_shipping_id = location.id
+                partner_shipping_id = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
+                order.write({
+                    "partner_shipping_id": partner_shipping_id.id,
+                    "delivery_partner_shipping_id": partner_shipping_id.id
+                })
         else:
             super(DeliveryCarrier, self).lookup_carrier(carrier_id, carrier_data, order)
