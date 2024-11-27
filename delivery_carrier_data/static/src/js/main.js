@@ -14,14 +14,14 @@ publicWidget.registry.CustomDelivery = publicWidget.Widget.extend({
     },
 
     _onSetDeliveryAddress: async function (ev) {
-        const radio = ev.currentTarget.closest('.o_delivery_carrier_select').querySelector(
+        const carrier_id = ev.currentTarget.closest('.o_delivery_carrier_select').querySelector(
             'input[type="radio"]'
         );
         var $carrier_data = $(ev.currentTarget)
 
         if ($carrier_data) {
             await this.rpc('/shop/delivery/carrier_data', {
-                'carrier_id': radio.value,
+                'carrier_id': carrier_id.value,
                 'carrier_data': $carrier_data.val(),
             })
         }
