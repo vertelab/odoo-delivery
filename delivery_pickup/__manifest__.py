@@ -2,7 +2,7 @@
 ##############################################################################
 #
 # OpenERP, Open Source Management Solution, third party addon
-# Copyright (C) 2017- Vertel AB (<http://vertel.se>).
+# Copyright (C) 2024- Vertel AB (<http://vertel.se>).
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -19,7 +19,7 @@
 #
 ##############################################################################
 {
-    'name': 'Delivery Pickup',
+    'name': 'Delivery: Delivery Pickup',
     'version': '1.0',
     'summary': 'Delivery to a pickup location',
     'category': 'stock',
@@ -30,8 +30,9 @@
     
     Financed by Cavarosa LTD""",
     'author': 'Vertel AB',
-        'license': 'AGPL-3',
-    'website': 'http://www.vertel.se',
+    'license': 'AGPL-3',
+    'website': 'https://vertel.se/apps/odoo-delivery/delivery_pickup',
+    'images': ['static/description/banner.png'], # 560x280 px.
     'depends': ['delivery', 'delivery_carrier_data'],
     'data': ['views/res_partner_inherit_view.xml', 'views/delivery_view.xml'],
     'assets': {
