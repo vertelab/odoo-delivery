@@ -2,7 +2,7 @@
 ##############################################################################
 #
 # OpenERP, Open Source Management Solution, third party addon
-# Copyright (C) 2017- Vertel AB (<http://vertel.se>).
+# Copyright (C) 2024- Vertel AB (<http://vertel.se>).
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -19,14 +19,15 @@
 #
 ##############################################################################
 {
-    'name': 'Home Delivery Option',
+    'name': 'Delivery: Home Delivery Option',
     'version': '0.1',
     'summary': "Home Delivery for Cavarosawine Customers",
     'category': 'stock',
     'description': """Home Delivery for Cavarosawine Customers""",
     'author': 'Vertel AB',
     'license': 'AGPL-3',
-    'website': 'http://www.vertel.se',
+    'website': 'https://vertel.se/apps/odoo-delivery/delivery_home_delivery',
+    'images': ['static/description/banner.png'], # 560x280 px.
     'depends': ['delivery_carrier_data', 'delivery_pickup', 'website_sale'],
     'data': [
         'views/delivery_view.xml',
