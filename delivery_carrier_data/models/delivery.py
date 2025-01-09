@@ -20,10 +20,9 @@
 ##############################################################################
 
 from odoo import models, fields, api, _
-from odoo import http
-from odoo.http import request
-
 import logging
+from odoo.exceptions import UserError, ValidationError
+
 
 _logger = logging.getLogger(__name__)
 
@@ -40,11 +39,3 @@ class DeliveryCarrier(models.Model):
     def lookup_carrier(self, carrier_id, carrier_data, order):
         pass
 
-
-class WebsiteCarrierData(http.Controller):
-
-    @http.route(['/shop/delivery/carrier_data'], type='json', auth="public", website=True)
-    def lookup_carrier(self, carrier_id, carrier_data, **post):
-        order = request.website.sale_get_order()
-        _logger.warning('delivery-data %s %s %s' % (carrier_id, carrier_data, order))
-        return request.env['delivery.carrier'].sudo().lookup_carrier(carrier_id, carrier_data, order)

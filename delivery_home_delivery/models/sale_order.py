@@ -16,7 +16,3 @@ class SaleOrder(models.Model):
         # states={'draft': [('readonly', False)], 'sent': [('readonly', False)], 'sale': [('readonly', False)]},
         domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",)
 
-    def _create_payment_transaction(self, vals):
-        if any([not so.delivery_partner_shipping_id for so in self]):
-            raise ValidationError(_('You need to select a delivery option.'))
-        return super()._create_payment_transaction(vals)

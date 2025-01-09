@@ -32,7 +32,7 @@ Is meant to be inherited and other modules will fill the input field.
     'author': 'Vertel AB',
     'license': 'AGPL-3',
     'website': 'https://vertel.se/apps/odoo-delivery/delivery_carrier_data',
-    'images': ['static/description/banner.png'], # 560x280 px.
+    'images': ['static/description/banner.png'],  # 560x280 px.
     'depends': [
         'delivery', 'website', 'sale', 'website_sale', 
     ],
@@ -42,6 +42,7 @@ Is meant to be inherited and other modules will fill the input field.
     'assets': {
         'web.assets_frontend': [
             'delivery_carrier_data/static/src/js/main.js',
+            'delivery_carrier_data/static/src/js/website_sale_delivery.js',
         ],
     },
     'installable': True,
