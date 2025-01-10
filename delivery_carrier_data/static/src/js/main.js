@@ -43,14 +43,19 @@ publicWidget.registry.CustomDelivery = publicWidget.Widget.extend({
         const carrier_id = ev.currentTarget.closest('.o_delivery_carrier_select').querySelector(
             'input[type="radio"]'
         );
+        console.log(carrier_id)
         var $carrier_data = $(ev.currentTarget)
-
-        if ($carrier_data) {
+        console.log($carrier_data.val())
+        if ($carrier_data && $carrier_data.val()) {
+            console.log("Its all true!")
             const result = await this.rpc('/shop/delivery/carrier_data', {
                 'carrier_id': parseInt(carrier_id.value),
                 'carrier_location': parseInt($carrier_data.val()),
             })
             this._handleCarrierUpdateResultBadge(result);
+        }
+        else{
+            await this.rpc('/shop/delivery/reset_delivery_partner');
         }
     },
 })
