@@ -1,5 +1,5 @@
 import logging
-
+from datetime import datetime, date
 
 from odoo import models, fields, api, _
 from odoo import http
@@ -7,7 +7,6 @@ from odoo.http import request
 from odoo.addons.website_sale.controllers.delivery import WebsiteSaleDelivery, WebsiteSale
 from odoo.addons.website_sale.controllers.main import PaymentPortal
 
-from datetime import datetime, date
 from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
@@ -62,10 +61,10 @@ class PaymentPortalExtended(PaymentPortal):
         Perform final checks against the transaction & sale_order.
         Override me to apply payment unrelated checks & processing
         """
-        sale_order = request.env['sale.order'].browse(sale_order_id).exists()
+        sale_order = request.env['sale.order'].sudo().browse(sale_order_id).exists()
 
         if not sale_order.delivery_partner_shipping_id and (
-                sale_order.carrier_id.home_delivery or sale_order.carrier_id.pickup_location
+                sale_order.carrier_id.sudo().home_delivery or sale_order.carrier_id.sudo().pickup_location
         ):
             raise ValidationError(_('You need to select a delivery option.'))
         if not sale_order.campaign_id:
@@ -75,8 +74,6 @@ class PaymentPortalExtended(PaymentPortal):
         cart_products = sale_order.order_line.mapped('product_id').mapped('product_tmpl_id').filtered(
             lambda product: product.is_published)
         campaign_real_products = sale_order.campaign_id.product_ids
-
-        from datetime import datetime, date
 
         if sale_order.order_line and date.today() > sale_order.campaign_id.date_stop and all(
                 item in campaign_real_products for item in cart_products):

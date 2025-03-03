@@ -53,7 +53,7 @@ class DeliveryCarrier(models.Model):
 
     @api.model
     def lookup_carrier(self, carrier_id, carrier_data, order):
-        carrier = self.env['delivery.carrier'].browse(int(carrier_id))
+        carrier = self.env['delivery.carrier'].sudo().browse(int(carrier_id))
         if carrier and carrier.pickup_location:
             if not carrier_data == '1':
                 location = self.env['res.partner'].sudo().browse(int(carrier_data or 1))
