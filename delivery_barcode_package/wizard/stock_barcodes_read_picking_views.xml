@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_delivery_barcodes_read_picking_form" model="ir.ui.view">
+        <field name="name">stock.delivery.barcodes.package.read.picking.form</field>
+        <field name="model">wiz.stock.barcodes.read.picking</field>
+        <field name="inherit_id" ref="stock_barcodes.view_stock_barcodes_read_picking_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[last()]" position="after">
+                <group name="additional_info" string="Additional Info">
+                    <field name="carrier_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
