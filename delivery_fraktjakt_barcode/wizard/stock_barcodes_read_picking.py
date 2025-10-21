@@ -36,5 +36,3 @@ class WizStockBarcodesReadPicking(models.TransientModel):
         #     action["context"] = context
         #
         # return action
-
-

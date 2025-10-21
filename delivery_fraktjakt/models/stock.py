@@ -41,14 +41,14 @@ class StockPicking(models.Model):
     fraktjakt_shipmentid = fields.Char(string='Fraktjakt Shipment ID', copy=False)
     fraktjakt_orderid = fields.Char(string='Fraktjakt Order ID', copy=False)
 
-    fraktjakt_arrival_time = fields.Char(string='Arrival Time')
-    fraktjakt_price = fields.Float(string='Price')
-    fraktjakt_agent_info = fields.Char(string='Agent info')
-    fraktjakt_agent_link = fields.Char(string='Agent Link')
+    fraktjakt_arrival_time = fields.Char(string='Arrival Time', copy=False)
+    fraktjakt_price = fields.Float(string='Price', copy=False)
+    fraktjakt_agent_info = fields.Char(string='Agent info', copy=False)
+    fraktjakt_agent_link = fields.Char(string='Agent Link', copy=False)
 
-    confirm_url = fields.Char()
-    cancel_url = fields.Char()
-    fraktjakt_tracking_url = fields.Char()
+    confirm_url = fields.Char(copy=False)
+    cancel_url = fields.Char(copy=False)
+    fraktjakt_tracking_url = fields.Char(copy=False)
 
     def open_website_url(self):
         if self.fraktjakt_tracking_url:
