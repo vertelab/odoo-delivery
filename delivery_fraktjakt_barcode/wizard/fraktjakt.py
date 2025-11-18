@@ -165,7 +165,8 @@ class FjQueryLine(models.TransientModel):
             #         'res_id': picking.id,
             #         'model': picking._name,
             #         'message_type': 'notification',})
-                return self.stock_barcodes_action_picking()
+                if self.env.context.get('active_model') == 'wiz.stock.barcodes.read.picking':
+                    return self.stock_barcodes_action_picking()
         else:
             form_tuple = self.env['ir.model.data'].get_object_reference('delivery_fraktjakt', 'fj_query_form_view')
             return {
