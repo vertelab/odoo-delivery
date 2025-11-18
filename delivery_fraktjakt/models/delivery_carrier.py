@@ -136,3 +136,23 @@ class DeliveryPackage(models.TransientModel):
             delivery_package.shipping_weight = self.shipping_weight
         if self.height:
             delivery_package.height = self.height
+
+    @api.depends('picking_id', 'picking_id.move_ids', 'picking_id.move_ids.product_id',
+                 'picking_id.move_ids.product_id.weight')
+    def _compute_weight_deficit(self):
+        for rec in self:
+            moves_without_weight = rec.picking_id.move_ids.filtered(
+                lambda m: not m.product_id.weight or m.product_id.weight <= 0
+            )
+            rec.weight_deficit = bool(moves_without_weight)
+            rec.weight_deficit_products = ', '.join(moves_without_weight.mapped('product_id.name'))
+
+    weight_deficit = fields.Boolean(
+        string="Missing Product Weights",
+        compute='_compute_weight_deficit',
+    )
+
+    weight_deficit_products = fields.Char(
+        string="Products Without Weight",
+        compute='_compute_weight_deficit',
+    )

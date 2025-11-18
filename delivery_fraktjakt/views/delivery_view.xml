@@ -21,7 +21,17 @@
                 <field name="delivery_package_type_id" position="after">
                     <field name="fraktjakt_package_type" invisible="1"/>
                     <field name="height" attrs="{'invisible': [('fraktjakt_package_type', '==', 'others')]}"/>
+                    <field name="weight_deficit" invisible="1"/>
                 </field>
+
+                <xpath expr="//form/group[1]" position="before">
+                    <div class="alert alert-warning mb-3" role="alert" attrs="{'invisible': [('weight_deficit', '=', False)]}">
+                        <i class="fa fa-warning" title="warning"/>
+                        <strong>Warning:</strong> Some products are missing weight information:
+                        <span class="font-weight-bold text-danger"><field name="weight_deficit_products" nolabel="1" readonly="1"/></span>
+                    </div>
+                </xpath>
+
             </field>
         </record>
 
