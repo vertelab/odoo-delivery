@@ -87,14 +87,14 @@ class StockPicking(models.Model):
                 ['product_id']  # field(s) to group by
             )
 
-            weight_of_products = 0
-            for move_line in stock_move_lines_grouped:
-                product = self.env['product.product'].browse(move_line['product_id'][0])
-                weight_of_products = weight_of_products + product.weight * move_line['qty_done']
+            #weight_of_products = 0
+            #for move_line in stock_move_lines_grouped:
+            #    product = self.env['product.product'].browse(move_line['product_id'][0])
+            #    weight_of_products = weight_of_products + product.weight * move_line['qty_done']
 
             self.env['fj_query.package'].sudo().create({
                 'pack_id': pack.id,
-                'weight': pack.shipping_weight + weight_of_products,
+                'weight': pack.shipping_weight,
                 'wizard_id': query.id,
             })
 
