@@ -6,7 +6,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Shipment Import">
-                    <group>
+                    <group name="options">
                         <group cols="2">
                             <field name="picking_id" invisible="1" />
                             <field name="sender_id" invisible='1' />
@@ -25,9 +25,9 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Shipment products">
+                        <page string="Shipment Options" name="shipping_options">
                             <field name="line_ids" readonly="1">
-                                <tree string="Shipment products">
+                                <tree string="Available Options">
                                     <field name="image" widget="image" class="oe_left oe_avatar" string='' nolabel="1" />
                                     <field name="partner_id" string="Transport company" />
                                     <field name="carrier_id" string="Transport product" />
@@ -37,7 +37,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Packages">
+                        <page string="Packages" name="packages">
                             <field name="pack_ids" readonly="0">
                                 <tree string="Packages" editable="bottom">
                                     <field name="pack_id" count="Number of packages" />
@@ -48,16 +48,16 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Products">
+                        <page string="Products" name="products">
                             <field name="move_lines" readonly="1">
-                                <tree string="Comodities">
+                                <tree string="Commodities">
                                     <field name="move_id" />
                                     <field name="name" />
                                     <field name="description" />
                                 </tree>
                             </field>
                         </page>
-                        <page string="Booking">
+                        <page string="Booking" name="booking">
                             <group>
                                 <field name="pickup_date" />
                             </group>
