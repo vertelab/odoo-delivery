@@ -246,6 +246,30 @@ class FjQueryLine(models.TransientModel):
                     package_uom = default_uom
 
                 for stock_move_line in stock_move_lines_grouped:
+                    unit_price = product.lst_price
+                    company = stock_move_line.company_id
+                    company_currency = company.currency_id
+                    _logger.warning(f"{company=}")
+                    _logger.warning(f"{company_currency=}")
+                    if stock_move_line.move_id and stock_move_line.move_id.sale_line_id and stock_move_line.move_id.sale_line_id.price_unit > 0:
+                        #Grab init price from here and convert to company_currency
+                        _logger.warning("Sale order line found"*100)
+                        price_in_so_currency = sale_line.price_unit
+                        _logger.warning(f"{price_in_so_currency=}")
+
+                        so_currency = sale_line.order_id.currency_id
+                        _logger.warning(f"{so_currency=}")
+
+                        price_in_company_currency = so_currency._convert(
+                            price_in_so_currency,
+                            company_currency,
+                            company,
+                            sale_line.order_id.date_order or fields.Date.context_today(stock_move_line)
+                        )
+                        _logger.warning(f"{price_in_company_currency=}")
+
+                        unit_price = price_in_company_currency
+
                     product = self.env['product.product'].browse(stock_move_line['product_id'][0])
                     country = product.country_of_origin.code if product.country_of_origin else False
                     commodity = carrier.init_subelement(commodities, 'commodity')
@@ -257,7 +281,8 @@ class FjQueryLine(models.TransientModel):
                     carrier.add_subelement(commodity, 'article_number', product.default_code)
                     carrier.add_subelement(commodity, 'in_own_parcel', '0')
                     carrier.add_subelement(commodity, 'shipped', '1')
-                    carrier.add_subelement(commodity, 'unit_price', product.lst_price)
+                    carrier.add_subelement(commodity, 'unit_price', unit_price)
+                    carrier.add_subelement(commodity, 'currency', company_currency.name)
                     carrier.add_subelement(commodity, 'weight', str(product.weight))
 
                 parcel = carrier.init_subelement(parcels, 'parcel')
