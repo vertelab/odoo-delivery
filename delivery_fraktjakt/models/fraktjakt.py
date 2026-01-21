@@ -195,7 +195,53 @@ class FjQueryLine(models.TransientModel):
         shipper_name = self.shipper.name
         shipper_logo = self.shipper.logo_url
         return shipper_id, shipper_name, shipper_logo
+        
+        
+    def add_commodity(self, carrier, stock_move_line):
+        commodity = carrier.init_subelement(commodities, 'commodity')
+        product = self.env['product.product'].browse(stock_move_line['product_id'][0])
+        country = product.country_of_origin.code if product.country_of_origin else False
+        unit_price = product.lst_price
+        company = stock_move_line.company_id
+        company_currency = company.currency_id
+        _logger.warning(f"{company=}")
+        _logger.warning(f"{company_currency=}")
+        if stock_move_line.move_id and stock_move_line.move_id.sale_line_id and stock_move_line.move_id.sale_line_id.price_unit > 0:
+            #Grab init price from here and convert to company_currency
+            _logger.warning("Sale order line found"*100)
+            sale_line = stock_move_line.move_id.sale_line_id
+            price_in_so_currency = sale_line.price_unit
+            _logger.warning(f"{price_in_so_currency=}")
 
+            so_currency = sale_line.order_id.currency_id
+            _logger.warning(f"{so_currency=}")
+
+            price_in_company_currency = so_currency._convert(
+                price_in_so_currency,
+                company_currency,
+                company,
+                sale_line.order_id.date_order or fields.Date.context_today(stock_move_line)
+            )
+            _logger.warning(f"{price_in_company_currency=}")
+
+            unit_price = price_in_company_currency
+
+        carrier.add_subelement(commodity, 'name', product.name)
+        carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
+        if country:
+           carrier.add_subelement(commodity, 'country_of_manufacture', country)
+        carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
+        carrier.add_subelement(commodity, 'article_number', product.default_code)
+        carrier.add_subelement(commodity, 'in_own_parcel', '0')
+        carrier.add_subelement(commodity, 'shipped', '1')
+        carrier.add_subelement(commodity, 'unit_price', unit_price)
+        carrier.add_subelement(commodity, 'currency', company_currency.name)
+        carrier.add_subelement(commodity, 'weight', str(product.weight))
+        if product.hs_code:
+            carrier.add_subelement(commodity, 'taric', str(product.hs_code))
+        return carrier, commodity
+        
+        
     # Choose Carrier
     def choose_product(self):
         if not self.wizard_id.processing:
@@ -246,44 +292,7 @@ class FjQueryLine(models.TransientModel):
                     package_uom = default_uom
 
                 for stock_move_line in stock_move_lines_grouped:
-                    unit_price = product.lst_price
-                    company = stock_move_line.company_id
-                    company_currency = company.currency_id
-                    _logger.warning(f"{company=}")
-                    _logger.warning(f"{company_currency=}")
-                    if stock_move_line.move_id and stock_move_line.move_id.sale_line_id and stock_move_line.move_id.sale_line_id.price_unit > 0:
-                        #Grab init price from here and convert to company_currency
-                        _logger.warning("Sale order line found"*100)
-                        price_in_so_currency = sale_line.price_unit
-                        _logger.warning(f"{price_in_so_currency=}")
-
-                        so_currency = sale_line.order_id.currency_id
-                        _logger.warning(f"{so_currency=}")
-
-                        price_in_company_currency = so_currency._convert(
-                            price_in_so_currency,
-                            company_currency,
-                            company,
-                            sale_line.order_id.date_order or fields.Date.context_today(stock_move_line)
-                        )
-                        _logger.warning(f"{price_in_company_currency=}")
-
-                        unit_price = price_in_company_currency
-
-                    product = self.env['product.product'].browse(stock_move_line['product_id'][0])
-                    country = product.country_of_origin.code if product.country_of_origin else False
-                    commodity = carrier.init_subelement(commodities, 'commodity')
-                    carrier.add_subelement(commodity, 'name', product.name)
-                    carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
-                    if country:
-                       carrier.add_subelement(commodity, 'country_of_manufacture', country)
-                    carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
-                    carrier.add_subelement(commodity, 'article_number', product.default_code)
-                    carrier.add_subelement(commodity, 'in_own_parcel', '0')
-                    carrier.add_subelement(commodity, 'shipped', '1')
-                    carrier.add_subelement(commodity, 'unit_price', unit_price)
-                    carrier.add_subelement(commodity, 'currency', company_currency.name)
-                    carrier.add_subelement(commodity, 'weight', str(product.weight))
+                    self.add_commodity(carrier, stock_move_line)
 
                 parcel = carrier.init_subelement(parcels, 'parcel')
                 carrier.add_subelement(parcel, 'weight', str(package_id.weight))
