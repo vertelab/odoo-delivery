@@ -146,6 +146,16 @@ class DeliveryPackage(models.TransientModel):
             )
             rec.weight_deficit = bool(moves_without_weight)
             rec.weight_deficit_products = ', '.join(moves_without_weight.mapped('product_id.name'))
+            
+            rec.no_done_products = False
+            move_line_ids = rec.picking_id.move_line_ids.filtered(lambda m:
+                float_compare(m.qty_done, 0.0, precision_rounding=m.product_uom_id.rounding) > 0
+                and not m.result_package_id
+            )
+            if not move_line_ids:
+                rec.no_done_products = True
+                
+                
 
     weight_deficit = fields.Boolean(
         string="Missing Product Weights",
@@ -156,3 +166,28 @@ class DeliveryPackage(models.TransientModel):
         string="Products Without Weight",
         compute='_compute_weight_deficit',
     )
+    
+    no_done_products = fields.Boolean(
+        string="Missing Product Weights",
+        compute='_compute_weight_deficit',
+    )
+    
+    # ~ @api.depends('delivery_package_type_id')
+    # ~ def _compute_shipping_weight(self):
+        # ~ for rec in self:
+            # ~ move_line_ids = rec.picking_id.move_line_ids.filtered(lambda m:
+                # ~ float_compare(m.qty_done, 0.0, precision_rounding=m.product_uom_id.rounding) > 0
+                # ~ and not m.result_package_id
+            # ~ )
+            # ~ # Add package weights to shipping weight, package base weight is defined in package.type
+            # ~ total_weight = rec.delivery_package_type_id.base_weight or 0.0
+            # ~ for ml in move_line_ids:
+                # ~ qty = ml.product_uom_id._compute_quantity(ml.qty_done, ml.product_id.uom_id)
+                # ~ total_weight += qty * ml.product_id.weight
+            # ~ rec.shipping_weight = total_weight
+
+    
+
+    
+    
+    

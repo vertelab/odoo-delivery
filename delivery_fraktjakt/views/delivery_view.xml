@@ -30,6 +30,13 @@
                         <strong>Warning:</strong> Some products are missing weight information:
                         <span class="font-weight-bold text-danger"><field name="weight_deficit_products" nolabel="1" readonly="1"/></span>
                     </div>
+                    
+                    
+                    <div class="alert alert-warning mb-3" role="alert" attrs="{'invisible': [('no_done_products', '=', False)]}">
+                        <i class="fa fa-warning" title="warning"/>
+                        <strong>Warning:</strong> Nothing is set to done and the weight is now only the package weight. Please set some to done or manually add a total weight for the package and the products within it.
+                    </div>
+                    
                 </xpath>
 
             </field>
