@@ -335,9 +335,10 @@ class FjQueryLine(models.TransientModel):
         url = self.env['ir.config_parameter'].sudo().get_param('fraktjakt_order_xml_url')
         xml = etree.tostring(order, encoding='UTF-8')
         data = {'xml': xml}
+        #raise UserError(f"{data=}")
         response = requests.post(url, data=data)
         code = response.status_code
-
+        _logger.warning(f"{response=}")
         record = etree.XML(response.content)
         self.wizard_id.message = response.content
 
