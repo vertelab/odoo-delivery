@@ -197,9 +197,9 @@ class FjQueryLine(models.TransientModel):
         return shipper_id, shipper_name, shipper_logo
         
         
-    def add_commodity(self, carrier, stock_move_line):
+    def add_commodity(self, carrier, commodities, stock_move_line):
         commodity = carrier.init_subelement(commodities, 'commodity')
-        product = self.env['product.product'].browse(stock_move_line['product_id'][0])
+        product = stock_move_line.product_id
         country = product.country_of_origin.code if product.country_of_origin else False
         unit_price = product.lst_price
         company = stock_move_line.company_id
@@ -227,7 +227,7 @@ class FjQueryLine(models.TransientModel):
             unit_price = price_in_company_currency
 
         carrier.add_subelement(commodity, 'name', product.name)
-        carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
+        carrier.add_subelement(commodity, 'quantity', stock_move_line.qty_done)
         if country:
            carrier.add_subelement(commodity, 'country_of_manufacture', country)
         carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
@@ -281,18 +281,18 @@ class FjQueryLine(models.TransientModel):
             parcels = carrier.init_subelement(order, 'parcels')
 
             for package_id in self.wizard_id.pack_ids:
-                stock_move_lines_grouped = self.env['stock.move.line'].read_group(
-                    [('result_package_id', '=', package_id.pack_id.id)],  # domain to filter the records
-                    ['product_id', 'move_id', 'qty_done:sum'],  # fields to include in the result
-                    ['product_id']  # field(s) to group by
-                )
-
+                # ~ stock_move_lines_grouped = self.env['stock.move.line'].read_group(
+                    # ~ [('result_package_id', '=', package_id.pack_id.id)],  # domain to filter the records
+                    # ~ ['product_id', 'move_id', 'qty_done:sum'],  # fields to include in the result
+                    # ~ ['product_id']  # field(s) to group by
+                # ~ )
+                stock_move_lines = self.env['stock.move.line'].search([('result_package_id', '=', package_id.pack_id.id),('qty_done','>',0)])
                 package_uom = False
                 if not package_uom:
                     package_uom = default_uom
 
-                for stock_move_line in stock_move_lines_grouped:
-                    self.add_commodity(carrier, stock_move_line)
+                for stock_move_line in stock_move_lines:
+                    self.add_commodity(carrier, commodities, stock_move_line)
 
                 parcel = carrier.init_subelement(parcels, 'parcel')
                 carrier.add_subelement(parcel, 'weight', str(package_id.weight))
