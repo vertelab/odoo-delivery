@@ -25,6 +25,7 @@ from io import BytesIO
 from odoo import models, fields, api, _
 from odoo.exceptions import Warning
 from odoo.service import common
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 import requests
 from lxml import etree

@@ -316,7 +316,7 @@ class FjQueryLine(models.TransientModel):
         carrier.add_subelement(recipient, 'mobile_to', self.wizard_id.picking_id.partner_id.mobile or '')
         carrier.add_subelement(recipient, 'email_to', self.wizard_id.picking_id.partner_id.email or '')
         carrier.add_subelement(recipient, 'tax_id', str(self.wizard_id.picking_id.partner_id.vat))
-
+        #raise UserError("Test")
         # Booking
         booking = carrier.init_subelement(order, 'booking')
         carrier.add_subelement(booking, 'pickup_date', str(self.wizard_id.pickup_date) or '')
