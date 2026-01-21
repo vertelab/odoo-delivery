@@ -316,6 +316,8 @@ class FjQueryLine(models.TransientModel):
         # Address
         if self.wizard_id.picking_id.partner_id.company_type == 'company':
             carrier.add_address(order, 'address_to', self.wizard_id.reciever_id, 0)
+        elif self.wizard_id.picking_id.partner_id.type == "delivery" and self.wizard_id.picking_id.partner_id.commercial_partner_id.company_type == 'company':
+            carrier.add_address(order, 'address_to', self.wizard_id.reciever_id, 0)
         else:
             carrier.add_address(order, 'address_to', self.wizard_id.reciever_id)
         carrier.add_address(order, 'address_from', self.wizard_id.sender_id, 0)
