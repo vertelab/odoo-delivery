@@ -13,7 +13,9 @@ _logger = logging.getLogger(__name__)
 
 class FjQueryLine(models.TransientModel):
     _inherit = 'fj_query.line'
-
+    
+    
+    # Choose Carrier
     def choose_product(self):
         if not self.wizard_id.processing:
             self.wizard_id.processing = True
@@ -52,30 +54,18 @@ class FjQueryLine(models.TransientModel):
             parcels = carrier.init_subelement(order, 'parcels')
 
             for package_id in self.wizard_id.pack_ids:
-                stock_move_lines_grouped = self.env['stock.move.line'].read_group(
-                    [('result_package_id', '=', package_id.pack_id.id)],  # domain to filter the records
-                    ['product_id', 'move_id', 'qty_done:sum'],  # fields to include in the result
-                    ['product_id']  # field(s) to group by
-                )
-
+                # ~ stock_move_lines_grouped = self.env['stock.move.line'].read_group(
+                    # ~ [('result_package_id', '=', package_id.pack_id.id)],  # domain to filter the records
+                    # ~ ['product_id', 'move_id', 'qty_done:sum'],  # fields to include in the result
+                    # ~ ['product_id']  # field(s) to group by
+                # ~ )
+                stock_move_lines = self.env['stock.move.line'].search([('result_package_id', '=', package_id.pack_id.id),('qty_done','>',0)])
                 package_uom = False
                 if not package_uom:
                     package_uom = default_uom
 
-                for stock_move_line in stock_move_lines_grouped:
-                    product = self.env['product.product'].browse(stock_move_line['product_id'][0])
-                    country = product.country_of_origin.code if product.country_of_origin else False
-                    commodity = carrier.init_subelement(commodities, 'commodity')
-                    carrier.add_subelement(commodity, 'name', product.name)
-                    carrier.add_subelement(commodity, 'quantity', stock_move_line['qty_done'])
-                    if country:
-                        carrier.add_subelement(commodity, 'country_of_manufacture', country)
-                    carrier.add_subelement(commodity, 'shelf_position', self.wizard_id.picking_id.location_id.name)
-                    carrier.add_subelement(commodity, 'article_number', product.default_code)
-                    carrier.add_subelement(commodity, 'in_own_parcel', '0')
-                    carrier.add_subelement(commodity, 'shipped', '1')
-                    carrier.add_subelement(commodity, 'unit_price', product.lst_price)
-                    carrier.add_subelement(commodity, 'weight', str(product.weight))
+                for stock_move_line in stock_move_lines:
+                    self.add_commodity(carrier, commodities, stock_move_line)
 
                 parcel = carrier.init_subelement(parcels, 'parcel')
                 carrier.add_subelement(parcel, 'weight', str(package_id.weight))
@@ -99,7 +89,7 @@ class FjQueryLine(models.TransientModel):
         carrier.add_subelement(recipient, 'mobile_to', self.wizard_id.picking_id.partner_id.mobile or '')
         carrier.add_subelement(recipient, 'email_to', self.wizard_id.picking_id.partner_id.email or '')
         carrier.add_subelement(recipient, 'tax_id', str(self.wizard_id.picking_id.partner_id.vat))
-
+        #raise UserError("Test")
         # Booking
         booking = carrier.init_subelement(order, 'booking')
         carrier.add_subelement(booking, 'pickup_date', str(self.wizard_id.pickup_date) or '')
@@ -107,6 +97,8 @@ class FjQueryLine(models.TransientModel):
 
         # Address
         if self.wizard_id.picking_id.partner_id.company_type == 'company':
+            carrier.add_address(order, 'address_to', self.wizard_id.reciever_id, 0)
+        elif self.wizard_id.picking_id.partner_id.type == "delivery" and self.wizard_id.picking_id.partner_id.commercial_partner_id.company_type == 'company':
             carrier.add_address(order, 'address_to', self.wizard_id.reciever_id, 0)
         else:
             carrier.add_address(order, 'address_to', self.wizard_id.reciever_id)
@@ -116,9 +108,10 @@ class FjQueryLine(models.TransientModel):
         url = self.env['ir.config_parameter'].sudo().get_param('fraktjakt_order_xml_url')
         xml = etree.tostring(order, encoding='UTF-8')
         data = {'xml': xml}
+        #raise UserError(f"{data=}")
         response = requests.post(url, data=data)
         code = response.status_code
-
+        _logger.warning(f"{response=}")
         record = etree.XML(response.content)
         self.wizard_id.message = response.content
 
@@ -178,6 +171,7 @@ class FjQueryLine(models.TransientModel):
                 'view_mode': 'form',
                 'target': 'new',
             }
+    
 
     def stock_barcodes_action_picking(self):
         action = self.env["ir.actions.actions"]._for_xml_id(
