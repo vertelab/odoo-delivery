@@ -208,7 +208,6 @@ class FjQueryLine(models.TransientModel):
         _logger.warning(f"{company_currency=}")
         if stock_move_line.move_id and stock_move_line.move_id.sale_line_id and stock_move_line.move_id.sale_line_id.price_unit > 0:
             #Grab init price from here and convert to company_currency
-            _logger.warning("Sale order line found"*100)
             sale_line = stock_move_line.move_id.sale_line_id
             price_in_so_currency = sale_line.price_unit
             _logger.warning(f"{price_in_so_currency=}")
@@ -236,7 +235,7 @@ class FjQueryLine(models.TransientModel):
         carrier.add_subelement(commodity, 'shipped', '1')
         carrier.add_subelement(commodity, 'unit_price', unit_price)
         carrier.add_subelement(commodity, 'currency', company_currency.name)
-        carrier.add_subelement(commodity, 'weight', str(product.weight))
+        carrier.add_subelement(commodity, 'weight', str(product.weight * stock_move_line.qty_done))
         if product.hs_code:
             carrier.add_subelement(commodity, 'taric', str(product.hs_code))
         return carrier, commodity
@@ -309,14 +308,19 @@ class FjQueryLine(models.TransientModel):
         recipient = carrier.init_subelement(order, 'recipient')
 
         if self.wizard_id.picking_id.partner_id.company_type == 'company':
-            carrier.add_subelement(recipient, 'company_to', self.wizard_id.picking_id.partner_id.name)
-
-        carrier.add_subelement(recipient, 'name_to', self.wizard_id.picking_id.partner_id.name or '')
+            carrier.add_subelement(recipient, 'company_to',  self.wizard_id.picking_id.partner_id.name)
+        elif self.wizard_id.picking_id.partner_id.type == "delivery" and self.wizard_id.picking_id.partner_id.commercial_partner_id.company_type == 'company':
+            carrier.add_subelement(recipient, 'company_to',  self.wizard_id.picking_id.partner_id.commercial_partner_id.name)
+        
+        #Should not set if we are sending to a company
+        #TODO So i partner is of type conact or if its a delivery adress beloning to a contact.
+        carrier.add_subelement(recipient, 'name_to', self.wizard_id.picking_id.partner_id.name or self.wizard_id.picking_id.partner_id.commercial_partner_id.name or '')
+        
         carrier.add_subelement(recipient, 'telephone_to', self.wizard_id.picking_id.partner_id.phone or '')
-        carrier.add_subelement(recipient, 'mobile_to', self.wizard_id.picking_id.partner_id.mobile or '')
+        carrier.add_subelement(recipient, 'mobile_to', self.wizard_id.picking_id.partner_id.mobile or self.wizard_id.picking_id.partner_id.phone or '')
         carrier.add_subelement(recipient, 'email_to', self.wizard_id.picking_id.partner_id.email or '')
         carrier.add_subelement(recipient, 'tax_id', str(self.wizard_id.picking_id.partner_id.vat))
-        #raise UserError("Test")
+        #raise UserError(f"Test {recipient=}")
         # Booking
         booking = carrier.init_subelement(order, 'booking')
         carrier.add_subelement(booking, 'pickup_date', str(self.wizard_id.pickup_date) or '')

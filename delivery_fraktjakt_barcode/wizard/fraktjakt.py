@@ -82,13 +82,19 @@ class FjQueryLine(models.TransientModel):
         recipient = carrier.init_subelement(order, 'recipient')
 
         if self.wizard_id.picking_id.partner_id.company_type == 'company':
-            carrier.add_subelement(recipient, 'company_to', self.wizard_id.picking_id.partner_id.name)
-
-        carrier.add_subelement(recipient, 'name_to', self.wizard_id.picking_id.partner_id.name or '')
+            carrier.add_subelement(recipient, 'company_to',  self.wizard_id.picking_id.partner_id.name)
+        elif self.wizard_id.picking_id.partner_id.type == "delivery" and self.wizard_id.picking_id.partner_id.commercial_partner_id.company_type == 'company':
+            carrier.add_subelement(recipient, 'company_to',  self.wizard_id.picking_id.partner_id.commercial_partner_id.name)
+        
+        #Should not set if we are sending to a company
+        #TODO So i partner is of type conact or if its a delivery adress beloning to a contact.
+        carrier.add_subelement(recipient, 'name_to', self.wizard_id.picking_id.partner_id.name or self.wizard_id.picking_id.partner_id.commercial_partner_id.name or '')
+        
         carrier.add_subelement(recipient, 'telephone_to', self.wizard_id.picking_id.partner_id.phone or '')
-        carrier.add_subelement(recipient, 'mobile_to', self.wizard_id.picking_id.partner_id.mobile or '')
+        carrier.add_subelement(recipient, 'mobile_to', self.wizard_id.picking_id.partner_id.mobile or self.wizard_id.picking_id.partner_id.phone or '')
         carrier.add_subelement(recipient, 'email_to', self.wizard_id.picking_id.partner_id.email or '')
         carrier.add_subelement(recipient, 'tax_id', str(self.wizard_id.picking_id.partner_id.vat))
+
         #raise UserError("Test")
         # Booking
         booking = carrier.init_subelement(order, 'booking')
