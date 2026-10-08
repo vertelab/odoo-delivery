@@ -20,7 +20,7 @@
 
 {
     'name': 'Delivery: Delivery Tax',
-    'version': '14.0.0.0.1',
+    'version': "18.0.0.0.1",
     # Version ledger: 14.0 = Odoo version. 1 = Major. Non regressionable code. 2 = Minor. New features that are regressionable. 3 = Bug fixes
     'summary': 'Adds the current taxes to the shipment-cost.',
     'category': 'Inventory',
@@ -29,12 +29,12 @@
         'price_tax' key that contains the shipment price with included tax.
     """,
     #'sequence': '1',
-    'author': 'Vertel AB',
+    'author': 'Vertel Sverige AB',
     'license': 'AGPL-3',
     'website': 'https://vertel.se/apps/odoo-delivery/delivery_tax',
     'images': ['static/description/banner.png'], # 560x280 px.
     'contributor': '',
-    'maintainer': 'Vertel AB',
+    'maintainer': 'Vertel Sverige AB',
     'repository': 'https://github.com/vertelab/odoo-delivery',
     'depends': ['delivery',],
     'installable': True,
